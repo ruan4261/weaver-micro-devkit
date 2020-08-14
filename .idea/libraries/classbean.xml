@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="classbean">
+    <CLASSES>
+      <root url="file://F:/resource/weaver-lib/classbean" />
+      <root url="file://F:/resource/weaver-lib/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://F:/resource/weaver-lib/lib" />
+    </SOURCES>
+    <jarDirectory url="file://F:/resource/weaver-lib/lib" recursive="false" />
+    <jarDirectory url="file://F:/resource/weaver-lib/lib" recursive="false" type="SOURCES" />
+  </library>
+</component>
