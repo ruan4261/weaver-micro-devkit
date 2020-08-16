@@ -1,6 +1,7 @@
 package weaver.interfaces.micro.devkit.env;
 
 
+import weaver.interfaces.micro.devkit.api.Formatter;
 import weaver.interfaces.micro.devkit.core.CacheBase;
 
 import java.util.Map;
@@ -32,9 +33,7 @@ public final class EnvArgument implements CacheBase {
     }
 
     public static String getString(String key) {
-        Object v = env.get(key);
-        if (v == null) return EMPTY;
-        return v.toString();
+        return Formatter.toString(env.get(key));
     }
 
     public static void clear() {

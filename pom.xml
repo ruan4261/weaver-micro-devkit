@@ -8,5 +8,22 @@
     <artifactId>micro-devkit</artifactId>
     <version>1.0.0</version>
 
+    <inceptionYear>2020</inceptionYear>
+    <description>
+        weaver-micro-devkit.
+    </description>
+
+    <developers>
+        <developer>
+            <id>4261</id>
+            <name>ruan4261</name>
+            <email>i@4261.ink</email>
+            <url>https://4261.ink</url>
+            <timezone>+8</timezone>
+            <roles>
+                <role>Master</role>
+            </roles>
+        </developer>
+    </developers>
 
 </project>

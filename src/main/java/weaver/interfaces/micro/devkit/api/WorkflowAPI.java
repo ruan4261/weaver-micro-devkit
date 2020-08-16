@@ -20,8 +20,8 @@ public interface WorkflowAPI {
     String EMPTY = CacheBase.EMPTY;
 
     /** 流程中的签字意见类型映射 */
-    HashMap<String, String> logTypeMapper = new HashMap<String, String>() {
-        public HashMap<String, String> construct() {
+    Map<String, String> logTypeMapper = new HashMap<String, String>() {
+        public Map<String, String> construct() {
             super.put("0", "批准");
             super.put("1", "保存");
             super.put("2", "提交");
