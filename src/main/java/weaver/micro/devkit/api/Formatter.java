@@ -1,6 +1,6 @@
 package weaver.micro.devkit.api;
 
-import weaver.micro.devkit.core.CacheBase;
+import static weaver.micro.devkit.core.CacheBase.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -12,9 +12,6 @@ import java.math.BigInteger;
  * @author ruan4261
  */
 public interface Formatter {
-
-    String EMPTY = CacheBase.EMPTY;
-    BigDecimal ZERO = CacheBase.ZERO;
 
     static String toString(Object val) {
         String s;

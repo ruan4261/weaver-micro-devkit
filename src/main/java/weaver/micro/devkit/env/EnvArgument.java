@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 当前应用环境变量
  * 请注意控制值的类型
+ * TODO 暂时无法确定持久性方案，此类已被搁置
  *
  * @author ruan4261
  */

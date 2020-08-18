@@ -16,5 +16,9 @@ public interface CacheBase {
     String LINE_SEPARATOR = System.lineSeparator();
     BigDecimal ZERO = BigDecimal.ZERO;
     DateTimeFormatter DEFAULT_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    DateTimeFormatter DEFAULT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    DateTimeFormatter DEFAULT_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+    DateTimeFormatter MILLIS_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    DateTimeFormatter MILLIS_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
 }

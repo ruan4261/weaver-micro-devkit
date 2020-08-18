@@ -1,9 +1,10 @@
 package weaver.micro.devkit.api;
 
+import static weaver.micro.devkit.core.CacheBase.EMPTY;
+
 import weaver.conn.RecordSet;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
-import weaver.micro.devkit.core.CacheBase;
 import weaver.micro.devkit.io.IOAPI;
 
 import java.io.File;
@@ -18,8 +19,6 @@ import java.util.Map;
  * @author ruan4261
  */
 public interface DocAPI {
-
-    String EMPTY = CacheBase.EMPTY;
 
     /**
      * 通过流程requestId获取该流程最新的文档id

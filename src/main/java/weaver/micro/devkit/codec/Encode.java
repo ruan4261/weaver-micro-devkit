@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.util.Base64;
 
 /**
- * 编码API接口
+ * 字符串编码接口
  *
  * @author ruan4261
  */
@@ -35,6 +35,10 @@ public interface Encode {
 
     static String toBase64String(byte[] bytes) {
         return new String(toBase64(bytes));
+    }
+
+    static String toBase64String(String origin) {
+        return toBase64String(origin.getBytes());
     }
 
 }

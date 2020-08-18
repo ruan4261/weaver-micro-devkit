@@ -1,8 +1,9 @@
 package weaver.micro.devkit.api;
 
+import static weaver.micro.devkit.core.CacheBase.EMPTY;
+
 import weaver.conn.RecordSet;
 import weaver.general.Util;
-import weaver.micro.devkit.core.CacheBase;
 import weaver.interfaces.workflow.action.WorkflowToDoc;
 
 import java.util.ArrayList;
@@ -16,8 +17,6 @@ import java.util.Map;
  * @author ruan4261
  */
 public interface WorkflowAPI {
-
-    String EMPTY = CacheBase.EMPTY;
 
     /** 流程中的签字意见类型映射 */
     Map<String, String> logTypeMapper = new HashMap<String, String>() {

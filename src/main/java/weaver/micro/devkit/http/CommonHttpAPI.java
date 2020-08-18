@@ -9,5 +9,8 @@ package weaver.micro.devkit.http;
 public interface CommonHttpAPI {
 
     // todo
+    static String doGet(){
+        return null;
+    }
 
 }

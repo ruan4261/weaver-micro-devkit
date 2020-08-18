@@ -33,6 +33,9 @@ public class EnvUpdateTask extends BaseCronJob {
         this.baseBean = new BaseBean();
     }
 
+    /**
+     * TODO {@code EnvArgument}已被搁置，请勿依赖本类
+     */
     @Override
     public void execute() {
         log("Start");

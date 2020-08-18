@@ -1,5 +1,7 @@
 package weaver.micro.devkit.exception;
 
+import static weaver.micro.devkit.core.CacheBase.LINE_SEPARATOR;
+
 import weaver.micro.devkit.exception.abs.AbstractRuntimeException;
 
 /**
@@ -34,7 +36,7 @@ public class StringParseException extends AbstractRuntimeException {
     /**
      * Print:
      * #Exception Message:cause xxx.
-     * #Occurrence Time:2020-01-01 12:00:00
+     * #Occurrence Timestamp:[timestamp]
      * #Exception String:abcdef
      */
     @Override

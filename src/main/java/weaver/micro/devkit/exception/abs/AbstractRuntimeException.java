@@ -1,20 +1,20 @@
 package weaver.micro.devkit.exception.abs;
 
-import weaver.micro.devkit.core.CacheBase;
+import static weaver.micro.devkit.core.CacheBase.LINE_SEPARATOR;
 
-import java.time.LocalDateTime;
+import static weaver.micro.devkit.core.SystemAPI.currentTimestamp;
 
 /**
  * 抽象运行时异常类，继承自{@code RuntimeException}，新增dateTime属性用于记录异常发生时间。
  *
  * @author ruan4261
  */
-public abstract class AbstractRuntimeException extends RuntimeException implements CacheBase {
+public abstract class AbstractRuntimeException extends RuntimeException {
 
-    private final LocalDateTime occurrenceTime;
+    private final long occurrenceTimestamp;
 
     {
-        occurrenceTime = LocalDateTime.now();
+        occurrenceTimestamp = currentTimestamp();
     }
 
     public AbstractRuntimeException() {
@@ -32,12 +32,12 @@ public abstract class AbstractRuntimeException extends RuntimeException implemen
     /**
      * Print:
      * #Exception Message:cause xxx.
-     * #Occurrence Time:2020-01-01 12:00:00
+     * #Occurrence Timestamp:[timestamp]
      */
     @Override
     public String getMessage() {
         return "#Exception Message:" + super.getMessage() + LINE_SEPARATOR +
-                "#Occurrence Time:" + occurrenceTime.format(DEFAULT_DATETIME_FORMATTER) + LINE_SEPARATOR;
+                "#Occurrence Timestamp:" + occurrenceTimestamp + LINE_SEPARATOR;
     }
 
 }

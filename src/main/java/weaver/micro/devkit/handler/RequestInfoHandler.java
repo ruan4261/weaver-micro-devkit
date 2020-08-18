@@ -3,7 +3,6 @@ package weaver.micro.devkit.handler;
 import weaver.conn.RecordSetTrans;
 import weaver.general.BaseBean;
 import weaver.micro.devkit.api.DocAPI;
-import weaver.micro.devkit.api.Formatter;
 import weaver.micro.devkit.api.WorkflowAPI;
 import weaver.micro.devkit.core.CacheBase;
 import weaver.micro.devkit.exception.runtime.ActionStopException;
@@ -41,34 +40,29 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
     }
 
     /**
-     * 获取流程主表数据
+     * 获取流程主表数据，请注意NULL值处理。
      *
-     * @return 流程主表对应的单行数据，字段名到流程数据的映射，数据值可能为NULL。
+     * @return 流程主表对应的单行数据，字段名到流程数据的映射。
      */
     public Map<String, String> getMainTable() {
         if (mainTable != null) return mainTable;
-        mainTable = new HashMap<String, String>() {
-            @Override
-            public String get(Object key) {
-                return Formatter.toString(super.get(key));
-            }
-        };
+        mainTable = new HashMap<>();
         Property[] properties = this.request.getMainTableInfo().getProperty();
         for (Property property : properties) {
             mainTable.put(property.getName(), property.getValue());
         }
-        this.logInfo.append(this.getLogPrefix()).append(mainTable.toString()).append(LINE_SEPARATOR);
+        this.log("MAIN FORM DATA : " + mainTable.toString());
         return mainTable;
     }
 
     /**
-     * 获取明细表数据
+     * 获取明细表数据，请注意NULL值处理。
      *
      * @param tableIdx 下标从0开始
      * @return 流程第(tableIdx - 1)个明细表的对应多行数据，字段名到流程数据的映射，数据值可能为NULL。
      */
     public List<Map<String, String>> getDetailTable(int tableIdx) {
-        ArrayList<Map<String, String>> data = new ArrayList<>();
+        List<Map<String, String>> data = new ArrayList<>();
         DetailTable[] dts = this.request.getDetailTableInfo().getDetailTable();
         DetailTable dt = dts[tableIdx];
         Row[] rows = dt.getRow();
@@ -80,16 +74,8 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
             }
             data.add(map);
         }
-        this.logInfo.append(this.getLogPrefix()).append(data.toString()).append(LINE_SEPARATOR);
+        this.log("DETAIL(idx_" + tableIdx + ") FORM DATA : " + data.toString());
         return data;
-    }
-
-    /**
-     * @return 流程标题
-     * @see WorkflowAPI#queryWorkflowTitle(String)
-     */
-    public String getWorkflowTitle() {
-        return WorkflowAPI.queryWorkflowTitle(this.getRequestId());
     }
 
     /**
@@ -101,7 +87,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
     }
 
     /**
-     * @return 流程相关文档
+     * @return 流程相关最新文档
      * @see DocAPI#queryDocIdByRequestId(String)
      */
     public String getDocIdLatest() throws ActionStopException {
@@ -112,6 +98,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
         return this.request.getRequestid();
     }
 
+    /** 流程标题 */
     public String getRequestName() {
         return this.request.getRequestManager().getRequestname();
     }
@@ -164,7 +151,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      */
     public String requestFail(String msg) {
         this.request.getRequestManager().setMessageid("0");
-        this.request.getRequestManager().setMessagecontent(msg);
+        this.request.getRequestManager().setMessagecontent(msg + LINE_SEPARATOR + "若无法解决请向系统管理员反馈错误信息:" + getLogPrefix());
         return this.actionEnd(Action.FAILURE_AND_CONTINUE);
     }
 
@@ -177,7 +164,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
         this.logInfo
                 .append(getLogPrefix())
                 .append(" start, bill table is ").append(this.getTableNameLower())
-                .append(", workflow title is ").append(this.getWorkflowTitle())
+                .append(", workflow title is ").append(this.getRequestName())
                 .append(", creator hrmId is ").append(this.getCreatorId())
                 .append(LINE_SEPARATOR);
     }

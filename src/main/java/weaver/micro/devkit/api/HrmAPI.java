@@ -1,8 +1,9 @@
 package weaver.micro.devkit.api;
 
+import static weaver.micro.devkit.core.CacheBase.EMPTY;
+
 import weaver.conn.RecordSet;
 import weaver.general.Util;
-import weaver.micro.devkit.core.CacheBase;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +14,6 @@ import java.util.Map;
  * @author ruan4261
  */
 public interface HrmAPI {
-
-    String EMPTY = CacheBase.EMPTY;
 
     /**
      * 根据id查询人员姓名
