@@ -2,6 +2,9 @@ package weaver.micro.devkit.api;
 
 import weaver.conn.RecordSet;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 所有模块都可以使用此接口简化开发
  *
@@ -20,4 +23,17 @@ public interface CommonAPI {
         return rs.getString(field);
     }
 
+    /**
+     * 从RecordSet当前行读取一张键值映射表
+     */
+    static Map<String, String> mapFromRecordRow(RecordSet rs) {
+        Map<String, String> result = new HashMap<>();
+        if (rs == null) return result;
+        String[] cols = rs.getColumnName();
+        for (String key : cols) {
+            String value = rs.getString(key);
+            result.put(key, value);
+        }
+        return result;
+    }
 }

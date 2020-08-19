@@ -1,7 +1,9 @@
 package weaver.micro.devkit.handler;
 
+import weaver.conn.RecordSet;
 import weaver.conn.RecordSetTrans;
 import weaver.general.BaseBean;
+import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
 import weaver.micro.devkit.core.CacheBase;
@@ -25,9 +27,16 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
 
     private final StringBuilder logInfo;
 
-    private Map<String, String> mainTable;
-
     private final String actionInfo;
+
+    // 主表缓存
+    private Map<String, String> mainTableCache;
+
+    // 明细表缓存
+    private Map<Integer, List<Map<String, String>>> detailTableListCache;
+
+    // 明细表缓存，原型
+    private DetailTable[] detailTablesCache;
 
     public RequestInfoHandler(String actionInfo) {
         this.logInfo = new StringBuilder(LINE_SEPARATOR);
@@ -40,31 +49,49 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
     }
 
     /**
-     * 获取流程主表数据，请注意NULL值处理。
+     * 获取流程主表数据，这是一个缓存值。
+     * 如果在获取了该映射表后，对数据库中该流程信息进行了修改，再次调用此方法无法获取更新的信息。
+     * 这个方法能满足大部分需求，如需获取最新信息请使用{@link #getMainTableNewest()}
+     * 请注意NULL值处理。
      *
      * @return 流程主表对应的单行数据，字段名到流程数据的映射。
      */
-    public Map<String, String> getMainTable() {
-        if (mainTable != null) return mainTable;
-        mainTable = new HashMap<>();
+    public Map<String, String> getMainTableCache() {
+        if (mainTableCache != null) return mainTableCache;
+        else mainTableCache = new HashMap<>();
+
         Property[] properties = this.request.getMainTableInfo().getProperty();
         for (Property property : properties) {
-            mainTable.put(property.getName(), property.getValue());
+            mainTableCache.put(property.getName(), property.getValue());
         }
-        this.log("MAIN FORM DATA : " + mainTable.toString());
-        return mainTable;
+
+        this.log("MAIN FORM DATA : " + mainTableCache.toString());
+        return mainTableCache;
     }
 
     /**
-     * 获取明细表数据，请注意NULL值处理。
+     * 获取明细表数据，这是一个缓存值。
+     * 如果在获取了该映射表后，对数据库中该流程信息进行了修改，再次调用此方法无法获取更新的信息。
+     * 这个方法能满足大部分需求，如需获取最新信息请使用{@link #getDetailTableNewest(int)} ()}
+     * 请注意NULL值处理。
      *
-     * @param tableIdx 下标从0开始
-     * @return 流程第(tableIdx - 1)个明细表的对应多行数据，字段名到流程数据的映射，数据值可能为NULL。
+     * @param table 明细表序号，从1开始
+     * @return 明细表下标！流程第(tableIdx + 1)个明细表的对应多行数据，字段名到流程数据的映射，数据值可能为NULL。
      */
-    public List<Map<String, String>> getDetailTable(int tableIdx) {
-        List<Map<String, String>> data = new ArrayList<>();
-        DetailTable[] dts = this.request.getDetailTableInfo().getDetailTable();
-        DetailTable dt = dts[tableIdx];
+    public List<Map<String, String>> getDetailTableCache(int table) {
+        if (detailTableListCache == null) detailTableListCache = new HashMap<>();
+
+        List<Map<String, String>> data = detailTableListCache.get(table);
+        if (data != null) return data;
+        else {
+            data = new ArrayList<>();
+            detailTableListCache.put(table, data);
+        }
+
+        if (detailTablesCache == null)
+            detailTablesCache = this.request.getDetailTableInfo().getDetailTable();
+
+        DetailTable dt = detailTablesCache[table - 1];
         Row[] rows = dt.getRow();
         for (Row row : rows) {
             Cell[] cells = row.getCell();
@@ -74,8 +101,25 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
             }
             data.add(map);
         }
-        this.log("DETAIL(idx_" + tableIdx + ") FORM DATA : " + data.toString());
+
+        this.log("DETAIL(dt_" + table + ") FORM DATA : " + data.toString());
         return data;
+    }
+
+    /**
+     * 通过数据库查询获取最新流程主表信息
+     */
+    public Map<String, String> getMainTableNewest() {
+        return WorkflowAPI.queryRequestMainData(getTableNameUpper(), getRequestId());
+    }
+
+    /**
+     * 通过数据库查询获取最新流程明细表信息
+     *
+     * @param table 明细表序号，从1开始
+     */
+    public List<Map<String, String>> getDetailTableNewest(int table) {
+        return WorkflowAPI.queryRequestDetailData(getTableNameUpper(), getRequestId(), table);
     }
 
     /**
@@ -105,6 +149,10 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
 
     public String getWorkflowId() {
         return this.request.getWorkflowid();
+    }
+
+    public int getBillId() {
+        return this.request.getRequestManager().getBillid();
     }
 
     /**
@@ -137,7 +185,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
 
     public void log(Throwable throwable) {
         StackTraceElement[] trace = throwable.getStackTrace();
-        log(throwable.getMessage());
+        log(throwable.getClass().getTypeName() + ':' + throwable.getMessage());
         for (StackTraceElement traceElement : trace) {
             log("\tat " + traceElement);
         }
@@ -178,4 +226,42 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
         return result;
     }
 
+    /**
+     * 校验字段长度
+     * 正常情况下返回EMPTY空字符串
+     * case:
+     * 1.如无法获取该字段，返回空字符串
+     * 2.字段在长度限制内，返回空字符串
+     * 3.字段超长，不通过校验，返回信息为可供显示的信息(包括引号) -> '字段名称'
+     *
+     * @param table     为0时选择主表字段，非0时为明细表序号
+     * @param field     字段数据库名
+     * @param maxlength 限制长度
+     * @return 字符串信息
+     */
+    public String fieldLengthLimit(int table, String field, int maxlength) {
+        if (table < 0) return EMPTY;
+        boolean overLimit = false;
+        if (table == 0) {
+            // 主表
+            Map<String, String> mainTable = getMainTableCache();
+            String v = mainTable.get(field);
+            if (v.length() > maxlength) overLimit = true;
+        } else {
+            // 明细表
+            List<Map<String, String>> detailTable = getDetailTableCache(table);
+            for (Map<String, String> map : detailTable) {
+                String v = map.get(field);
+                if (v.length() > maxlength) {
+                    overLimit = true;
+                    break;
+                }
+            }
+        }
+
+        if (!overLimit) return EMPTY;
+        // 通过数据库字段名获取显示字段名
+        String sql = "select indexdesc from htmllabelindex a left outer join workflow_billfield b on a.id=b.fieldlabel where b.fieldname='" + field + "' and b.billid='" + getBillId() + "'";
+        return '\'' + CommonAPI.querySingleField(sql, "indexdesc") + '\'';
+    }
 }

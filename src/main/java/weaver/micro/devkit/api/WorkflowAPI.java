@@ -57,7 +57,7 @@ public interface WorkflowAPI {
      *         nodeid 节点id
      *         nodename 节点名称
      *         operator 操作者id，如为1则是系统管理员，此id无法查询人力资源表
-     *         logtype 签字意见，已对应转化为确定类型，详情请查看{@link logTypeMapper}
+     *         logtype 签字意见，已对应转化为确定类型，详情请查看{@link #logTypeMapper}
      *         remark 签字意见
      *         operatedate 操作日期
      *         operatetime 操作时间
@@ -100,25 +100,26 @@ public interface WorkflowAPI {
 
     /**
      * 获取表单字段简写到id的映射
+     * 只可获取表单名称为formtable_main_{billid}的表单字段映射
      *
-     * @param formid 主表id
+     * @param billid 流程表单id
      * @param num    0：主表，大于0为明细表
      * @return 字段映射
      */
-    static Map<String, String> queryFieldMapper(int formid, final String num) {
+    static Map<String, String> queryFieldMapper(int billid, final String num) {
         Map<String, String> result = new HashMap<>();
-        formid = Math.abs(formid);
+        billid = Math.abs(billid);
         RecordSet rs = new RecordSet();
         String sql;
         if ("0".equals(num)) {
             sql = "select b.id,fieldname,detailtable from workflow_billfield b ,workflow_base a where b.billid=-"
-                    + formid
+                    + billid
                     + " and a.formid=b.billid and (detailtable is null or detailtable = '') ";
         } else {
             sql = "select b.id,fieldname,detailtable from workflow_billfield b ,workflow_base a where b.billid=-"
-                    + formid
+                    + billid
                     + " and a.formid=b.billid and detailtable='formtable_main_"
-                    + formid + "_dt" + num + "'";
+                    + billid + "_dt" + num + "'";
         }
         rs.execute(sql);
         while (rs.next()) {
@@ -182,4 +183,64 @@ public interface WorkflowAPI {
 
         return DocAPI.saveDocLocally(docid, path, requestid + ".html", null);
     }
+
+    /**
+     * 根据请求查询billTable
+     *
+     * @param requestId 流程请求id
+     */
+    static String queryBillTableByRequest(String requestId) {
+        if (Util.getIntValue(requestId) == -1) return EMPTY;
+        String sql = "select tablename from workflow_bill bill left outer join workflow_base base on bill.id=base.formid left outer join workflow_requestbase req on base.id=req.workflowid where req.requestid='" + requestId + "'";
+        return CommonAPI.querySingleField(sql, "tablename");
+    }
+
+    /**
+     * 查询某条请求的主表信息
+     * 不知道数据库表单可以使用{@link #queryBillTableByRequest(String)}方法
+     *
+     * @param billTableName 数据库表单，必须为formtable_main_{num}格式
+     *                      选择明细表请使用{@link #queryRequestDetailData(String, String, int)}方法
+     * @param requestId     流程的请求id
+     * @return 主表信息映射
+     */
+    static Map<String, String> queryRequestMainData(final String billTableName, final String requestId) {
+        Map<String, String> result = new HashMap<>();
+        if (Util.null2String(billTableName).equals("") || Util.getIntValue(requestId) == -1) return result;
+        RecordSet rs = new RecordSet();
+        String sql = "select * from " + billTableName + " where requestid = '" + requestId + "'";
+        rs.execute(sql);
+        if (!rs.next()) return result;
+        return CommonAPI.mapFromRecordRow(rs);
+    }
+
+    /**
+     * 查询某条请求的明细表信息
+     * 不知道数据库表单可以使用{@link #queryBillTableByRequest(String)}方法
+     *
+     * @param billTableName 数据库表单，必须为formtable_main_{num}格式，无需写dt参数
+     * @param requestId     流程的请求id
+     * @param table         明细表从1开始，实际上就是表名_dt后面的数
+     * @return 多行明细映射信息
+     */
+    static List<Map<String, String>> queryRequestDetailData(final String billTableName, final String requestId, final int table) {
+        List<Map<String, String>> result = new ArrayList<>();
+        if (Util.null2String(billTableName).equals("") || Util.getIntValue(requestId) == -1) return result;
+        RecordSet rs = new RecordSet();
+
+        // 获取主表id，用于明细表关联
+        String sql = "select id from " + billTableName + " where requestid = '" + requestId + "'";
+        rs.execute(sql);
+        if (!rs.next()) return result;
+        String mainid = rs.getString("id");
+
+        // 查询明细表
+        sql = "select * from " + billTableName + "_dt" + table + " where mainid= '" + mainid + "'";
+        rs.execute(sql);
+        while (rs.next()) {
+            result.add(CommonAPI.mapFromRecordRow(rs));
+        }
+        return result;
+    }
+
 }
