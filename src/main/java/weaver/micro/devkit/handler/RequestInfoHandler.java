@@ -65,7 +65,8 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
             mainTableCache.put(property.getName(), property.getValue());
         }
 
-        this.log("MAIN FORM DATA : " + mainTableCache.toString());
+        log("MAIN FORM DATA(Cache) : " + mainTableCache.toString());
+        logFlush();
         return mainTableCache;
     }
 
@@ -102,7 +103,8 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
             data.add(map);
         }
 
-        this.log("DETAIL(dt_" + table + ") FORM DATA : " + data.toString());
+        log("DETAIL(dt_" + table + ") FORM DATA(Cache) : " + data.toString());
+        logFlush();
         return data;
     }
 
@@ -110,7 +112,10 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      * 通过数据库查询获取最新流程主表信息
      */
     public Map<String, String> getMainTableNewest() {
-        return WorkflowAPI.queryRequestMainData(getTableNameUpper(), getRequestId());
+        Map<String, String> res = WorkflowAPI.queryRequestMainData(getTableNameUpper(), getRequestId());
+        log("MAIN FORM DATA(Newest) : " + mainTableCache.toString());
+        logFlush();
+        return res;
     }
 
     /**
@@ -119,7 +124,10 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      * @param table 明细表序号，从1开始
      */
     public List<Map<String, String>> getDetailTableNewest(int table) {
-        return WorkflowAPI.queryRequestDetailData(getTableNameUpper(), getRequestId(), table);
+        List<Map<String, String>> res = WorkflowAPI.queryRequestDetailData(getTableNameUpper(), getRequestId(), table);
+        log("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res.toString());
+        logFlush();
+        return res;
     }
 
     /**
@@ -127,7 +135,10 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      * @see WorkflowAPI#queryRemarkList(String)
      */
     public List<Map<String, String>> getRemarkList() {
-        return WorkflowAPI.queryRemarkList(this.getRequestId());
+        List<Map<String, String>> res = WorkflowAPI.queryRemarkList(this.getRequestId());
+        log("Remark list : " + res.toString());
+        logFlush();
+        return res;
     }
 
     /**
@@ -135,7 +146,10 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      * @see DocAPI#queryDocIdByRequestId(String)
      */
     public String getDocIdLatest() throws ActionStopException {
-        return DocAPI.queryDocIdByRequestId(this.getRequestId());
+        String docId = DocAPI.queryDocIdByRequestId(this.getRequestId());
+        log("Newest document id : " + docId);
+        logFlush();
+        return docId;
     }
 
     public String getRequestId() {
@@ -180,15 +194,16 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
     }
 
     public void log(String msg) {
-        this.logInfo.append(msg).append(LINE_SEPARATOR);
+        this.logInfo.append(getLogPrefix()).append(msg).append(LINE_SEPARATOR);
     }
 
     public void log(Throwable throwable) {
         StackTraceElement[] trace = throwable.getStackTrace();
-        log(throwable.getClass().getTypeName() + ':' + throwable.getMessage());
+        log(getLogPrefix() + '@' + throwable.getClass().getTypeName() + ':' + throwable.getMessage());
         for (StackTraceElement traceElement : trace) {
             log("\tat " + traceElement);
         }
+        logFlush();
     }
 
     /**
@@ -215,6 +230,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
                 .append(", workflow title is ").append(this.getRequestName())
                 .append(", creator hrmId is ").append(this.getCreatorId())
                 .append(LINE_SEPARATOR);
+        logFlush();
     }
 
     private String actionEnd(String result) {
@@ -222,7 +238,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
                 .append(getLogPrefix())
                 .append(" end with result:").append(result)
                 .append(LINE_SEPARATOR);
-        this.writeLog(this.logInfo.toString());
+        logFlush();
         return result;
     }
 
@@ -263,5 +279,13 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
         // 通过数据库字段名获取显示字段名
         String sql = "select indexdesc from htmllabelindex a left outer join workflow_billfield b on a.id=b.fieldlabel where b.fieldname='" + field + "' and b.billid='" + getBillId() + "'";
         return '\'' + CommonAPI.querySingleField(sql, "indexdesc") + '\'';
+    }
+
+    /**
+     * 强制输出日志信息
+     */
+    public void logFlush() {
+        writeLog(this.logInfo.toString());
+        this.logInfo.setLength(0);
     }
 }

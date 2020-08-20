@@ -17,6 +17,13 @@ import java.util.Objects;
  */
 public interface BasicQuery {
 
+    /**
+     * 生成MethodGet的URI
+     *
+     * @param param 主体参数，不可传null值，可传空内容映射
+     * @param uri   可传空值
+     * @return (? a = xxx & b = xxx) || (protocol://www.site.com/rest?a=xxx&b=xxx)
+     */
     static String toQueryStringEncodeUTF8(Map<String, Object> param, String uri) {
         Objects.requireNonNull(param);
         StringBuilder builder;
@@ -38,11 +45,17 @@ public interface BasicQuery {
         return builder.toString();
     }
 
+    /**
+     * overload
+     */
     static String toQueryStringEncodeUTF8(Map<String, Object> param) {
         Objects.requireNonNull(param);
         return toQueryStringEncodeUTF8(param, null);
     }
 
+    /**
+     * 将参数Mapper转换为List<NameValuePair>格式
+     */
     static List<NameValuePair> mapToNameValuePairList(Map<String, Object> param) {
         Objects.requireNonNull(param);
         List<NameValuePair> result = new ArrayList<>();
