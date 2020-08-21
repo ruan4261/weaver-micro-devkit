@@ -31,7 +31,7 @@ public interface DateTimeAPI {
      * 使用系统默认时区
      * Formatter: yyyy-MM-dd
      */
-    static String currentDate() {
+    static String date() {
         return CURRENT_DATE().format(DEFAULT_DATE_FORMATTER);
     }
 
@@ -39,7 +39,7 @@ public interface DateTimeAPI {
      * 使用系统默认时区
      * Formatter: HH:mm:ss
      */
-    static String currentTime() {
+    static String time() {
         return CURRENT_TIME().format(DEFAULT_TIME_FORMATTER);
     }
 
@@ -47,8 +47,22 @@ public interface DateTimeAPI {
      * 使用系统默认时区
      * Formatter: yyyy-MM-dd HH:mm:ss
      */
-    static String currentDateTime() {
+    static String dateTime() {
         return CURRENT_DATE_TIME().format(DEFAULT_DATETIME_FORMATTER);
+    }
+
+    /* 日期偏移量、秒偏移量 */
+
+    static String dateWithOffset(long offsetDay) {
+        return CURRENT_DATE().plusDays(offsetDay).format(DEFAULT_DATE_FORMATTER);
+    }
+
+    static String timeWithOffset(long offsetSecond) {
+        return CURRENT_TIME().plusSeconds(offsetSecond).format(DEFAULT_TIME_FORMATTER);
+    }
+
+    static String dateTimeWithOffset(long offsetDay, long offsetSecond) {
+        return CURRENT_DATE_TIME().plusDays(offsetDay).plusSeconds(offsetSecond).format(DEFAULT_DATETIME_FORMATTER);
     }
 
     /**
@@ -56,7 +70,7 @@ public interface DateTimeAPI {
      * 使用自定义的时区偏移量
      *
      * @param timestamp  时间戳
-     * @param zoneOffset 时区与格林威治标准的小时偏移量
+     * @param zoneOffset 时区与格林威治标准的小时偏移量，比如中国时区的偏移量是+8
      * @param formatter  格式化标准
      */
     static String format(long timestamp, int zoneOffset, DateTimeFormatter formatter) {

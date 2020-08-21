@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
  */
 public interface CacheBase {
 
+    String NULL = "NULL";
     String EMPTY = "";
     String SUCCESS = "SUCCESS";
     String FAIL = "FAIL";

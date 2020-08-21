@@ -1,9 +1,8 @@
 package weaver.micro.devkit.api;
 
-import static weaver.micro.devkit.core.CacheBase.EMPTY;
-
 import weaver.conn.RecordSet;
 import weaver.general.Util;
+import weaver.micro.devkit.exception.runtime.IllegalDataException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,8 +20,7 @@ public interface HrmAPI {
      * @param hrmId 人员id
      * @return lastname
      */
-    static String queryHrmName(final String hrmId) {
-        if (Util.getIntValue(hrmId) != -1) return EMPTY;
+    static String queryHrmName(final int hrmId) throws IllegalDataException {
         String sql = "select lastname from HrmResource where id = " + hrmId;
         return CommonAPI.querySingleField(sql, "lastname");
     }
@@ -37,9 +35,8 @@ public interface HrmAPI {
      *         departmentname 部门名称
      *         subcompanyname 分部名称
      */
-    static Map<String, String> queryHrmInfo(final String hrmId) {
+    static Map<String, String> queryHrmInfo(final int hrmId) {
         Map<String, String> result = new HashMap<>();
-        if (Util.getIntValue(hrmId) == -1) return result;
 
         RecordSet rs = new RecordSet();
         String sql = "select a.lastname,a.managerid,d.jobtitlename,b.departmentname,c.subcompanyname from HrmResource a left outer join hrmdepartment b on a.departmentid=b.id left outer join HrmSubCompany c on a.subcompanyid1=c.id left outer join HrmJobTitles d on a.jobtitle=d.id where a.id=" + hrmId;

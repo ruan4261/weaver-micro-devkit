@@ -10,9 +10,16 @@ import java.math.BigInteger;
  * 在任何时候不会返回{@code Null}值或抛出{@code ThrowAble}实例。
  *
  * @author ruan4261
+ * @deprecated 请使用
+ *         {@link weaver.micro.devkit.util.Cast}
  */
+@Deprecated
 public interface Formatter {
 
+    /**
+     * @param val (nullable)
+     */
+    @Deprecated
     static String toString(Object val) {
         String s;
         return val == null ? EMPTY : (s = val.toString()) == null ? EMPTY : s;
@@ -20,8 +27,12 @@ public interface Formatter {
 
     /**
      * 如果输入一个{@code BigDecimal}实例，此接口将返回一个新的{@code BigDecimal}对象。
+     *
+     * @param val (nullable)
      */
+    @Deprecated
     static BigDecimal toBigDecimal(Object val) {
+        if (val == null) return ZERO;
         try {
             if (val instanceof Integer) {
                 return new BigDecimal((Integer) val);

@@ -1,6 +1,5 @@
 package weaver.micro.devkit.handler;
 
-import weaver.conn.RecordSet;
 import weaver.conn.RecordSetTrans;
 import weaver.general.BaseBean;
 import weaver.micro.devkit.api.CommonAPI;
@@ -9,6 +8,7 @@ import weaver.micro.devkit.api.WorkflowAPI;
 import weaver.micro.devkit.core.CacheBase;
 import weaver.micro.devkit.exception.runtime.ActionStopException;
 import weaver.interfaces.workflow.action.Action;
+import weaver.micro.devkit.util.Cast;
 import weaver.soa.workflow.request.*;
 
 import java.util.ArrayList;
@@ -25,8 +25,6 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
 
     private RequestInfo request;
 
-    private final StringBuilder logInfo;
-
     private final String actionInfo;
 
     // 主表缓存
@@ -39,7 +37,6 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
     private DetailTable[] detailTablesCache;
 
     public RequestInfoHandler(String actionInfo) {
-        this.logInfo = new StringBuilder(LINE_SEPARATOR);
         this.actionInfo = actionInfo;
     }
 
@@ -65,8 +62,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
             mainTableCache.put(property.getName(), property.getValue());
         }
 
-        log("MAIN FORM DATA(Cache) : " + mainTableCache.toString());
-        logFlush();
+        logLine("MAIN FORM DATA(Cache) : " + mainTableCache.toString());
         return mainTableCache;
     }
 
@@ -103,8 +99,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
             data.add(map);
         }
 
-        log("DETAIL(dt_" + table + ") FORM DATA(Cache) : " + data.toString());
-        logFlush();
+        logLine("DETAIL(dt_" + table + ") FORM DATA(Cache) : " + data.toString());
         return data;
     }
 
@@ -113,8 +108,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      */
     public Map<String, String> getMainTableNewest() {
         Map<String, String> res = WorkflowAPI.queryRequestMainData(getTableNameUpper(), getRequestId());
-        log("MAIN FORM DATA(Newest) : " + mainTableCache.toString());
-        logFlush();
+        logLine("MAIN FORM DATA(Newest) : " + mainTableCache.toString());
         return res;
     }
 
@@ -125,35 +119,32 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      */
     public List<Map<String, String>> getDetailTableNewest(int table) {
         List<Map<String, String>> res = WorkflowAPI.queryRequestDetailData(getTableNameUpper(), getRequestId(), table);
-        log("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res.toString());
-        logFlush();
+        logLine("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res.toString());
         return res;
     }
 
     /**
      * @return 流程签字意见列表
-     * @see WorkflowAPI#queryRemarkList(String)
+     * @see WorkflowAPI#queryRemarkList(int)
      */
     public List<Map<String, String>> getRemarkList() {
         List<Map<String, String>> res = WorkflowAPI.queryRemarkList(this.getRequestId());
-        log("Remark list : " + res.toString());
-        logFlush();
+        logLine("Remark list : " + res.toString());
         return res;
     }
 
     /**
      * @return 流程相关最新文档
-     * @see DocAPI#queryDocIdByRequestId(String)
+     * @see DocAPI#queryDocIdByRequestId(int)
      */
     public String getDocIdLatest() throws ActionStopException {
         String docId = DocAPI.queryDocIdByRequestId(this.getRequestId());
         log("Newest document id : " + docId);
-        logFlush();
         return docId;
     }
 
-    public String getRequestId() {
-        return this.request.getRequestid();
+    public int getRequestId() {
+        return Cast.toInteger(this.request.getRequestid(), -1);
     }
 
     /** 流程标题 */
@@ -161,8 +152,8 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
         return this.request.getRequestManager().getRequestname();
     }
 
-    public String getWorkflowId() {
-        return this.request.getWorkflowid();
+    public int getWorkflowId() {
+        return Cast.toInteger(this.request.getWorkflowid(), -1);
     }
 
     public int getBillId() {
@@ -177,8 +168,8 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
         return this.actionInfo + "$request:" + this.getRequestId() + '$';
     }
 
-    public String getCreatorId() {
-        return this.request.getCreatorid();
+    public int getCreatorId() {
+        return Cast.toInteger(this.request.getCreatorid(), 1);
     }
 
     public RecordSetTrans getRsTrans() {
@@ -194,16 +185,21 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
     }
 
     public void log(String msg) {
-        this.logInfo.append(getLogPrefix()).append(msg).append(LINE_SEPARATOR);
+        writeLog(getLogPrefix() + " -> " + msg);
+    }
+
+    public void logLine(String msg) {
+        writeLog(getLogPrefix() + " -> " + LINE_SEPARATOR + msg);
     }
 
     public void log(Throwable throwable) {
+        StringBuilder builder = new StringBuilder();
         StackTraceElement[] trace = throwable.getStackTrace();
-        log(getLogPrefix() + '@' + throwable.getClass().getTypeName() + ':' + throwable.getMessage());
+        builder.append(throwable.getClass().getTypeName()).append(':').append(throwable.getMessage());
         for (StackTraceElement traceElement : trace) {
-            log("\tat " + traceElement);
+            builder.append(LINE_SEPARATOR).append("\tat ").append(traceElement);
         }
-        logFlush();
+        logLine(builder.toString());
     }
 
     /**
@@ -214,7 +210,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      */
     public String requestFail(String msg) {
         this.request.getRequestManager().setMessageid("0");
-        this.request.getRequestManager().setMessagecontent(msg + LINE_SEPARATOR + "若无法解决请向系统管理员反馈错误信息:" + getLogPrefix());
+        this.request.getRequestManager().setMessagecontent(msg + "【参考信息:" + getLogPrefix() + '】');
         return this.actionEnd(Action.FAILURE_AND_CONTINUE);
     }
 
@@ -224,21 +220,13 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
     }
 
     private void actionStart() {
-        this.logInfo
-                .append(getLogPrefix())
-                .append(" start, bill table is ").append(this.getTableNameLower())
-                .append(", workflow title is ").append(this.getRequestName())
-                .append(", creator hrmId is ").append(this.getCreatorId())
-                .append(LINE_SEPARATOR);
-        logFlush();
+        log(" start, bill table is " + this.getTableNameLower() +
+                ", workflow title is " + this.getRequestName() +
+                ", creator hrmId is " + this.getCreatorId());
     }
 
     private String actionEnd(String result) {
-        this.logInfo
-                .append(getLogPrefix())
-                .append(" end with result:").append(result)
-                .append(LINE_SEPARATOR);
-        logFlush();
+        log(" end with result:" + result);
         return result;
     }
 
@@ -281,11 +269,4 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
         return '\'' + CommonAPI.querySingleField(sql, "indexdesc") + '\'';
     }
 
-    /**
-     * 强制输出日志信息
-     */
-    public void logFlush() {
-        writeLog(this.logInfo.toString());
-        this.logInfo.setLength(0);
-    }
 }

@@ -5,13 +5,16 @@ import static weaver.micro.devkit.core.CacheBase.EMPTY;
 import weaver.conn.RecordSet;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
+import weaver.micro.devkit.exception.runtime.IllegalDataException;
 import weaver.micro.devkit.io.IOAPI;
+import weaver.micro.devkit.util.Cast;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 公文、文档操作接口
@@ -26,8 +29,7 @@ public interface DocAPI {
      * @param requestId 请求id
      * @return 流程最新文档id
      */
-    static String queryDocIdByRequestId(String requestId) {
-        if (Util.getIntValue(requestId) == -1) return EMPTY;
+    static String queryDocIdByRequestId(final int requestId) {
         String sql = "select max(id) as id from docdetail where fromworkflow =" + requestId;
         return CommonAPI.querySingleField(sql, "id");
     }
@@ -38,8 +40,7 @@ public interface DocAPI {
      * @param docId 文档id
      * @return 最新文件id
      */
-    static String queryImageFileIdLatest(String docId) {
-        if (Util.getIntValue(docId) == -1) return EMPTY;
+    static String queryImageFileIdLatest(final int docId) {
         String sql = "select max(imagefileid) as fid from docimagefile where docid=" + docId;
         return CommonAPI.querySingleField(sql, "fid");
     }
@@ -54,9 +55,7 @@ public interface DocAPI {
      *         iszip 是否为压缩格式
      *         filerealpath 服务器保存的真实路径
      */
-    static Map<String, String> queryImageFileInfo(String docId) {
-        if (Util.getIntValue(docId) == -1) return new HashMap<>();
-
+    static Map<String, String> queryImageFileInfo(final int docId) {
         String fid = queryImageFileIdLatest(docId);
         if ("".equals(fid)) return new HashMap<>();
 
@@ -84,8 +83,8 @@ public interface DocAPI {
      * @param charset  如此参数不为空，将使用对应字符流，如参数为空，则使用字节流
      * @return 保存的完整路径
      */
-    static String saveDocLocally(String docId, String path, String filename, String charset) {
-        if (Util.getIntValue(docId) == -1) return EMPTY;
+    static String saveDocLocally(final int docId, final String path, final String filename, final String charset) {
+        Objects.requireNonNull(path, "path");
 
         Map<String, String> imageFileInfo = queryImageFileInfo(docId);
         String fid = imageFileInfo.get("imagefileid");

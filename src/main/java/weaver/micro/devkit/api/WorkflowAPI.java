@@ -5,11 +5,10 @@ import static weaver.micro.devkit.core.CacheBase.EMPTY;
 import weaver.conn.RecordSet;
 import weaver.general.Util;
 import weaver.interfaces.workflow.action.WorkflowToDoc;
+import weaver.micro.devkit.util.Assert;
+import weaver.micro.devkit.util.Cast;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 流程操作工具。
@@ -43,8 +42,7 @@ public interface WorkflowAPI {
      * @param requestId 流程实例id
      * @return 流程实例标题
      */
-    static String queryWorkflowTitle(final String requestId) {
-        if (Util.getIntValue(requestId) == -1) return EMPTY;
+    static String queryWorkflowTitle(final int requestId) {
         String sql = "select requestname from workflow_requestbase where requestid = " + requestId;
         return CommonAPI.querySingleField(sql, "requestname");
     }
@@ -62,9 +60,8 @@ public interface WorkflowAPI {
      *         operatedate 操作日期
      *         operatetime 操作时间
      */
-    static List<Map<String, String>> queryRemarkList(final String requestId) {
+    static List<Map<String, String>> queryRemarkList(final int requestId) {
         List<Map<String, String>> result = new ArrayList<>();
-        if (Util.getIntValue(requestId) == -1) return result;
 
         RecordSet rs = new RecordSet();
         String sql = "select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark,a.operatedate,a.operatetime from workflow_requestLog a left outer join workflow_nodebase b on a.nodeid=b.id where a.requestid=" + requestId + " order by a.nodeid";
@@ -92,8 +89,7 @@ public interface WorkflowAPI {
      * @param departId 部门id
      * @return 部门名称
      */
-    static String queryDepartName(final String departId) {
-        if (Util.getIntValue(departId) == -1) return EMPTY;
+    static String queryDepartName(final int departId) {
         String sql = "select departmentname from hrmdepartment where id = " + departId;
         return CommonAPI.querySingleField(sql, "departmentname");
     }
@@ -107,6 +103,7 @@ public interface WorkflowAPI {
      * @return 字段映射
      */
     static Map<String, String> queryFieldMapper(int billid, final String num) {
+        Objects.requireNonNull(num, "table number");
         Map<String, String> result = new HashMap<>();
         billid = Math.abs(billid);
         RecordSet rs = new RecordSet();
@@ -135,8 +132,7 @@ public interface WorkflowAPI {
      * @param workflowId 流程id
      * @return 数据库表单名称
      */
-    static String queryTableName(final String workflowId) {
-        if (Util.getIntValue(workflowId) == -1) return EMPTY;
+    static String queryTableName(final int workflowId) {
         String sql = "select b.tablename from workflow_base a,workflow_bill b where a.formid = b.id and a.id = " + workflowId;
         return CommonAPI.querySingleField(sql, "tablename");
     }
@@ -149,7 +145,7 @@ public interface WorkflowAPI {
      * @param requestId 请求id
      * @return 是否成功
      */
-    static boolean workflowToDoc(final Integer requestId) {
+    static boolean workflowToDoc(final int requestId) {
         RecordSet rs = new RecordSet();
         RecordSet rs2 = new RecordSet();
         rs.execute("select workflowid,requestname,creater from workflow_requestbase where requestid =" + requestId);
@@ -167,21 +163,18 @@ public interface WorkflowAPI {
      * 保存流程页面（请提前配置流程存为文档，并至少提前一个节点触发使其生成文档）
      * 服务器保存的文件名为{requestid}.html
      *
-     * @param requestid  请求id
-     * @param workflowid 流程id
-     * @param path       保存路径
+     * @param requestId 请求id
+     * @param path      保存路径
      * @return 保存的全路径
      */
-    static String saveWorkflowHtml(final String requestid, final String workflowid, final String path) {
-        String sql = "select seccategoryid from workflowtodocprop where workflowid =" + workflowid;
-        String docfolderid = CommonAPI.querySingleField(sql, "seccategoryid");
-        if (EMPTY.equals(docfolderid)) return EMPTY;
+    static String saveWorkflowHtml(final int requestId, final String path) {
+        Objects.requireNonNull(path, "path");
 
-        sql = "select id from DocDetail where seccategory = " + docfolderid + " and fromworkflow = " + requestid + " order by id desc";
+        String sql = "select max(id) from DocDetail where fromworkflow = " + requestId + " order by id desc";
         String docid = CommonAPI.querySingleField(sql, "id");
         if (EMPTY.equals(docid)) return EMPTY;
 
-        return DocAPI.saveDocLocally(docid, path, requestid + ".html", null);
+        return DocAPI.saveDocLocally(Cast.toInteger(docid), path, requestId + ".html", null);
     }
 
     /**
@@ -189,24 +182,23 @@ public interface WorkflowAPI {
      *
      * @param requestId 流程请求id
      */
-    static String queryBillTableByRequest(String requestId) {
-        if (Util.getIntValue(requestId) == -1) return EMPTY;
+    static String queryBillTableByRequest(final int requestId) {
         String sql = "select tablename from workflow_bill bill left outer join workflow_base base on bill.id=base.formid left outer join workflow_requestbase req on base.id=req.workflowid where req.requestid='" + requestId + "'";
         return CommonAPI.querySingleField(sql, "tablename");
     }
 
     /**
      * 查询某条请求的主表信息
-     * 不知道数据库表单可以使用{@link #queryBillTableByRequest(String)}方法
+     * 不知道数据库表单可以使用{@link #queryBillTableByRequest(int)}方法
      *
      * @param billTableName 数据库表单，必须为formtable_main_{num}格式
-     *                      选择明细表请使用{@link #queryRequestDetailData(String, String, int)}方法
+     *                      选择明细表请使用{@link #queryRequestDetailData(String, int, int)}方法
      * @param requestId     流程的请求id
      * @return 主表信息映射
      */
-    static Map<String, String> queryRequestMainData(final String billTableName, final String requestId) {
+    static Map<String, String> queryRequestMainData(final String billTableName, final int requestId) {
+        Assert.notEmpty(billTableName);
         Map<String, String> result = new HashMap<>();
-        if (Util.null2String(billTableName).equals("") || Util.getIntValue(requestId) == -1) return result;
         RecordSet rs = new RecordSet();
         String sql = "select * from " + billTableName + " where requestid = '" + requestId + "'";
         rs.execute(sql);
@@ -216,16 +208,16 @@ public interface WorkflowAPI {
 
     /**
      * 查询某条请求的明细表信息
-     * 不知道数据库表单可以使用{@link #queryBillTableByRequest(String)}方法
+     * 不知道数据库表单可以使用{@link #queryBillTableByRequest(int)}方法
      *
      * @param billTableName 数据库表单，必须为formtable_main_{num}格式，无需写dt参数
      * @param requestId     流程的请求id
      * @param table         明细表从1开始，实际上就是表名_dt后面的数
      * @return 多行明细映射信息
      */
-    static List<Map<String, String>> queryRequestDetailData(final String billTableName, final String requestId, final int table) {
+    static List<Map<String, String>> queryRequestDetailData(final String billTableName, final int requestId, final int table) {
+        Assert.notEmpty(billTableName);
         List<Map<String, String>> result = new ArrayList<>();
-        if (Util.null2String(billTableName).equals("") || Util.getIntValue(requestId) == -1) return result;
         RecordSet rs = new RecordSet();
 
         // 获取主表id，用于明细表关联

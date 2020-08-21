@@ -12,6 +12,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 
@@ -21,6 +22,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -48,9 +50,8 @@ public interface CommonHttpAPI {
 
     /**
      * 基于默认请求配置构建一个新的客户端
-     * 可转换为CloseableHttpClient
      */
-    static HttpClient BUILD_DEFAULT_CLIENT() {
+    static CloseableHttpClient BUILD_DEFAULT_CLIENT() {
         return HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build();
     }
 
@@ -86,6 +87,7 @@ public interface CommonHttpAPI {
      */
     static HttpResponse doPostURLEncode(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
         // method
+        if (headers == null) headers = new HashMap<>();
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         HttpPost method = (HttpPost) buildMethod(new HttpPost(), uri, headers);
 
@@ -108,6 +110,7 @@ public interface CommonHttpAPI {
      */
     static HttpResponse doPostJson(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
         // method
+        if (headers == null) headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
         HttpPost method = (HttpPost) buildMethod(new HttpPost(), uri, headers);
 
@@ -131,6 +134,7 @@ public interface CommonHttpAPI {
      */
     static HttpResponse doPostMultipart(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
         // method
+        if (headers == null) headers = new HashMap<>();
         headers.put("Content-Type", "multipart/form-data");
         HttpPost method = (HttpPost) buildMethod(new HttpPost(), uri, headers);
 
@@ -139,7 +143,9 @@ public interface CommonHttpAPI {
         entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
         entityBuilder.seContentType(ContentType.MULTIPART_FORM_DATA);
         param.forEach((k, v) -> {
-            if (v instanceof File) {
+            if (v instanceof byte[]) {
+                entityBuilder.addBinaryBody(k, (byte[]) v);
+            } else if (v instanceof File) {
                 entityBuilder.addBinaryBody(k, (File) v);
             } else if (v instanceof InputStream) {
                 entityBuilder.addBinaryBody(k, (InputStream) v);
@@ -169,5 +175,13 @@ public interface CommonHttpAPI {
         if (headers != null)
             headers.forEach(requestBase::setHeader);// custom headers
         return requestBase;
+    }
+
+    static void closeClient(CloseableHttpClient client) {
+        if (client != null)
+            try {
+                client.close();
+            } catch (IOException ignore) {
+            }
     }
 }
