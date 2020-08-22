@@ -4,6 +4,7 @@ import weaver.conn.RecordSet;
 import weaver.formmode.setup.ModeRightInfo;
 import weaver.general.TimeUtil;
 import weaver.general.Util;
+import weaver.micro.devkit.util.Assert;
 
 import java.util.Map;
 import java.util.Objects;
@@ -23,11 +24,11 @@ public interface ModeAPI {
      * @param modeMainTable 建模
      * @param modeId        建模id
      * @param creatorId     数据创建者
-     * @param data          数据集
+     * @param data          数据集，可为空
      * @return 建模主表数据行id，方法执行失败返回-1
      */
     static int createModeData(final String modeMainTable, final int modeId, final int creatorId, final Map<String, Object> data) {
-        Objects.requireNonNull(modeMainTable, "modeMainTable");
+        Assert.notEmpty(modeMainTable, "modeMainTable");
         int id = -1;
         RecordSet rs = new RecordSet();
         String uuid = UUID.randomUUID().toString();

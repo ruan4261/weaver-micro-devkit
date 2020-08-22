@@ -103,7 +103,7 @@ public interface WorkflowAPI {
      * @return 字段映射
      */
     static Map<String, String> queryFieldMapper(int billid, final String num) {
-        Objects.requireNonNull(num, "table number");
+        Assert.notEmpty(num, "table number");
         Map<String, String> result = new HashMap<>();
         billid = Math.abs(billid);
         RecordSet rs = new RecordSet();
@@ -168,7 +168,7 @@ public interface WorkflowAPI {
      * @return 保存的全路径
      */
     static String saveWorkflowHtml(final int requestId, final String path) {
-        Objects.requireNonNull(path, "path");
+        Assert.notEmpty(path, "path");
 
         String sql = "select max(id) from DocDetail where fromworkflow = " + requestId + " order by id desc";
         String docid = CommonAPI.querySingleField(sql, "id");

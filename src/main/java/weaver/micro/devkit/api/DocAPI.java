@@ -5,9 +5,8 @@ import static weaver.micro.devkit.core.CacheBase.EMPTY;
 import weaver.conn.RecordSet;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
-import weaver.micro.devkit.exception.runtime.IllegalDataException;
 import weaver.micro.devkit.io.IOAPI;
-import weaver.micro.devkit.util.Cast;
+import weaver.micro.devkit.util.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +83,7 @@ public interface DocAPI {
      * @return 保存的完整路径
      */
     static String saveDocLocally(final int docId, final String path, final String filename, final String charset) {
-        Objects.requireNonNull(path, "path");
+        Assert.notEmpty(path, "path");
 
         Map<String, String> imageFileInfo = queryImageFileInfo(docId);
         String fid = imageFileInfo.get("imagefileid");

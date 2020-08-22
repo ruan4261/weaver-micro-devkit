@@ -8,6 +8,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -15,12 +16,15 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.util.EntityUtils;
+import weaver.micro.devkit.util.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +38,7 @@ import java.util.Map;
 public interface CommonHttpAPI {
 
     /**
-     * 默认请求配置，暂时懒得提供修改
+     * 默认请求配置，懒得提供修改，请自行构造
      */
     RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
             // 等待连接池给出可用连接超时 ms
@@ -46,7 +50,10 @@ public interface CommonHttpAPI {
             // 设置是否允许重定向(默认为true)
             .setRedirectsEnabled(true).build();
 
-    Header DEFAULT_USER_AGENT = new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36");
+    Header[] DEFAULT_USER_AGENT = new Header[]{
+            new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36"),
+            new BasicHeader("Accept-Encoding", "Identity")
+    };
 
     /**
      * 基于默认请求配置构建一个新的客户端
@@ -159,6 +166,49 @@ public interface CommonHttpAPI {
     }
 
     /**
+     * http状态码
+     */
+    static int getStatusCode(HttpResponse response) {
+        Assert.notNull(response);
+        return response.getStatusLine().getStatusCode();
+    }
+
+    /**
+     * 它应该是对http状态的解释
+     */
+    static String getReasonPhrase(HttpResponse response) {
+        Assert.notNull(response);
+        return response.getStatusLine().getReasonPhrase();
+    }
+
+    /**
+     * 返回的主题内容，以指定字符编码获取，不包括http头
+     */
+    static String getText(HttpResponse response, Charset charset) throws IOException {
+        Assert.notNull(response);
+        return EntityUtils.toString(response.getEntity(), charset);
+    }
+
+    /**
+     * 返回http头中的Content-Length值
+     * 如果返回头中没有该键，则此方法返回-1
+     * 一般来说，如果请求对象是个页面，该大概率无此键值，如果请求对象为某文件，则大概率存在此键值
+     * 通过这种方式获取请求体长度不一定正确，因为该信息存在http头中，可被服务端手动修改
+     */
+    static long getContentLength(HttpResponse response) {
+        Assert.notNull(response);
+        return response.getEntity().getContentLength();
+    }
+
+    /**
+     * 获取全部返回头
+     */
+    static Header[] getAllHeaders(HttpResponse response) {
+        Assert.notNull(response);
+        return response.getAllHeaders();
+    }
+
+    /**
      * 构建请求方法
      *
      * @param requestBase 构建对象
@@ -171,7 +221,7 @@ public interface CommonHttpAPI {
         requestBase.setURI(new URI(uri));// url
         requestBase.setConfig(DEFAULT_CONFIG);// request config
         requestBase.setProtocolVersion(HttpVersion.HTTP_1_1);// http version
-        requestBase.setHeader(DEFAULT_USER_AGENT);// user agent
+        requestBase.setHeaders(DEFAULT_USER_AGENT);// user agent
         if (headers != null)
             headers.forEach(requestBase::setHeader);// custom headers
         return requestBase;

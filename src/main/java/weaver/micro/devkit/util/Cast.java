@@ -29,7 +29,7 @@ public final class Cast {
     /**
      * 参数为NULL时返回'NULL'字符串
      */
-    public static String toStringOfNull(Object val) {
+    public static String toStringNullable(Object val) {
         return val == null ? NULL : toString(val);
     }
 
@@ -57,6 +57,7 @@ public final class Cast {
     }
 
     public static BigDecimal toBigDecimal(Object val, BigDecimal decimal) {
+        if (val == null) return decimal;
         try {
             return toBigDecimal(val);
         } catch (IllegalDataException ignore) {
@@ -79,6 +80,7 @@ public final class Cast {
     }
 
     public static Integer toInteger(Object val, Integer integer) {
+        if (val == null) return integer;
         try {
             return toInteger(val);
         } catch (IllegalDataException ignore) {

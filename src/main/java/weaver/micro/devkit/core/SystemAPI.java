@@ -1,5 +1,6 @@
 package weaver.micro.devkit.core;
 
+import static weaver.micro.devkit.core.CacheBase.EMPTY;
 import static weaver.micro.devkit.core.CacheBase.LINE_SEPARATOR;
 
 /**
@@ -13,6 +14,7 @@ public interface SystemAPI {
      * 非显式调用异常栈，性能并没有多大提高
      */
     static String getCompleteStackTraceInfo(String title) {
+        title = title == null ? EMPTY : title;
         StackTraceElement[] trace = getStackTrace();
         StringBuilder builder = new StringBuilder(title).append(LINE_SEPARATOR);
         for (int i = 2; i < trace.length; i++) {

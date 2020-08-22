@@ -1,8 +1,7 @@
 package weaver.micro.devkit.env;
 
-
-import weaver.micro.devkit.api.Formatter;
 import weaver.micro.devkit.core.CacheBase;
+import weaver.micro.devkit.util.Cast;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +33,7 @@ public final class EnvArgument implements CacheBase {
     }
 
     public static String getString(String key) {
-        return Formatter.toString(env.get(key));
+        return Cast.toString(env.get(key));
     }
 
     public static void clear() {

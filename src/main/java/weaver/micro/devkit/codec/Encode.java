@@ -1,5 +1,7 @@
 package weaver.micro.devkit.codec;
 
+import weaver.micro.devkit.util.Assert;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +22,7 @@ public interface Encode {
      * @throws IOException 异常必定从输入流抛出，本方法抛出异常时输入流必定被关闭
      */
     static String toBase64String(InputStream inputStream) throws IOException {
+        Assert.notNull(inputStream);
         try (InputStream in = inputStream;
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             byte[] buff = new byte[1024];
@@ -30,14 +33,17 @@ public interface Encode {
     }
 
     static byte[] toBase64(byte[] bytes) {
+        Assert.notNull(bytes);
         return Base64.getEncoder().encode(bytes);
     }
 
     static String toBase64String(byte[] bytes) {
+        Assert.notNull(bytes);
         return new String(toBase64(bytes));
     }
 
     static String toBase64String(String origin) {
+        Assert.notNull(origin);
         return toBase64String(origin.getBytes());
     }
 
