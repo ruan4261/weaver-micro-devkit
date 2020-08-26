@@ -216,6 +216,13 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
         return this.actionEnd(Action.FAILURE_AND_CONTINUE);
     }
 
+    public String requestFail(Throwable throwable) {
+        log(throwable);
+        this.request.getRequestManager().setMessageid("0");
+        this.request.getRequestManager().setMessagecontent(throwable.getClass().getTypeName() + ':' + throwable.getMessage() + "【参考信息:" + getLogPrefix() + '】');
+        return this.actionEnd(Action.FAILURE_AND_CONTINUE);
+    }
+
     /** 接口执行完毕 */
     public String requestSuccess() {
         return this.actionEnd(Action.SUCCESS);
