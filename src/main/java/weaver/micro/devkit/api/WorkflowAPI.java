@@ -1,12 +1,12 @@
 package weaver.micro.devkit.api;
 
-import static weaver.micro.devkit.core.CacheBase.EMPTY;
+import static org.r2.devkit.core.CacheBase.EMPTY;
 
 import weaver.conn.RecordSet;
 import weaver.general.Util;
 import weaver.interfaces.workflow.action.WorkflowToDoc;
-import weaver.micro.devkit.util.Assert;
-import weaver.micro.devkit.util.Cast;
+import org.r2.devkit.util.Assert;
+import org.r2.devkit.util.Cast;
 
 import java.util.*;
 
@@ -170,7 +170,7 @@ public interface WorkflowAPI {
     static String saveWorkflowHtml(final int requestId, final String path) {
         Assert.notEmpty(path, "path");
 
-        String sql = "select max(id) from DocDetail where fromworkflow = " + requestId + " order by id desc";
+        String sql = "select max(id) from DocDetail where fromworkflow = " + requestId;
         String docid = CommonAPI.querySingleField(sql, "id");
         if (EMPTY.equals(docid)) return EMPTY;
 

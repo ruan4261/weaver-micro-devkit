@@ -1,14 +1,14 @@
 package weaver.micro.devkit.handler;
 
+import org.r2.devkit.util.Cast;
 import weaver.conn.RecordSetTrans;
 import weaver.general.BaseBean;
+import weaver.interfaces.workflow.action.Action;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
-import weaver.micro.devkit.core.CacheBase;
-import weaver.micro.devkit.exception.runtime.ActionStopException;
-import weaver.interfaces.workflow.action.Action;
-import weaver.micro.devkit.util.Cast;
+import org.r2.devkit.core.CacheBase;
+import org.r2.devkit.exception.runtime.ActionStopException;
 import weaver.soa.workflow.request.*;
 
 import java.util.ArrayList;
@@ -22,6 +22,8 @@ import java.util.Map;
  * @author ruan4261
  */
 public class RequestInfoHandler extends BaseBean implements CacheBase {
+
+    private int instanceRunTimes = 0;
 
     private RequestInfo request;
 
@@ -209,6 +211,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      * @return FAILURE_AND_CONTINUE
      */
     public String requestFail(String msg) {
+        log(msg);
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(msg + "【参考信息:" + getLogPrefix() + '】');
         return this.actionEnd(Action.FAILURE_AND_CONTINUE);
@@ -222,12 +225,20 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
     private void actionStart() {
         log(" start, bill table is " + this.getTableNameLower() +
                 ", workflow title is " + this.getRequestName() +
-                ", creator hrmId is " + this.getCreatorId());
+                ", creator hrmId is " + this.getCreatorId() +
+                ", runTimes of this action instance is " + (++this.instanceRunTimes));
     }
 
     private String actionEnd(String result) {
         log(" end with result:" + result);
+        clearCache();
         return result;
+    }
+
+    public void clearCache() {
+        this.mainTableCache = null;
+        this.detailTableListCache = null;
+        this.detailTablesCache = null;
     }
 
     /**

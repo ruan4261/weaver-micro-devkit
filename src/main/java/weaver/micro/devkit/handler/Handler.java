@@ -1,6 +1,5 @@
 package weaver.micro.devkit.handler;
 
-import weaver.micro.devkit.exception.runtime.ActionStopException;
 import weaver.soa.workflow.request.RequestInfo;
 
 /**
@@ -11,6 +10,6 @@ import weaver.soa.workflow.request.RequestInfo;
  */
 public interface Handler {
 
-    String handler(RequestInfo requestInfo) throws ActionStopException;
+    String handler(RequestInfo requestInfo) throws Exception;
 
 }

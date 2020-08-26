@@ -1,7 +1,7 @@
 package weaver.micro.devkit.api;
 
 import weaver.conn.RecordSet;
-import weaver.micro.devkit.util.Assert;
+import org.r2.devkit.util.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
