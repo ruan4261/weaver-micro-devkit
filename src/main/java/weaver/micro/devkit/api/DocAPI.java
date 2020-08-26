@@ -1,19 +1,18 @@
 package weaver.micro.devkit.api;
 
-import static weaver.micro.devkit.core.CacheBase.EMPTY;
+import static org.r2.devkit.core.CacheBase.EMPTY;
 
 import weaver.conn.RecordSet;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
-import weaver.micro.devkit.io.IOAPI;
-import weaver.micro.devkit.util.Assert;
+import org.r2.devkit.io.IOAPI;
+import org.r2.devkit.util.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 公文、文档操作接口

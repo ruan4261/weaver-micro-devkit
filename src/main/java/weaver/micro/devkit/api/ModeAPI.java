@@ -4,10 +4,9 @@ import weaver.conn.RecordSet;
 import weaver.formmode.setup.ModeRightInfo;
 import weaver.general.TimeUtil;
 import weaver.general.Util;
-import weaver.micro.devkit.util.Assert;
+import org.r2.devkit.util.Assert;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 

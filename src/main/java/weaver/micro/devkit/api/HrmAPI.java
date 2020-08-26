@@ -2,7 +2,7 @@ package weaver.micro.devkit.api;
 
 import weaver.conn.RecordSet;
 import weaver.general.Util;
-import weaver.micro.devkit.exception.runtime.IllegalDataException;
+import org.r2.devkit.exception.runtime.IllegalDataException;
 
 import java.util.HashMap;
 import java.util.Map;

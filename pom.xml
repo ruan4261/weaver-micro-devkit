@@ -8,6 +8,10 @@
     <artifactId>micro-devkit</artifactId>
     <version>1.0.0</version>
 
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
+
     <inceptionYear>2020</inceptionYear>
     <description>
         项目三连：公司不给系统文档，事业部头很大，进度很着急。
@@ -25,5 +29,28 @@
             </roles>
         </developer>
     </developers>
+
+    <dependencies>
+        <!-- 本地依赖 -->
+        <dependency>
+            <groupId>org.r2</groupId>
+            <artifactId>devkit</artifactId>
+            <version>0.0.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/r2-devkit.jar</systemPath>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>lib</directory>
+                <targetPath>/WEB-INF/lib/</targetPath>
+                <includes>
+                    <include>**/*.jar</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
 
 </project>
