@@ -170,7 +170,7 @@ public interface WorkflowAPI {
     static String saveWorkflowHtml(final int requestId, final String path) {
         Assert.notEmpty(path, "path");
 
-        String sql = "select max(id) from DocDetail where fromworkflow = " + requestId;
+        String sql = "select max(id) id from DocDetail where fromworkflow = " + requestId;
         String docid = CommonAPI.querySingleField(sql, "id");
         if (EMPTY.equals(docid)) return EMPTY;
 
