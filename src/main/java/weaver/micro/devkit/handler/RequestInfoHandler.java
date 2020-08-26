@@ -8,7 +8,6 @@ import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
 import org.r2.devkit.core.CacheBase;
-import org.r2.devkit.exception.runtime.ActionStopException;
 import weaver.soa.workflow.request.*;
 
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ import java.util.Map;
  *
  * @author ruan4261
  */
-public class RequestInfoHandler extends BaseBean implements CacheBase {
+public abstract class RequestInfoHandler extends BaseBean implements Handler, Action, CacheBase {
 
     private int instanceRunTimes = 0;
 
@@ -139,7 +138,7 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
      * @return 流程相关最新文档
      * @see DocAPI#queryDocIdByRequestId(int)
      */
-    public String getDocIdLatest() throws ActionStopException {
+    public String getDocIdLatest() {
         String docId = DocAPI.queryDocIdByRequestId(this.getRequestId());
         log("Newest document id : " + docId);
         return docId;
@@ -280,4 +279,9 @@ public class RequestInfoHandler extends BaseBean implements CacheBase {
         return '\'' + CommonAPI.querySingleField(sql, "indexdesc") + '\'';
     }
 
+    @Override
+    public abstract String handler(RequestInfo requestInfo) throws Exception;
+
+    @Override
+    public abstract String execute(RequestInfo requestInfo);
 }
