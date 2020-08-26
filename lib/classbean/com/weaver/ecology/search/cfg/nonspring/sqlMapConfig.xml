@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig PUBLIC "-//iBATIS.com//DTD SQL Map Config 2.0//EN"
+    "http://www.ibatis.com/dtd/sql-map-config-2.dtd">
+<sqlMapConfig>
+ <!-- properties resource="nonspring/jdbc.oracle.properties"/ -->
+	<!-- properties resource="com/weaver/ecology/search/cfg/nonspring/jdbc.properties"/ -->
+	<transactionManager type="JDBC">
+			<dataSource type="SIMPLE">
+			<property value="${DriverClasses}" name="JDBC.Driver"/>
+			<property value="${ecology.url}" name="JDBC.ConnectionURL"/>
+			<property value="${ecology.user}" name="JDBC.Username"/>
+			<property value="${ecology.password}" name="JDBC.Password"/>
+		</dataSource>
+	</transactionManager>
+
+	<sqlMap resource="com/weaver/ecology/search/dao/ibatis/sqlmap/CommonSqlMap.xml"/>
+</sqlMapConfig>

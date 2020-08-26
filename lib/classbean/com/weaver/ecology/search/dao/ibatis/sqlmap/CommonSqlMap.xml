@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap>
+
+	<typeAlias alias="mainCategory" type="com.weaver.ecology.search.model.DocMainCategory"/>
+	<typeAlias alias="htmlLabelInfo" type="com.weaver.ecology.search.model.HtmlLabelInfo"/>
+	<typeAlias alias="shareInnerDoc" type="com.weaver.ecology.search.model.ShareInnerDoc"/>
+	<typeAlias alias="hrmOrgGroupRelated" type="com.weaver.ecology.search.model.HrmOrgGroupRelated"/>
+	
+	<select id="getMainCategoryList" resultClass="mainCategory">
+		select * from docMaincategory
+		<isNotEqual compareValue="0">
+			WHERE id=#value#
+		</isNotEqual>
+	</select>
+	
+	<resultMap id="shareInnerDocResult" class="shareInnerDoc">
+		<result property="id" column="id"/>
+		<result property="sourceid" column="sourceid"/>
+		<result property="type" column="type"/>
+		<result property="content" column="content"/>
+		<result property="seclevel" column="seclevel"/>
+		<result property="sharelevel" column="sharelevel"/>
+		<result property="srcfrom" column="srcfrom"/>
+		<result property="opuser" column="opuser"/>
+		<result property="sharesource" column="sharesource"/>
+	</resultMap>
+	
+	<resultMap id="hrmOrgGroupRelatedResult" class="hrmOrgGroupRelated">
+		<result property="id" column="id"/>
+		<result property="orgGroupId" column="orgGroupId"/>
+		<result property="type" column="type"/>
+		<result property="content" column="content"/>
+		<result property="secLevelFrom" column="secLevelFrom"/>
+		<result property="secLevelTo" column="secLevelTo"/>
+	</resultMap>
+	
+	<sql id="getDocs">
+		SELECT D.id AS id,D.docSubject AS docSubject,D.doctype AS doctype,D.mainCategory AS mainCategory,D.subCategory AS subCategory,
+		D.secCategory AS secCategory,D.docCreaterId AS docCreaterId,D.docCreateDate AS docCreateDate,D.docCreateTime AS docCreateTime,
+		D.accessoryCount AS accessoryCount,D.replaydoccount AS replaydoccount,D.isReply AS isReply,D.replyDocId AS replyDocId,D.docCreaterType AS docCreaterType,
+		<isEqual property="isDb" compareValue="mssql">
+			D.docContent AS docContent
+			FROM Docdetail D	
+		</isEqual>
+		<isEqual property="isDb" compareValue="oracle">
+			C.docContent AS docContent
+			FROM Docdetail D,docDetailContent C
+		</isEqual>
+	</sql>
+	
+	<sql id="orcaleWhere">
+		AND D.id=C.docId
+	</sql>
+	
+	<select id="getDocDetailById" resultMap="docDetailResult">
+		<include refid="getDocs"/>
+		WHERE D.id=#docId#
+		<isEqual property="isDb" compareValue="oracle">
+			<include refid="orcaleWhere"/>
+		</isEqual>
+	</select>
+
+	<select id="getDocDetailListByDate"  resultMap="docDetailResult">
+		<include refid="getDocs"/>
+		<dynamic prepend="WHERE">
+			<isNull property="docId">
+			<![CDATA[
+				(D.isReply is null OR D.isreply<>1) AND D.docCreateDate BETWEEN #startDate# AND #endDate#
+			]]>
+			</isNull>
+			<isNotNull property="docId">
+				D.replyDocId=#docId#
+			</isNotNull>
+			<isEqual property="isDb" compareValue="oracle">
+				<include refid="orcaleWhere"/>
+			</isEqual>
+		</dynamic>
+	</select>
+	
+	<select id="getUpdateDocByDate" resultMap="docDetailResult">
+		<include refid="getDocs"/>
+		WHERE D.doclastmoddate BETWEEN #startDate# AND #endDate#
+		<isEqual property="isDb" compareValue="oracle">
+			<include refid="orcaleWhere"/>
+		</isEqual>
+	</select>
+	
+	<select id="getDocImageFilesByDocId" resultClass="com.weaver.ecology.search.model.DocImageFile">
+		SELECT * FROM docImageFile WHERE docId=#value#  order by id asc,versionid desc
+	</select>
+	
+	<select id="getImageFilesByFileId" resultClass="com.weaver.ecology.search.model.ImageFile">		
+		SELECT * FROM ImageFile WHERE imageFileid=#value#
+	</select>
+	
+	<select id="getShareInfoByDocId" resultMap="shareInnerDocResult">
+		SELECT id,sourceid,type,content,seclevel,sharelevel,srcfrom,opuser,sharesource 
+		FROM ShareInnerDoc WHERE sourceId=#value#
+	</select>
+	
+	
+	<select id="getHrmOrgGroupRelatedByGroupId" resultMap="hrmOrgGroupRelatedResult">
+		SELECT id,orgGroupId, type, content,secLevelFrom,secLevelTo
+		FROM HrmOrgGroupRelated  WHERE orgGroupId=#value#
+	</select>
+		
+	<sql id="sqlCategoryFields">
+		SELECT id AS ID,categoryname AS CATEGORYNAME FROM
+	</sql>
+	
+	<select id="getSecCategoryNames" resultClass="java.util.HashMap">
+		<include refid="sqlCategoryFields"/> DocSecCategory
+	</select>
+	
+	<select id="getSubCategoryNames" resultClass="java.util.HashMap">
+		<include refid="sqlCategoryFields"/> DocsubCategory
+	</select>
+	
+	<select id="getMainCategoryNames" resultClass="java.util.HashMap">
+		<include refid="sqlCategoryFields"/> docMaincategory
+	</select>
+	
+	<select id="getLanguageResource" resultClass="htmlLabelInfo" parameterClass="string">
+		SELECT * FROM HtmlLabelInfo WHERE indexid in ($value$)
+	</select>
+	
+	<select id="getLoginIdByUserId" resultClass="string">
+		SELECT loginid FROM hrmResource WHERE id=#value#
+	</select>
+	
+</sqlMap>

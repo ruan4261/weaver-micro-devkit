@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap>
+	<resultMap id="docDetailResult" class="com.weaver.ecology.search.model.DocDetail">
+		<result property="id" column="id"/>
+		<result property="docSubject" column="docSubject"/>		
+		<result property="doctype" column="doctype"/>
+		<result property="mainCategory" column="mainCategory"/>
+		<result property="subCategory" column="subCategory"/>
+		<result property="secCategory" column="secCategory"/>
+		<result property="docCreaterId" column="docCreaterId"/>
+		<result property="docCreateDate" column="docCreateDate"/>
+		<result property="docCreateTime" column="docCreateTime"/>
+		<result property="accessoryCount" column="accessoryCount"/>
+		<result property="replayDocCount" column="replayDocCount"/>
+		<result property="isReply" column="isReply"/>
+		<result property="replyDocId" column="replyDocId"/>
+		<result property="docCreaterType" column="docCreaterType"/>
+		<result property="docContent" column="docContent"/>
+	</resultMap>
+</sqlMap>
