@@ -4,7 +4,7 @@ import weaver.conn.RecordSet;
 import weaver.formmode.setup.ModeRightInfo;
 import weaver.general.TimeUtil;
 import weaver.general.Util;
-import org.r2.devkit.util.Assert;
+import org.r2.devkit.Assert;
 
 import java.util.Map;
 import java.util.Set;

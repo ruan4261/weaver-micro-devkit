@@ -5,8 +5,8 @@ import static org.r2.devkit.core.CacheBase.EMPTY;
 import weaver.conn.RecordSet;
 import weaver.general.Util;
 import weaver.interfaces.workflow.action.WorkflowToDoc;
-import org.r2.devkit.util.Assert;
-import org.r2.devkit.util.Cast;
+import org.r2.devkit.Assert;
+import org.r2.devkit.Cast;
 
 import java.util.*;
 
@@ -174,7 +174,7 @@ public interface WorkflowAPI {
         String docid = CommonAPI.querySingleField(sql, "id");
         if (EMPTY.equals(docid)) return EMPTY;
 
-        return DocAPI.saveDocLocally(Cast.toInteger(docid), path, requestId + ".html", null);
+        return DocAPI.saveDocLocally(Cast.o2Integer(docid), path, requestId + ".html", null);
     }
 
     /**

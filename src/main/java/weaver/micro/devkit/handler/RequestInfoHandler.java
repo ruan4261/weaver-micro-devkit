@@ -1,6 +1,6 @@
 package weaver.micro.devkit.handler;
 
-import org.r2.devkit.util.Cast;
+import org.r2.devkit.Cast;
 import weaver.conn.RecordSetTrans;
 import weaver.general.BaseBean;
 import weaver.interfaces.workflow.action.Action;
@@ -145,7 +145,7 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
     }
 
     public int getRequestId() {
-        return Cast.toInteger(this.request.getRequestid(), -1);
+        return Cast.o2Integer(this.request.getRequestid());
     }
 
     /** 流程标题 */
@@ -154,7 +154,7 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
     }
 
     public int getWorkflowId() {
-        return Cast.toInteger(this.request.getWorkflowid(), -1);
+        return Cast.o2Integer(this.request.getWorkflowid());
     }
 
     public int getBillId() {
@@ -170,7 +170,7 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
     }
 
     public int getCreatorId() {
-        return Cast.toInteger(this.request.getCreatorid(), 1);
+        return Cast.o2Integer(this.request.getCreatorid(), 1);
     }
 
     public RecordSetTrans getRsTrans() {
