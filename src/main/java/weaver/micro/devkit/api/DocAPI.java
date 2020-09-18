@@ -6,7 +6,7 @@ import weaver.conn.RecordSet;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
 import org.r2.devkit.io.IOAPI;
-import org.r2.devkit.util.Assert;
+import org.r2.devkit.Assert;
 
 import java.io.File;
 import java.io.IOException;
