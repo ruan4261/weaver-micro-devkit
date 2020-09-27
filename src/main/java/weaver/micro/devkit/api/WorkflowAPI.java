@@ -235,4 +235,11 @@ public interface WorkflowAPI {
         return result;
     }
 
+    /**
+     * 根据logid获取节点名称
+     */
+    static String getNodeNameByLogId(String logid) {
+        String nodeid = CommonAPI.querySingleField("select nodeid from workflow_requestlog where logid=" + logid, "nodeid");
+        return CommonAPI.querySingleField("select nodename from workflow_nodebase where id=" + nodeid, "nodename");
+    }
 }
