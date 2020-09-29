@@ -42,11 +42,6 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         this.instanceRunTimes = 0;
     }
 
-    public void construct(RequestInfo request) {
-        this.request = request;
-        this.actionStart();
-    }
-
     /**
      * 获取流程主表数据，这是一个缓存值。
      * 如果在获取了该映射表后，对数据库中该流程信息进行了修改，再次调用此方法无法获取更新的信息。
@@ -298,9 +293,11 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
 
     @Override
     public String execute(RequestInfo requestInfo) {
+        this.request = requestInfo;
         try {
+            this.actionStart();
             return this.handle(requestInfo);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return this.fail(e);
         } finally {
             this.end();
