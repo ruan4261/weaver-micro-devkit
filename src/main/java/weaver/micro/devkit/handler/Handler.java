@@ -11,6 +11,6 @@ import weaver.soa.workflow.request.RequestInfo;
 @FunctionalInterface
 public interface Handler {
 
-    String handle(RequestInfo requestInfo) throws Exception;
+    String handle(RequestInfo requestInfo) throws Throwable;
 
 }
