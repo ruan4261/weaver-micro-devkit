@@ -30,27 +30,17 @@
         </developer>
     </developers>
 
-    <dependencies>
-        <!-- 本地依赖 -->
-        <dependency>
-            <groupId>org.r2</groupId>
-            <artifactId>devkit</artifactId>
-            <version>0.0.1</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/r2-devkit.jar</systemPath>
-        </dependency>
-    </dependencies>
-
     <build>
-        <resources>
-            <resource>
-                <directory>lib</directory>
-                <targetPath>/WEB-INF/lib/</targetPath>
-                <includes>
-                    <include>**/*.jar</include>
-                </includes>
-            </resource>
-        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 </project>

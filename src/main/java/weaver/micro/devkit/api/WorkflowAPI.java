@@ -169,8 +169,8 @@ public interface WorkflowAPI {
         Assert.notEmpty(path, "path");
 
         String sql = "select max(id) id from DocDetail where fromworkflow = " + requestId;
-        String docid = CommonAPI.querySingleField(sql, "id");
-        if (EMPTY.equals(docid)) return EMPTY;
+        int docid = Util.getIntValue(CommonAPI.querySingleField(sql, "id"));
+        if (docid == -1) return EMPTY;
 
         return DocAPI.saveDocLocally(Cast.o2Integer(docid), path, requestId + ".html", null);
     }
@@ -222,7 +222,7 @@ public interface WorkflowAPI {
         String sql = "select id from " + billTableName + " where requestid = '" + requestId + "'";
         rs.execute(sql);
         if (!rs.next()) return result;
-        String mainid = rs.getString("id");
+        int mainid = Util.getIntValue(rs.getString("id"));
 
         // 查询明细表
         sql = "select * from " + billTableName + "_dt" + table + " where mainid= '" + mainid + "'";
@@ -236,8 +236,9 @@ public interface WorkflowAPI {
     /**
      * 根据logid获取节点名称
      */
-    static String getNodeNameByLogId(String logid) {
-        String nodeid = CommonAPI.querySingleField("select nodeid from workflow_requestlog where logid=" + logid, "nodeid");
+    static String getNodeNameByLogId(int logid) {
+        int nodeid = Util.getIntValue(CommonAPI.querySingleField("select nodeid from workflow_requestlog where logid=" + logid, "nodeid"));
+        if (nodeid == -1) return EMPTY;
         return CommonAPI.querySingleField("select nodename from workflow_nodebase where id=" + nodeid, "nodename");
     }
 }
