@@ -1,13 +1,13 @@
 package weaver.micro.devkit.handler;
 
 import org.r2.devkit.Cast;
+import org.r2.devkit.core.SystemAPI;
 import weaver.conn.RecordSetTrans;
 import weaver.general.BaseBean;
 import weaver.interfaces.workflow.action.Action;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
-import org.r2.devkit.core.CacheBase;
 import weaver.soa.workflow.request.*;
 
 import java.util.ArrayList;
@@ -20,25 +20,26 @@ import java.util.Map;
  *
  * @author ruan4261
  */
-public abstract class RequestInfoHandler extends BaseBean implements Handler, Action, CacheBase {
-
-    private int instanceRunTimes = 0;
-
+public abstract class ActionHandler extends BaseBean implements Handler, Action {
+    // 该实例被执行次数
+    private int instanceRunTimes;
+    // 每次的请求
     private RequestInfo request;
-
+    // action信息
     private final String actionInfo;
-
+    // 返回值信息
+    private String endResult;
+    private String endMessage;
     // 主表缓存
     private Map<String, String> mainTableCache;
-
     // 明细表缓存
     private Map<Integer, List<Map<String, String>>> detailTableListCache;
-
     // 明细表缓存，原型
     private DetailTable[] detailTablesCache;
 
-    public RequestInfoHandler(String actionInfo) {
+    public ActionHandler(String actionInfo) {
         this.actionInfo = actionInfo;
+        this.instanceRunTimes = 0;
     }
 
     public void construct(RequestInfo request) {
@@ -190,7 +191,7 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
     }
 
     public void logLine(String msg) {
-        writeLog(getLogPrefix() + " -> " + LINE_SEPARATOR + msg);
+        writeLog(getLogPrefix() + " -> " + SystemAPI.LINE_SEPARATOR + msg);
     }
 
     public void log(Throwable throwable) {
@@ -198,7 +199,7 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
         StackTraceElement[] trace = throwable.getStackTrace();
         builder.append(throwable.getClass().getTypeName()).append(':').append(throwable.getMessage());
         for (StackTraceElement traceElement : trace) {
-            builder.append(LINE_SEPARATOR).append("\tat ").append(traceElement);
+            builder.append(SystemAPI.LINE_SEPARATOR).append("\tat ").append(traceElement);
         }
         logLine(builder.toString());
     }
@@ -209,23 +210,29 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
      * @param msg 前端显示信息
      * @return FAILURE_AND_CONTINUE
      */
-    public String requestFail(String msg) {
-        log(msg);
+    public String fail(String msg) {
+        String mes = msg + "【参考信息:" + getLogPrefix() + '】';
         this.request.getRequestManager().setMessageid("0");
-        this.request.getRequestManager().setMessagecontent(msg + "【参考信息:" + getLogPrefix() + '】');
-        return this.actionEnd(Action.FAILURE_AND_CONTINUE);
+        this.request.getRequestManager().setMessagecontent(mes);
+        this.endResult = Action.FAILURE_AND_CONTINUE;
+        this.endMessage = mes;
+        return Action.FAILURE_AND_CONTINUE;
     }
 
-    public String requestFail(Throwable throwable) {
-        log(throwable);
+    public String fail(Throwable throwable) {
+        String mes = throwable.getClass().getTypeName() + ':' + throwable.getMessage() + "【参考信息:" + getLogPrefix() + '】';
         this.request.getRequestManager().setMessageid("0");
-        this.request.getRequestManager().setMessagecontent(throwable.getClass().getTypeName() + ':' + throwable.getMessage() + "【参考信息:" + getLogPrefix() + '】');
-        return this.actionEnd(Action.FAILURE_AND_CONTINUE);
+        this.request.getRequestManager().setMessagecontent(mes);
+        this.endResult = Action.FAILURE_AND_CONTINUE;
+        this.endMessage = mes;
+        return Action.FAILURE_AND_CONTINUE;
     }
 
     /** 接口执行完毕 */
-    public String requestSuccess() {
-        return this.actionEnd(Action.SUCCESS);
+    public String success() {
+        this.endResult = Action.SUCCESS;
+        this.endMessage = "OK";
+        return Action.SUCCESS;
     }
 
     private void actionStart() {
@@ -235,13 +242,16 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
                 ", runTimes of this action instance is " + (++this.instanceRunTimes));
     }
 
-    private String actionEnd(String result) {
-        log(" end with result:" + result);
+    /** 每次执行execute结束时必然执行此方法 */
+    public void end() {
+        log(" end with result:" + this.endResult + ", message:" + this.endMessage);
         clearCache();
-        return result;
     }
 
     public void clearCache() {
+        this.request = null;
+        this.endResult = null;
+        this.endMessage = null;
         this.mainTableCache = null;
         this.detailTableListCache = null;
         this.detailTablesCache = null;
@@ -261,7 +271,7 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
      * @return 字符串信息
      */
     public String fieldLengthLimit(int table, String field, int maxlength) {
-        if (table < 0) return EMPTY;
+        if (table < 0) return "";
         boolean overLimit = false;
         if (table == 0) {
             // 主表
@@ -280,15 +290,20 @@ public abstract class RequestInfoHandler extends BaseBean implements Handler, Ac
             }
         }
 
-        if (!overLimit) return EMPTY;
+        if (!overLimit) return "";
         // 通过数据库字段名获取显示字段名
         String sql = "select indexdesc from htmllabelindex a left outer join workflow_billfield b on a.id=b.fieldlabel where b.fieldname='" + field + "' and b.billid='" + getBillId() + "'";
         return '\'' + CommonAPI.querySingleField(sql, "indexdesc") + '\'';
     }
 
     @Override
-    public abstract String handler(RequestInfo requestInfo) throws Exception;
-
-    @Override
-    public abstract String execute(RequestInfo requestInfo);
+    public String execute(RequestInfo requestInfo) {
+        try {
+            return this.handle(requestInfo);
+        } catch (Exception e) {
+            return this.fail(e);
+        } finally {
+            this.end();
+        }
+    }
 }
