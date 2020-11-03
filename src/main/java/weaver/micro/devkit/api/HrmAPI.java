@@ -51,4 +51,14 @@ public interface HrmAPI {
         return result;
     }
 
+    /**
+     * 通过部门id查询部门名称
+     *
+     * @param departId 部门id
+     * @return 部门名称
+     */
+    static String queryDepartName(final int departId) {
+        String sql = "select departmentname from hrmdepartment where id = " + departId;
+        return CommonAPI.querySingleField(sql, "departmentname");
+    }
 }

@@ -25,7 +25,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     private int instanceRunTimes;
     // 每次的请求
     private RequestInfo request;
-    // action信息
+    // 接口说明信息
     private final String actionInfo;
     // 返回值信息
     private String endResult;
