@@ -82,17 +82,6 @@ public interface WorkflowAPI {
     }
 
     /**
-     * 通过部门id查询部门名称
-     *
-     * @param departId 部门id
-     * @return 部门名称
-     */
-    static String queryDepartName(final int departId) {
-        String sql = "select departmentname from hrmdepartment where id = " + departId;
-        return CommonAPI.querySingleField(sql, "departmentname");
-    }
-
-    /**
      * 获取表单字段简写到id的映射
      * 只可获取表单名称为formtable_main_{billid}的表单字段映射
      *
