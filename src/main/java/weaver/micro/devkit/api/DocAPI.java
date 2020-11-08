@@ -3,8 +3,8 @@ package weaver.micro.devkit.api;
 import weaver.conn.RecordSet;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
-import org.r2.devkit.io.IOAPI;
-import org.r2.devkit.Assert;
+import weaver.micro.devkit.Assert;
+import weaver.micro.devkit.io.IOAPI;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,9 +17,9 @@ import java.util.Map;
  *
  * @author ruan4261
  */
-public interface DocAPI {
+public final class DocAPI {
 
-    String EMPTY = "";
+    final static String EMPTY = "";
 
     /**
      * 通过流程requestId获取该流程最新的文档id
@@ -27,7 +27,7 @@ public interface DocAPI {
      * @param requestId 请求id
      * @return 流程最新文档id
      */
-    static String queryDocIdByRequestId(final int requestId) {
+    public static String queryDocIdByRequestId(final int requestId) {
         String sql = "select max(id) as id from docdetail where fromworkflow =" + requestId;
         return CommonAPI.querySingleField(sql, "id");
     }
@@ -38,7 +38,7 @@ public interface DocAPI {
      * @param docId 文档id
      * @return 最新文件id
      */
-    static String queryImageFileIdLatest(final int docId) {
+    public static String queryImageFileIdLatest(final int docId) {
         String sql = "select max(imagefileid) as fid from docimagefile where docid=" + docId;
         return CommonAPI.querySingleField(sql, "fid");
     }
@@ -53,9 +53,9 @@ public interface DocAPI {
      *         iszip 是否为压缩格式
      *         filerealpath 服务器保存的真实路径
      */
-    static Map<String, String> queryImageFileInfo(final int docId) {
+    public static Map<String, String> queryImageFileInfo(final int docId) {
         String fid = queryImageFileIdLatest(docId);
-        if ("".equals(fid)) return new HashMap<>();
+        if ("".equals(fid)) return new HashMap<String,String>();
 
         RecordSet rs = new RecordSet();
         String sql;
@@ -63,7 +63,7 @@ public interface DocAPI {
         rs.execute(sql);
         rs.next();
 
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new HashMap<String, String>();
         result.put("filerealpath", Util.null2String(rs.getString("filerealpath")));// 真实路径
         result.put("iszip", Util.null2String(rs.getString("iszip")));// 是否zip格式
         result.put("imagefileid", fid);
@@ -81,7 +81,7 @@ public interface DocAPI {
      * @param charset  如此参数不为空，将使用对应字符流，如参数为空，则使用字节流
      * @return 保存的完整路径
      */
-    static String saveDocLocally(final int docId, final String path, final String filename, final String charset) {
+    public static String saveDocLocally(final int docId, final String path, final String filename, final String charset) {
         Assert.notEmpty(path, "path");
 
         Map<String, String> imageFileInfo = queryImageFileInfo(docId);

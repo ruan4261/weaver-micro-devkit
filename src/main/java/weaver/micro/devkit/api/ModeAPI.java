@@ -4,7 +4,7 @@ import weaver.conn.RecordSet;
 import weaver.formmode.setup.ModeRightInfo;
 import weaver.general.TimeUtil;
 import weaver.general.Util;
-import org.r2.devkit.Assert;
+import weaver.micro.devkit.Assert;
 
 import java.util.Map;
 import java.util.Set;
@@ -15,7 +15,7 @@ import java.util.UUID;
  *
  * @author ruan4261
  */
-public interface ModeAPI {
+public final class ModeAPI {
 
     /**
      * 创建建模主表中的一行数据，带有权限重构
@@ -26,7 +26,7 @@ public interface ModeAPI {
      * @param data          数据集，可为空
      * @return 建模主表数据行id，方法执行失败返回-1
      */
-    static int createModeData(final String modeMainTable, final int modeId, final int creatorId, final Map<String, Object> data) {
+    public static int createModeData(final String modeMainTable, final int modeId, final int creatorId, final Map<String, Object> data) {
         Assert.notEmpty(modeMainTable, "modeMainTable");
         int id = -1;
         RecordSet rs = new RecordSet();
