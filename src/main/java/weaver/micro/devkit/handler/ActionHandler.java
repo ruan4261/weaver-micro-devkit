@@ -1,10 +1,10 @@
 package weaver.micro.devkit.handler;
 
-import org.r2.devkit.Cast;
-import org.r2.devkit.core.SystemAPI;
 import weaver.conn.RecordSetTrans;
 import weaver.general.BaseBean;
 import weaver.interfaces.workflow.action.Action;
+import weaver.micro.devkit.Cast;
+import weaver.micro.devkit.SystemAPI;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
@@ -52,7 +52,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      */
     public Map<String, String> getMainTableCache() {
         if (mainTableCache != null) return mainTableCache;
-        else mainTableCache = new HashMap<>();
+        else mainTableCache = new HashMap<String, String>();
 
         Property[] properties = this.request.getMainTableInfo().getProperty();
         for (Property property : properties) {
@@ -73,12 +73,12 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @return 明细表下标！流程第(tableIdx + 1)个明细表的对应多行数据，字段名到流程数据的映射，数据值可能为NULL。
      */
     public List<Map<String, String>> getDetailTableCache(int table) {
-        if (detailTableListCache == null) detailTableListCache = new HashMap<>();
+        if (detailTableListCache == null) detailTableListCache = new HashMap<Integer, List<Map<String, String>>>();
 
         List<Map<String, String>> data = detailTableListCache.get(table);
         if (data != null) return data;
         else {
-            data = new ArrayList<>();
+            data = new ArrayList<Map<String, String>>();
             detailTableListCache.put(table, data);
         }
 
@@ -89,7 +89,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         Row[] rows = dt.getRow();
         for (Row row : rows) {
             Cell[] cells = row.getCell();
-            Map<String, String> map = new HashMap<>();
+            Map<String, String> map = new HashMap<String, String>();
             for (Cell cell : cells) {
                 map.put(cell.getName(), cell.getValue());
             }
@@ -192,7 +192,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     public void log(Throwable throwable) {
         StringBuilder builder = new StringBuilder();
         StackTraceElement[] trace = throwable.getStackTrace();
-        builder.append(throwable.getClass().getTypeName()).append(':').append(throwable.getMessage());
+        builder.append(throwable.getClass().getName()).append(':').append(throwable.getMessage());
         for (StackTraceElement traceElement : trace) {
             builder.append(SystemAPI.LINE_SEPARATOR).append("\tat ").append(traceElement);
         }
@@ -215,7 +215,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public String fail(Throwable throwable) {
-        String mes = throwable.getClass().getTypeName() + ':' + throwable.getMessage() + "【参考信息:" + getLogPrefix() + '】';
+        String mes = throwable.getClass().getName() + ':' + throwable.getMessage() + "【参考信息:" + getLogPrefix() + '】';
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(mes);
         this.endResult = Action.FAILURE_AND_CONTINUE;

@@ -1,6 +1,5 @@
 package weaver.micro.devkit.api;
 
-import org.r2.devkit.IllegalDataException;
 import weaver.conn.RecordSet;
 import weaver.general.Util;
 
@@ -12,7 +11,7 @@ import java.util.Map;
  *
  * @author ruan4261
  */
-public interface HrmAPI {
+public final class HrmAPI {
 
     /**
      * 根据id查询人员姓名
@@ -20,7 +19,7 @@ public interface HrmAPI {
      * @param hrmId 人员id
      * @return lastname
      */
-    static String queryHrmName(final int hrmId) throws IllegalDataException {
+    public static String queryHrmName(final int hrmId) {
         String sql = "select lastname from HrmResource where id = " + hrmId;
         return CommonAPI.querySingleField(sql, "lastname");
     }
@@ -35,8 +34,8 @@ public interface HrmAPI {
      *         departmentname 部门名称
      *         subcompanyname 分部名称
      */
-    static Map<String, String> queryHrmInfo(final int hrmId) {
-        Map<String, String> result = new HashMap<>();
+    public static Map<String, String> queryHrmInfo(final int hrmId) {
+        Map<String, String> result = new HashMap<String, String>();
 
         RecordSet rs = new RecordSet();
         String sql = "select a.lastname,a.managerid,d.jobtitlename,b.departmentname,c.subcompanyname from HrmResource a left outer join hrmdepartment b on a.departmentid=b.id left outer join HrmSubCompany c on a.subcompanyid1=c.id left outer join HrmJobTitles d on a.jobtitle=d.id where a.id=" + hrmId;
@@ -57,7 +56,7 @@ public interface HrmAPI {
      * @param departId 部门id
      * @return 部门名称
      */
-    static String queryDepartName(final int departId) {
+    public static String queryDepartName(final int departId) {
         String sql = "select departmentname from hrmdepartment where id = " + departId;
         return CommonAPI.querySingleField(sql, "departmentname");
     }
