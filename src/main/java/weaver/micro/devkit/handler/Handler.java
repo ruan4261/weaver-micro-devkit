@@ -8,7 +8,6 @@ import weaver.soa.workflow.request.RequestInfo;
  *
  * @author ruan4261
  */
-@FunctionalInterface
 public interface Handler {
 
     String handle(RequestInfo requestInfo) throws Throwable;
