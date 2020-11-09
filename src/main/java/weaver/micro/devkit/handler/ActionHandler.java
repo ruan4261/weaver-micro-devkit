@@ -190,8 +190,8 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public void log(Throwable throwable) {
-        StringBuilder builder = new StringBuilder();
         StackTraceElement[] trace = throwable.getStackTrace();
+        StringBuilder builder = new StringBuilder(trace.length << 5);
         builder.append(throwable.getClass().getName()).append(':').append(throwable.getMessage());
         for (StackTraceElement traceElement : trace) {
             builder.append(SystemAPI.LINE_SEPARATOR).append("\tat ").append(traceElement);
@@ -298,6 +298,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
             this.actionStart();
             return this.handle(requestInfo);
         } catch (Throwable e) {
+            this.log(e);
             return this.fail(e);
         } finally {
             this.end();
