@@ -252,6 +252,11 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         this.detailTablesCache = null;
     }
 
+    /** 发生异常情况下在action结束时执行，该方法用于自定义重写 */
+    public void ifException(Throwable e) {
+        this.log(e);
+    }
+
     /**
      * 校验字段长度
      * 正常情况下返回EMPTY空字符串
@@ -298,7 +303,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
             this.actionStart();
             return this.handle(requestInfo);
         } catch (Throwable e) {
-            this.log(e);
+            this.ifException(e);
             return this.fail(e);
         } finally {
             this.end();
