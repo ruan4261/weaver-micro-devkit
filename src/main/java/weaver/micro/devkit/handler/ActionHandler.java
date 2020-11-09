@@ -140,20 +140,20 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return docId;
     }
 
-    public int getRequestId() {
+    public final int getRequestId() {
         return Cast.o2Integer(this.request.getRequestid());
     }
 
     /** 流程标题 */
-    public String getRequestName() {
+    public final String getRequestName() {
         return this.request.getRequestManager().getRequestname();
     }
 
-    public int getWorkflowId() {
+    public final int getWorkflowId() {
         return Cast.o2Integer(this.request.getWorkflowid());
     }
 
-    public int getBillId() {
+    public final int getBillId() {
         return this.request.getRequestManager().getBillid();
     }
 
@@ -165,7 +165,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return this.actionInfo + "$request:" + this.getRequestId() + '$';
     }
 
-    public int getCreatorId() {
+    public final int getCreatorId() {
         return Cast.o2Integer(this.request.getCreatorid(), 1);
     }
 
@@ -173,23 +173,23 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return this.request.getRsTrans();
     }
 
-    public String getTableNameLower() {
+    public final String getTableNameLower() {
         return this.request.getRequestManager().getBillTableName().toLowerCase();
     }
 
-    public String getTableNameUpper() {
+    public final String getTableNameUpper() {
         return this.request.getRequestManager().getBillTableName().toUpperCase();
     }
 
-    public void log(String msg) {
+    public final void log(String msg) {
         writeLog(getLogPrefix() + " -> " + msg);
     }
 
-    public void logLine(String msg) {
+    public final void logLine(String msg) {
         writeLog(getLogPrefix() + " -> " + SystemAPI.LINE_SEPARATOR + msg);
     }
 
-    public void log(Throwable throwable) {
+    public final void log(Throwable throwable) {
         StackTraceElement[] trace = throwable.getStackTrace();
         StringBuilder builder = new StringBuilder(trace.length << 5);
         builder.append(throwable.getClass().getName()).append(':').append(throwable.getMessage());
@@ -205,7 +205,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @param msg 前端显示信息
      * @return FAILURE_AND_CONTINUE
      */
-    public String fail(String msg) {
+    public final String fail(String msg) {
         String mes = msg + "【参考信息:" + getLogPrefix() + '】';
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(mes);
@@ -214,7 +214,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return Action.FAILURE_AND_CONTINUE;
     }
 
-    public String fail(Throwable throwable) {
+    public final String fail(Throwable throwable) {
         String mes = throwable.getClass().getName() + ':' + throwable.getMessage() + "【参考信息:" + getLogPrefix() + '】';
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(mes);
@@ -224,13 +224,13 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     /** 接口执行完毕 */
-    public String success() {
+    public final String success() {
         this.endResult = Action.SUCCESS;
         this.endMessage = "OK";
         return Action.SUCCESS;
     }
 
-    private void actionStart() {
+    public void actionStart() throws Throwable {
         log(" start, bill table is " + this.getTableNameLower() +
                 ", workflow title is " + this.getRequestName() +
                 ", creator hrmId is " + this.getCreatorId() +
@@ -238,12 +238,15 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     /** 每次执行execute结束时必然执行此方法 */
-    public void end() {
+    public final void end() {
         log(" end with result:" + this.endResult + ", message:" + this.endMessage);
-        clearCache();
+        try {
+            clearCache();
+        } catch (Throwable ignored) {
+        }
     }
 
-    public void clearCache() {
+    public void clearCache() throws Throwable {
         this.request = null;
         this.endResult = null;
         this.endMessage = null;
@@ -297,7 +300,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     @Override
-    public String execute(RequestInfo requestInfo) {
+    public final String execute(RequestInfo requestInfo) {
         this.request = requestInfo;
         try {
             this.actionStart();
