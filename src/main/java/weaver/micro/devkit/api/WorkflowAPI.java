@@ -83,27 +83,25 @@ public final class WorkflowAPI {
 
     /**
      * 获取表单字段简写到id的映射
-     * 只可获取表单名称为formtable_main_{billid}的表单字段映射
+     * 只可获取表单名称为formtable_main_{billid}的表单及其明细表_dt{tableIdx}字段映射
      *
-     * @param billid 流程表单id
-     * @param num    0：主表，大于0为明细表
+     * @param billid   流程表单id
+     * @param tableIdx 0：主表，大于0为明细表
      * @return 字段映射
      */
-    public static Map<String, String> queryFieldMapper(int billid, final String num) {
-        Assert.notEmpty(num, "table number");
+    public static Map<String, String> queryFieldMapper(int billid, final int tableIdx) {
         Map<String, String> result = new HashMap<String, String>();
         billid = Math.abs(billid);
         RecordSet rs = new RecordSet();
         String sql;
-        if ("0".equals(num)) {
-            sql = "select b.id,fieldname,detailtable from workflow_billfield b ,workflow_base a where b.billid=-"
+        if (tableIdx == 0) {
+            sql = "select id,fieldname,detailtable from workflow_billfield where billid=-"
                     + billid
-                    + " and a.formid=b.billid and (detailtable is null or detailtable = '') ";
+                    + " and (detailtable is null or detailtable = '') ";
         } else {
-            sql = "select b.id,fieldname,detailtable from workflow_billfield b ,workflow_base a where b.billid=-"
+            sql = "select id,fieldname,detailtable from workflow_billfield where b.billid=-"
                     + billid
-                    + " and a.formid=b.billid and detailtable='formtable_main_"
-                    + billid + "_dt" + num + "'";
+                    + " and detailtable='formtable_main_" + billid + "_dt" + tableIdx + "'";
         }
         rs.execute(sql);
         while (rs.next()) {
@@ -112,6 +110,7 @@ public final class WorkflowAPI {
 
         return result;
     }
+
 
     /**
      * 根据workflowid获取billTableName
