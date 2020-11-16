@@ -174,11 +174,15 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public final String getTableNameLower() {
-        return this.request.getRequestManager().getBillTableName().toLowerCase();
+        return this.getBillTableName().toLowerCase();
     }
 
     public final String getTableNameUpper() {
-        return this.request.getRequestManager().getBillTableName().toUpperCase();
+        return this.getBillTableName().toUpperCase();
+    }
+
+    public final String getBillTableName() {
+        return WorkflowAPI.queryTableName(this.getWorkflowId());
     }
 
     public final void log(String msg) {
