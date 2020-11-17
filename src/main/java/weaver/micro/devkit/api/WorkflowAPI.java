@@ -108,6 +108,10 @@ public final class WorkflowAPI {
         return result;
     }
 
+    public static int getBillId(int workflowId) {
+        String sql = "select b.id from workflow_base a,workflow_bill b where a.formid=b.id and a.id =" + workflowId;
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "id"));
+    }
 
     /**
      * 根据workflowid获取billTableName
@@ -115,8 +119,21 @@ public final class WorkflowAPI {
      * @param workflowId 流程id
      * @return 数据库表单名称
      */
+    public static String getBillTableName(int workflowId) {
+        String sql = "select b.tablename from workflow_base a,workflow_bill b where a.formid=b.id and a.id=" + workflowId;
+        return CommonAPI.querySingleField(sql, "tablename");
+    }
+
+    /**
+     * 根据workflowid获取billTableName
+     *
+     * @param workflowId 流程id
+     * @return 数据库表单名称
+     * @deprecated 修改方法名称使其更加语义化，见{@link #getBillTableName(int)}
+     */
+    @Deprecated
     public static String queryTableName(final int workflowId) {
-        String sql = "select b.tablename from workflow_base a,workflow_bill b where a.formid = b.id and a.id = " + workflowId;
+        String sql = "select b.tablename from workflow_base a,workflow_bill b where a.formid=b.id and a.id=" + workflowId;
         return CommonAPI.querySingleField(sql, "tablename");
     }
 
