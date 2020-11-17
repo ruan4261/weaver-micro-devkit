@@ -316,4 +316,24 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
             this.end();
         }
     }
+
+    /**
+     * @param tableIdx 0代表主表，其余代表明细表
+     * @param name     字段数据库名
+     * @return 字段id
+     */
+    public final int getFiledId(int tableIdx, String name) {
+        return WorkflowAPI.getFieldIdByFieldName(this.getBillId(), tableIdx, name);
+    }
+
+    /**
+     * @param tableIdx 0代表主表，其余代表明细表
+     * @param name     字段数据库名
+     * @return 字段显示值
+     */
+    public final String getDropdownBoxValue(int tableIdx, String name) {
+        int fieldId = this.getFiledId(tableIdx, name);
+        int fieldValue = Cast.o2Integer(this.getMainTableCache().get(name));
+        return WorkflowAPI.getDropdownBoxValue(fieldId, fieldValue);
+    }
 }

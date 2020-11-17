@@ -93,16 +93,13 @@ public final class WorkflowAPI {
         Map<String, String> result = new HashMap<String, String>();
         billid = Math.abs(billid);
         RecordSet rs = new RecordSet();
-        String sql;
-        if (tableIdx == 0) {
-            sql = "select id,fieldname,detailtable from workflow_billfield where billid=-"
-                    + billid
-                    + " and (detailtable is null or detailtable = '') ";
-        } else {
-            sql = "select id,fieldname,detailtable from workflow_billfield where b.billid=-"
-                    + billid
-                    + " and detailtable='formtable_main_" + billid + "_dt" + tableIdx + "'";
-        }
+
+        String sql = "select id,fieldname from workflow_billfield where billid=-" + billid;
+        if (tableIdx == 0)
+            sql += " and (detailtable is null or detailtable = '') ";
+        else
+            sql += " and detailtable='formtable_main_" + billid + "_dt" + tableIdx + "'";
+
         rs.execute(sql);
         while (rs.next()) {
             result.put(Util.null2String(rs.getString("fieldname")).toLowerCase(), Util.null2String(rs.getString("id")));
@@ -228,5 +225,45 @@ public final class WorkflowAPI {
         int nodeid = Util.getIntValue(CommonAPI.querySingleField("select nodeid from workflow_requestlog where logid=" + logid, "nodeid"));
         if (nodeid == -1) return EMPTY;
         return CommonAPI.querySingleField("select nodename from workflow_nodebase where id=" + nodeid, "nodename");
+    }
+
+    /**
+     * 获取表单某字段的id
+     *
+     * @param billId   主表billId
+     * @param tableIdx 0代表主表，其余代表明细表
+     * @param name     表单字段数据库名
+     * @return 表单字段id
+     */
+    public static int getFieldIdByFieldName(int billId, int tableIdx, String name) {
+        billId = Math.abs(billId);
+        RecordSet rs = new RecordSet();
+
+        String sql = "select id from workflow_billfield where fieldname='" + name + "' and billid=-" + billId;
+        if (tableIdx == 0)
+            sql += " and (detailtable is null or detailtable = '') ";
+        else
+            sql += " and detailtable='formtable_main_" + billId + "_dt" + tableIdx + "'";
+
+        rs.execute(sql);
+        if (!rs.next()) {
+            String tablename = "formtable_main_" + billId + (tableIdx == 0 ? "" : ("_dt" + tableIdx));
+            throw new RuntimeException("No such field, input : billId=" + billId + ", billTable=" + tablename + ", field(notExist)=" + name);
+        }
+        return rs.getInt("id");
+    }
+
+    /**
+     * 获取表单下拉框的值
+     *
+     * @param fieldId  表单字段id
+     * @param valueIdx 选择的value
+     */
+    public static String getDropdownBoxValue(int fieldId, int valueIdx) {
+        RecordSet rs = new RecordSet();
+        rs.execute("select selectvalue,selectname from workflow_selectitem where fieldid=" + fieldId + " and selectvalue=" + valueIdx);
+        if (!rs.next())
+            throw new RuntimeException("No such select item, input : fieldId=" + fieldId + ", selectvalue=" + valueIdx);
+        return rs.getString("selectname");
     }
 }
