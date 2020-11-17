@@ -154,7 +154,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public final int getBillId() {
-        return this.request.getRequestManager().getBillid();
+        return WorkflowAPI.getBillId(this.getWorkflowId());
     }
 
     /**
