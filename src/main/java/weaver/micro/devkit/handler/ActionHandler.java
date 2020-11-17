@@ -182,7 +182,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public final String getBillTableName() {
-        return WorkflowAPI.queryTableName(this.getWorkflowId());
+        return WorkflowAPI.getBillTableName(this.getWorkflowId());
     }
 
     public final void log(String msg) {
