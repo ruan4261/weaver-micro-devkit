@@ -36,6 +36,8 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     private Map<Integer, List<Map<String, String>>> detailTableListCache;
     // 明细表缓存，原型
     private DetailTable[] detailTablesCache;
+    // 字段校验
+    private boolean fieldVerifyFlag;
 
     public ActionHandler(String actionInfo) {
         this.actionInfo = actionInfo;
@@ -154,7 +156,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public final int getBillId() {
-        return WorkflowAPI.getBillId(this.getWorkflowId());
+        return WorkflowAPI.getBillIdByWorkflowId(this.getWorkflowId());
     }
 
     /**
@@ -182,7 +184,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public final String getBillTableName() {
-        return WorkflowAPI.getBillTableName(this.getWorkflowId());
+        return WorkflowAPI.getBillTableNameByWorkflowId(this.getWorkflowId());
     }
 
     public final void log(String msg) {
@@ -235,6 +237,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public void actionStart() throws Throwable {
+        this.setFieldVerifyFlag(true);
         log(" start, bill table is " + this.getTableNameLower() +
                 ", workflow title is " + this.getRequestName() +
                 ", creator hrmId is " + this.getCreatorId() +
@@ -265,12 +268,15 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     /**
-     * 校验字段长度
-     * 正常情况下返回EMPTY空字符串
+     * 校验字段长度<br>
+     * 正常情况下返回常量池中的EMPTY空字符串<br>
+     * 如字段超长则会返回可供显示的信息(包括引号)，例如 '字段A'
      * case:
-     * 1.如无法获取该字段，返回空字符串
-     * 2.字段在长度限制内，返回空字符串
-     * 3.字段超长，不通过校验，返回信息为可供显示的信息(包括引号) -> '字段名称'
+     * <ul>
+     * <li>1.如无法获取该字段，返回空字符串</li>
+     * <li>2.字段在长度限制内，返回空字符串</li>
+     * <li>3.字段超长，不通过校验，返回信息</li>
+     * </ul>
      *
      * @param table     为0时选择主表字段，非0时为明细表序号
      * @param field     字段数据库名
@@ -308,6 +314,12 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         this.request = requestInfo;
         try {
             this.actionStart();
+            // 字段校验
+            String mes = this.fieldVerify();
+            if (!this.fieldVerifyFlag)
+                return this.fail(mes);
+
+            // 正常流程
             return this.handle(requestInfo);
         } catch (Throwable e) {
             this.ifException(e);
@@ -335,5 +347,18 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         int fieldId = this.getFiledId(tableIdx, name);
         int fieldValue = Cast.o2Integer(this.getMainTableCache().get(name));
         return WorkflowAPI.getDropdownBoxValue(fieldId, fieldValue);
+    }
+
+    /**
+     * 请覆盖本方法，通过{@link #setFieldVerifyFlag(boolean)}方法设置校验成功与否
+     * 如果{@link #fieldVerifyFlag}为true则通过校验，如果为false则此方法应该返回信息用于显示给用户
+     */
+    public String fieldVerify() {
+        // fieldVerifyFlag在actionStart()时被设置为默认true
+        return "Success";
+    }
+
+    public final void setFieldVerifyFlag(boolean fieldVerifyFlag) {
+        this.fieldVerifyFlag = fieldVerifyFlag;
     }
 }
