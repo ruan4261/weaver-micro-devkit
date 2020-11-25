@@ -2,6 +2,7 @@ package weaver.micro.devkit.api;
 
 import weaver.conn.RecordSet;
 import weaver.general.Util;
+import weaver.micro.devkit.Cast;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,5 +60,15 @@ public final class HrmAPI {
     public static String queryDepartName(final int departId) {
         String sql = "select departmentname from hrmdepartment where id = " + departId;
         return CommonAPI.querySingleField(sql, "departmentname");
+    }
+
+    public static int queryHrmIdByHrmName(String hrmName) {
+        String sql = "select id from HrmResource where lastname='" + hrmName + "'";
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "id"));
+    }
+
+    public static int queryDepartIdByDepartName(String departName) {
+        String sql = "select id from HrmResource where departmentname='" + departName + "'";
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "id"));
     }
 }
