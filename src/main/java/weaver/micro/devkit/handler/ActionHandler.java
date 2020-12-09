@@ -18,6 +18,8 @@ import java.util.Map;
 /**
  * 流程对象RequestInfo处理器。
  *
+ * <h1>特别注意：在Ecology系统中，Action为无状态模型，使用单例控制！请注意自行控制内部各实例属性的创建销毁！</h1>
+ *
  * @author ruan4261
  */
 public abstract class ActionHandler extends BaseBean implements Handler, Action {
@@ -153,6 +155,24 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
 
     public final int getWorkflowId() {
         return Cast.o2Integer(this.request.getWorkflowid());
+    }
+
+    public final int getCurrentNodeId() {
+        String sql = "select nownodeid from workflow_nownode where requestid=" + this.getRequestId();
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "nownodeid"));
+    }
+
+    public final String getCurrentNodeName() {
+        int nodeId = getCurrentNodeId();
+        String sql = "select nodename from workflow_nodebase where id=" + nodeId;
+        return CommonAPI.querySingleField(sql, "nodename");
+    }
+
+    /**
+     * 流程路径名称
+     */
+    public String getWorkflowPathName() {
+        return WorkflowAPI.getWorkflowPathName(this.getWorkflowId());
     }
 
     public final int getBillId() {
@@ -333,8 +353,19 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @param tableIdx 0代表主表，其余代表明细表
      * @param name     字段数据库名
      * @return 字段id
+     * @deprecated 错拼
      */
+    @Deprecated
     public final int getFiledId(int tableIdx, String name) {
+        return this.getFieldId(tableIdx, name);
+    }
+
+    /**
+     * @param tableIdx 0代表主表，其余代表明细表
+     * @param name     字段数据库名
+     * @return 字段id
+     */
+    public final int getFieldId(int tableIdx, String name) {
         return WorkflowAPI.getFieldIdByFieldName(this.getBillId(), tableIdx, name);
     }
 

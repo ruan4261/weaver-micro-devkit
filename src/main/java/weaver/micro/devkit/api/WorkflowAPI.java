@@ -64,7 +64,6 @@ public final class WorkflowAPI {
         RecordSet rs = new RecordSet();
         String sql = "select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark,a.operatedate,a.operatetime from workflow_requestLog a left outer join workflow_nodebase b on a.nodeid=b.id where a.requestid=" + requestId + " order by a.nodeid";
         rs.execute(sql);
-        if (!rs.next()) return result;
 
         while (rs.next()) {
             Map<String, String> map = new HashMap<String, String>();
@@ -343,5 +342,15 @@ public final class WorkflowAPI {
         if (orderId == 0) return billTableName;
         int billId = getBillIdByBillTableName(billTableName);
         return getDetailTableNameByBillIdAndOrderId(billId, orderId);
+    }
+
+    /**
+     * 获取流程路径的名称
+     *
+     * @param workflowId 流程id, 表workflow_base中的id
+     */
+    public static String getWorkflowPathName(int workflowId) {
+        String sql = "select workflowname from workflow_base where id=" + workflowId;
+        return CommonAPI.querySingleField(sql, "workflowname");
     }
 }
