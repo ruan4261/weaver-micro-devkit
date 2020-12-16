@@ -259,6 +259,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     public void actionStart() throws Throwable {
         this.setFieldVerifyFlag(true);
         log(" start, bill table is " + this.getTableNameLower() +
+                ", currentNodeName is " + this.getCurrentNodeName() +
                 ", workflow title is " + this.getRequestName() +
                 ", creator hrmId is " + this.getCreatorId() +
                 ", runTimes of this action instance is " + (++this.instanceRunTimes));
@@ -283,8 +284,9 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     /** 发生异常情况下在action结束时执行，该方法用于自定义重写 */
-    public void ifException(Throwable e) {
+    public String ifException(Throwable e) {
         this.log(e);
+        return this.fail(e);
     }
 
     /**
@@ -342,8 +344,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
             // 正常流程
             return this.handle(requestInfo);
         } catch (Throwable e) {
-            this.ifException(e);
-            return this.fail(e);
+            return this.ifException(e);
         } finally {
             this.end();
         }
@@ -386,7 +387,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      */
     public String fieldVerify() {
         // fieldVerifyFlag在actionStart()时被设置为默认true
-        return "Success";
+        return "";
     }
 
     public final void setFieldVerifyFlag(boolean fieldVerifyFlag) {
