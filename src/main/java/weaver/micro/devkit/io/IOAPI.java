@@ -1,6 +1,7 @@
 package weaver.micro.devkit.io;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
@@ -111,6 +112,58 @@ public final class IOAPI {
             if (output != null)
                 output.close();
         }
+    }
+
+    public static String getRemoteString(String path){
+        return "";// todo
+    }
+
+    /**
+     * 网络字节流
+     */
+    public static byte[] getRemoteBytes(String path) throws IOException {
+        HttpURLConnection conn = null;
+        InputStream is = null;
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            //创建远程url连接对象
+            URL url = new URL(path);
+            //通过远程url连接对象打开一个连接，强转成HTTPURLConnection类
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            //设置连接超时时间和读取超时时间
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(60000);
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36");
+            //发送请求
+            conn.connect();
+            //通过conn取得输入流，并使用Reader读取
+            if (200 == conn.getResponseCode()) {
+                is = conn.getInputStream();
+
+                int len;
+                byte[] subData = new byte[1024];
+                while ((len = is.read(subData, 0, subData.length)) != -1) {
+                    outputStream.write(subData, 0, len);
+                }
+            } else {
+                throw new IOException(conn.getResponseCode() + " :: " + conn.getResponseMessage());
+            }
+        } finally {
+            try {
+                outputStream.close();
+            } catch (IOException ignore) {
+            }
+            if (is != null)
+                try {
+                    is.close();
+                } catch (IOException ignore) {
+                }
+            if (conn != null)
+                conn.disconnect();
+        }
+        return outputStream.toByteArray();
     }
 
     public static String readLocalFileText(String path) throws IOException {

@@ -51,6 +51,14 @@ public final class HrmAPI {
         return result;
     }
 
+    public static int queryDepartIdByHrmId(int hrmId) {
+        return Cast.o2Integer(CommonAPI.querySingleField("select departmentid from hrmresource where id=" + hrmId, "departmentid"));
+    }
+
+    public static int querySubCompanyIdByHrmId(int hrmId) {
+        return Cast.o2Integer(CommonAPI.querySingleField("select subcompanyid1 from hrmresource where id=" + hrmId, "subcompanyid1"));
+    }
+
     /**
      * 通过部门id查询部门名称
      *
@@ -71,4 +79,10 @@ public final class HrmAPI {
         String sql = "select id from HrmResource where departmentname='" + departName + "'";
         return Cast.o2Integer(CommonAPI.querySingleField(sql, "id"));
     }
+
+    public static String querySubCompanyNameById(int id) {
+        return CommonAPI.querySingleField("select subcompanyname from hrmsubcompany where id=" + id, "subcompanyname");
+    }
+
+
 }
