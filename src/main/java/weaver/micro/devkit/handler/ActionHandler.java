@@ -77,7 +77,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @return 明细表下标！流程第(tableIdx + 1)个明细表的对应多行数据，字段名到流程数据的映射，数据值可能为NULL。
      */
     public List<Map<String, String>> getDetailTableCache(int table) {
-        if (detailTableListCache == null) detailTableListCache = new HashMap<Integer, List<Map<String, String>>>();
+        if (detailTableListCache == null) detailTableListCache = new HashMap<Integer, List<Map<String, String>>>(8);
 
         List<Map<String, String>> data = detailTableListCache.get(table);
         if (data != null) return data;
@@ -109,7 +109,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      */
     public Map<String, String> getMainTableNewest() {
         Map<String, String> res = WorkflowAPI.queryRequestMainData(getTableNameUpper(), getRequestId());
-        logLine("MAIN FORM DATA(Newest) : " + mainTableCache.toString());
+        logLine("MAIN FORM DATA(Newest) : " + res.toString());
         return res;
     }
 
