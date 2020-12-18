@@ -9,6 +9,7 @@ import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
 import weaver.soa.workflow.request.*;
+import weaver.workflow.request.RequestManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +45,14 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     public ActionHandler(String actionInfo) {
         this.actionInfo = actionInfo;
         this.instanceRunTimes = 0;
+    }
+
+    public RequestInfo requestInfo(){
+        return this.request;
+    }
+
+    public RequestManager requestManager(){
+        return this.request.getRequestManager();
     }
 
     /**
