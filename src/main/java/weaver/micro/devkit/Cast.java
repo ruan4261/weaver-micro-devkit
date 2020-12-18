@@ -61,17 +61,38 @@ public final class Cast {
     /**
      * 默认返回-1
      */
-    public static Integer o2Integer(Object val) {
+    public static int o2Integer(Object val) {
         return o2Integer(val, -1);
     }
 
-    public static Integer o2Integer(Object val, int defaultVal) {
+    public static int o2Integer(Object val, int defaultVal) {
         if (val == null) return defaultVal;
         try {
             if (val instanceof Number) {
                 return ((Number) val).intValue();
             } else if (val instanceof CharSequence) {
                 return Integer.parseInt(val.toString());
+            }
+        } catch (NumberFormatException ignore) {
+            return defaultVal;
+        }
+        return defaultVal;
+    }
+
+    /**
+     * 默认返回-1
+     */
+    public static long o2Long(Object val) {
+        return o2Long(val, -1L);
+    }
+
+    public static long o2Long(Object val, long defaultVal) {
+        if (val == null) return defaultVal;
+        try {
+            if (val instanceof Number) {
+                return ((Number) val).longValue();
+            } else if (val instanceof CharSequence) {
+                return Long.parseLong(val.toString());
             }
         } catch (NumberFormatException ignore) {
             return defaultVal;

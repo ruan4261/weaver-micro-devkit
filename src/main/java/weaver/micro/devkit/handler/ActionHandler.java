@@ -376,7 +376,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @return 字段显示值
      */
     public final String getDropdownBoxValue(int tableIdx, String name) {
-        int fieldId = this.getFiledId(tableIdx, name);
+        int fieldId = this.getFieldId(tableIdx, name);
         int fieldValue = Cast.o2Integer(this.getMainTableCache().get(name));
         return WorkflowAPI.getDropdownBoxValue(fieldId, fieldValue);
     }
