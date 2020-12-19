@@ -94,9 +94,6 @@ public final class Assert {
         if (num.intValue() < 0) fail(mes);
     }
 
-    /**
-     * 判定为true时触发IllegalDataException异常
-     */
     public static void judge(Judgement judgement) {
         if (judgement.judge())
             fail(null);
@@ -116,6 +113,9 @@ public final class Assert {
 
     }
 
+    /**
+     * RuntimeException
+     */
     public static RuntimeException fail(String mes) throws RuntimeException {
         throw new RuntimeException(mes);
     }
