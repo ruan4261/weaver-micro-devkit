@@ -99,9 +99,6 @@ public final class Assert {
             fail(null);
     }
 
-    /**
-     * 判定为true时触发IllegalDataException异常
-     */
     public static void judge(Judgement judgement, String mes) {
         if (judgement.judge())
             fail(mes);
