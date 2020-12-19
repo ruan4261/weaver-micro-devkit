@@ -33,8 +33,7 @@ public final class BeanUtil {
         Map<String, Object> map = new HashMap<String, Object>(fields.length);
         for (Field field : fields) {
             try {
-                if (!field.isAccessible())
-                    field.setAccessible(true);
+                field.setAccessible(true);
 
                 map.put(field.getName(), field.get(object));
             } catch (IllegalAccessException ignore) {
