@@ -117,7 +117,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * 通过数据库查询获取最新流程主表信息
      */
     public Map<String, String> getMainTableNewest() {
-        Map<String, String> res = WorkflowAPI.queryRequestMainData(getTableNameUpper(), getRequestId());
+        Map<String, String> res = WorkflowAPI.queryRequestMainData(getBillTableName(), getRequestId());
         logLine("MAIN FORM DATA(Newest) : " + res.toString());
         return res;
     }
@@ -128,7 +128,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @param table 明细表序号，从1开始
      */
     public List<Map<String, String>> getDetailTableNewest(int table) {
-        List<Map<String, String>> res = WorkflowAPI.queryRequestDetailData(getTableNameUpper(), getRequestId(), table);
+        List<Map<String, String>> res = WorkflowAPI.queryRequestDetailData(getBillTableName(), getRequestId(), table);
         logLine("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res.toString());
         return res;
     }
@@ -204,10 +204,12 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return this.request.getRsTrans();
     }
 
+    @Deprecated
     public final String getTableNameLower() {
         return this.getBillTableName().toLowerCase();
     }
 
+    @Deprecated
     public final String getTableNameUpper() {
         return this.getBillTableName().toUpperCase();
     }
