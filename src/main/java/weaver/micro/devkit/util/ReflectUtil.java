@@ -11,8 +11,7 @@ public final class ReflectUtil {
     }
 
     /**
-     * 获取类本身以及其所有实现的接口
-     * 包括更上层的超类和他们实现的接口
+     * 获取类本类, 超类, 实现接口
      * 数组顺序是：自身->自身接口->超类->超类接口->超类的超类->超类的超类的接口->...
      */
     public static Class<?>[] getAllSuper(Class<?> clazz) {
