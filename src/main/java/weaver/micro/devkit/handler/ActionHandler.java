@@ -47,11 +47,11 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         this.instanceRunTimes = 0;
     }
 
-    public RequestInfo requestInfo(){
+    public RequestInfo requestInfo() {
         return this.request;
     }
 
-    public RequestManager requestManager(){
+    public RequestManager requestManager() {
         return this.request.getRequestManager();
     }
 
@@ -210,6 +210,14 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
 
     public final String getTableNameUpper() {
         return this.getBillTableName().toUpperCase();
+    }
+
+    /** 明细order从1开始, 为0时返回主表名称, 不存在该明细表则会抛出运行时异常 */
+    public final String getDetailTableName(int order) {
+        String name = WorkflowAPI.getDetailTableNameByBillIdAndOrderId(getBillId(), order);
+        if ("".equals(name))
+            throw new RuntimeException("BillTable [" + getBillTableName() + "] doesn't have such detail table which order number is " + order + ".");
+        return name;
     }
 
     public final String getBillTableName() {
@@ -383,11 +391,25 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @param tableIdx 0代表主表，其余代表明细表
      * @param name     字段数据库名
      * @return 字段显示值
+     * @deprecated cannot get detail table values
      */
+    @Deprecated
     public final String getDropdownBoxValue(int tableIdx, String name) {
+        // tableIdx can only be zero
         int fieldId = this.getFieldId(tableIdx, name);
         int fieldValue = Cast.o2Integer(this.getMainTableCache().get(name));
         return WorkflowAPI.getDropdownBoxValue(fieldId, fieldValue);
+    }
+
+    /**
+     * @param tableIdx 0代表主表，其余代表明细表
+     * @param name     字段数据库名
+     * @param value    字段下标值
+     * @return 字段显示值
+     */
+    public final String getDropdownBoxShowValue(int tableIdx, String name, int value) {
+        int fieldId = this.getFieldId(tableIdx, name);
+        return WorkflowAPI.getDropdownBoxValue(fieldId, value);
     }
 
     /**
