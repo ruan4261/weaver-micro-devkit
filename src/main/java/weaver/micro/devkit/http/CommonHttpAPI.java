@@ -58,7 +58,7 @@ public class CommonHttpAPI {
     /**
      * 基于默认请求配置构建一个新的客户端
      */
-    static CloseableHttpClient BUILD_DEFAULT_CLIENT() {
+    public static CloseableHttpClient BUILD_DEFAULT_CLIENT() {
         return HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build();
     }
 
@@ -72,7 +72,7 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    static HttpResponse doGet(HttpClient client, final String uri, Map<String, String> headers, Map<String, String> param) throws IOException, URISyntaxException {
+    public static HttpResponse doGet(HttpClient client, final String uri, Map<String, String> headers, Map<String, String> param) throws IOException, URISyntaxException {
         // entity
         String url = BasicQuery.buildUrl(param, uri);
 
@@ -92,7 +92,7 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    static HttpResponse doPostURLEncode(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
+    public static HttpResponse doPostURLEncode(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
         // method
         if (headers == null) headers = new HashMap<String, String>(1, 1f);
         headers.put("Content-Type", "application/x-www-form-urlencoded");
@@ -115,7 +115,7 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    static HttpResponse doPostJson(HttpClient client, String uri, Map<String, String> headers, String json) throws IOException, URISyntaxException {
+    public static HttpResponse doPostJson(HttpClient client, String uri, Map<String, String> headers, String json) throws IOException, URISyntaxException {
         // method
         if (headers == null) headers = new HashMap<String, String>(1, 1f);
         headers.put("Content-Type", "application/json");
@@ -137,7 +137,7 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    static HttpResponse doPostMultipart(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
+    public static HttpResponse doPostMultipart(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
         // method
         if (headers == null) headers = new HashMap<String, String>(1, 1f);
         headers.put("Content-Type", "multipart/form-data");
@@ -168,21 +168,21 @@ public class CommonHttpAPI {
     /**
      * http状态码
      */
-    static int getStatusCode(HttpResponse response) {
+    public static int getStatusCode(HttpResponse response) {
         return response.getStatusLine().getStatusCode();
     }
 
     /**
      * 它应该是对http状态的解释
      */
-    static String getReasonPhrase(HttpResponse response) {
+    public static String getReasonPhrase(HttpResponse response) {
         return response.getStatusLine().getReasonPhrase();
     }
 
     /**
      * 返回的主题内容，以指定字符编码获取，不包括http头
      */
-    static String getText(HttpResponse response, Charset charset) throws IOException {
+    public static String getText(HttpResponse response, Charset charset) throws IOException {
         return EntityUtils.toString(response.getEntity(), charset);
     }
 
@@ -192,14 +192,14 @@ public class CommonHttpAPI {
      * 一般来说，如果请求对象是个页面，该大概率无此键值，如果请求对象为某文件，则大概率存在此键值
      * 通过这种方式获取请求体长度不一定正确，因为该信息存在http头中，可被服务端手动修改
      */
-    static long getContentLength(HttpResponse response) {
+    public static long getContentLength(HttpResponse response) {
         return response.getEntity().getContentLength();
     }
 
     /**
      * 获取全部返回头
      */
-    static Header[] getAllHeaders(HttpResponse response) {
+    public static Header[] getAllHeaders(HttpResponse response) {
         return response.getAllHeaders();
     }
 
@@ -212,7 +212,7 @@ public class CommonHttpAPI {
      * @return 可返回构建对象
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    static HttpRequestBase buildMethod(HttpRequestBase requestBase, String uri, Map<String, String> headers) throws URISyntaxException {
+    public static HttpRequestBase buildMethod(HttpRequestBase requestBase, String uri, Map<String, String> headers) throws URISyntaxException {
         requestBase.setURI(new URI(uri));// url
         requestBase.setConfig(DEFAULT_CONFIG);// request config
         requestBase.setProtocolVersion(HttpVersion.HTTP_1_1);// http version
@@ -225,7 +225,7 @@ public class CommonHttpAPI {
         return requestBase;
     }
 
-    static void closeClient(CloseableHttpClient client) {
+    public static void closeClient(CloseableHttpClient client) {
         if (client != null)
             try {
                 client.close();
