@@ -95,26 +95,23 @@ public final class Assert {
     }
 
     public static void judge(Judgement judgement) {
-        if (judgement.judge())
+        if (!judgement.through())
             fail(null);
     }
 
     public static void judge(Judgement judgement, String mes) {
-        if (judgement.judge())
+        if (!judgement.through())
             fail(mes);
     }
 
     public interface Judgement {
 
-        boolean judge();
+        boolean through();
 
     }
 
-    /**
-     * RuntimeException
-     */
-    public static RuntimeException fail(String mes) throws RuntimeException {
-        throw new RuntimeException(mes);
+    public static IllegalArgumentException fail(String mes) throws IllegalArgumentException {
+        throw new IllegalArgumentException(mes);
     }
 
     public static NullPointerException npe(String mes) throws NullPointerException {
