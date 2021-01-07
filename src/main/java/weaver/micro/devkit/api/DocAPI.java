@@ -1,10 +1,12 @@
 package weaver.micro.devkit.api;
 
 import weaver.conn.RecordSet;
+import weaver.docs.docs.DocImageManager;
+import weaver.docs.docs.VersionIdUpdate;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
 import weaver.micro.devkit.Assert;
-import weaver.micro.devkit.io.IOAPI;
+import weaver.micro.devkit.io.LocalAPI;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +46,7 @@ public final class DocAPI {
     }
 
     /**
-     * 通过文档id获得最新文件信息，此方法最低兼容E8。
+     * 通过文档id获得最新文件信息。
      *
      * @param docId 文档id
      * @return imagefileid 文件id
@@ -55,7 +57,7 @@ public final class DocAPI {
      */
     public static Map<String, String> queryImageFileInfo(final int docId) {
         String fid = queryImageFileIdLatest(docId);
-        if ("".equals(fid)) return new HashMap<String,String>();
+        if ("".equals(fid)) return new HashMap<String, String>();
 
         RecordSet rs = new RecordSet();
         String sql;
@@ -73,16 +75,16 @@ public final class DocAPI {
     }
 
     /**
-     * 通过文档id获得输入流并将其内容保存在选定文件夹中。
+     * 通过文档id获得最新附件并将其保存在选定文件夹中。
      *
-     * @param docId    文档id
-     * @param path     保存文件到该文件夹下
-     * @param filename 文件名称，此入参为空时使用数据库保存的文档名
-     * @param charset  如此参数不为空，将使用对应字符流，如参数为空，则使用字节流
+     * @param docId      文档id
+     * @param saveFolder 保存文件到该文件夹下
+     * @param filename   文件名称，此入参为空时使用数据库保存的文档名
+     * @param charset    如此参数不为空，将使用对应字符流，如参数为空，则使用字节流
      * @return 保存的完整路径
      */
-    public static String saveDocLocally(final int docId, final String path, final String filename, final String charset) {
-        Assert.notEmpty(path, "path");
+    public static String saveDocLocally(int docId, String saveFolder, String filename, String charset) {
+        Assert.notEmpty(saveFolder, "path");
 
         Map<String, String> imageFileInfo = queryImageFileInfo(docId);
         String fid = imageFileInfo.get("imagefileid");
@@ -98,17 +100,65 @@ public final class DocAPI {
         // 如果filename参数为空，则使用真实文件名作为保存的文件名
         String name = Util.null2String(filename).equals("") ? Util.null2String(imageFileInfo.get("imagefilename")) : filename;
         String savePath;
-        if (path.endsWith(File.separator)) savePath = path + name;
-        else savePath = path + File.separator + name;
+        if (saveFolder.endsWith(File.separator)) savePath = saveFolder + name;
+        else savePath = saveFolder + File.separator + name;
 
         try {
             if (charset == null || charset.equals(""))// 无字符集使用字节流
-                IOAPI.inputStreamSaveLocally(savePath, inputStream, false);
+                LocalAPI.saveByteStream(inputStream, savePath);
             else// 有字符集使用字符流
-                IOAPI.inputStreamSaveLocallyCharset(savePath, inputStream, false, charset);
+                LocalAPI.saveCharStream(inputStream, savePath, charset);
         } catch (IOException e) {
             return EMPTY;
         }
         return savePath;
+    }
+
+    /**
+     * @param detailedCategory 细粒度最小存放目录
+     * @param title            文档标题
+     * @param content          文档内容
+     * @param creator          创建者, 所属人
+     * @return 存放的文档id
+     */
+    public static int autoArchiving(int detailedCategory, String title, String content, int creator) throws Exception {
+        // 文档存放目录
+        CreateNewsDoc createNewsDoc = new CreateNewsDoc(detailedCategory);
+        return createNewsDoc.createDoc(title, content, creator);
+    }
+
+    /**
+     * 将文件作为文档附件
+     *
+     * @param docId       文档id
+     * @param imageFileId 文件id
+     * @param fileName    文件名称
+     */
+    public static void createDocImageFile(int docId, int imageFileId, String fileName) {
+        RecordSet rs = new RecordSet();
+        DocImageManager dm = new DocImageManager();
+        VersionIdUpdate versionIdUpdate = new VersionIdUpdate();
+        int versionid = versionIdUpdate.getVersionNewId();
+
+        try {
+            rs.execute("insert into DocImageFile (id,docid,imagefileid,imagefilename,imagefilewidth,imagefileheight,imagefielsize,docfiletype,versionid)" +
+                    " values(" + dm.getNextDocImageFileId() + "," + docId + "," + imageFileId + ",'" + fileName + "','0','0','0','3'," + versionid + ")");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 创建一个oa文件
+     *
+     * @param fileName 文件名
+     * @param data     文件内容
+     * @return 在表ImageFile中的id
+     */
+    public static int createImageFile(String fileName, byte[] data) {
+        ImageFileManager imageFileManager = new ImageFileManager();
+        imageFileManager.setImagFileName(fileName);
+        imageFileManager.setData(data);
+        return imageFileManager.saveImageFile();
     }
 }
