@@ -114,7 +114,7 @@ public final class ArrayUtil {
      * 改变数组大小
      * 支持扩大或缩小
      * 如果数组扩大，原元素将被全部保留于原下标位置；
-     * 如果数组缩小，所有下标大于登录新数组长度的元素将被舍去。
+     * 如果数组缩小，所有下标大于等于新数组长度的元素将被舍去。
      */
     @SuppressWarnings("unchecked")
     public static <T> T[] arrayExtend(T[] a, int newLength) {
@@ -129,7 +129,7 @@ public final class ArrayUtil {
         return dest;
     }
 
-    public static <T> T[] arrayFilter(T[] a, ArrayFilter<T> filter) {
+    public static <T> void arrayFilter(T[] a, ArrayFilter<T> filter) {
         int alive = 0;
         for (T ele : a) {
             if (filter.filter(ele)) {
@@ -138,8 +138,7 @@ public final class ArrayUtil {
         }
 
         if (alive != a.length)
-            return arrayExtend(a, alive);
-        return a;
+            arrayExtend(a, alive);
     }
 
     public interface ArrayFilter<T> {

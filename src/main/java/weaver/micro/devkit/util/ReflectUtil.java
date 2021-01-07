@@ -100,12 +100,13 @@ public final class ReflectUtil {
             }
         }
 
-        return ArrayUtil.arrayFilter(fields, new ArrayUtil.ArrayFilter<Field>() {
+        ArrayUtil.arrayFilter(fields, new ArrayUtil.ArrayFilter<Field>() {
             @Override
             public boolean filter(Field ele) {
                 int modifier = ele.getModifiers();
                 return (modifier & filter) == 0;
             }
         });
+        return fields;
     }
 }
