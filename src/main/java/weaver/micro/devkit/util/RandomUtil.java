@@ -1,6 +1,7 @@
 package weaver.micro.devkit.util;
 
 import java.util.Random;
+import java.util.UUID;
 
 public class RandomUtil {
 
@@ -47,6 +48,10 @@ public class RandomUtil {
         int low = allowZero.get() ? 0 : 1;
         int p = 1 - low;
         return new Random(System.nanoTime()).nextInt(limit + p) + low;
+    }
+
+    public static String UUID32() {
+        return UUID.randomUUID().toString().replaceAll("-", "");
     }
 
 }
