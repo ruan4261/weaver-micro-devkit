@@ -21,7 +21,7 @@ public abstract class BaseClassLoader extends ClassLoader {
     private String own;
 
     /**
-     * 无参构造主要是方便newInstance
+     * 无参构造主要是方便子类newInstance
      */
     public BaseClassLoader() {
         this.controller = null;
@@ -50,6 +50,8 @@ public abstract class BaseClassLoader extends ClassLoader {
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         this.initCheck();
         Assert.notNull(name);
+        // todo delete
+        System.out.println("Load: " + name);
 
         // 依赖类, 委派给所属版本管理器进行处理
         if (!name.equals(this.own))

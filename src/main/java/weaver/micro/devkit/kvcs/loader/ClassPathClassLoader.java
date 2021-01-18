@@ -15,16 +15,16 @@ import java.util.List;
 /**
  * 从classpath寻找字节码文件进行加载的加载器
  */
-public class ResourceClassLoader extends BaseClassLoader {
+public class ClassPathClassLoader extends BaseClassLoader {
 
     @Override
     public Class<?> findClass(String name) {
         // 将类全限定名转为资源形式
-        name = name.replace(".", "/") + ".class";
+        String path = name.replace(".", "/") + ".class";
 
         try {
-            Enumeration<URL> enumeration = ClassLoader.getSystemResources(name);
-            URL url = getOnlyURL(enumeration, name);
+            Enumeration<URL> enumeration = ClassLoader.getSystemResources(path);
+            URL url = getOnlyURL(enumeration, path);
             File file = new File(url.toURI());
 
             if (file.exists() && file.isFile()) {
