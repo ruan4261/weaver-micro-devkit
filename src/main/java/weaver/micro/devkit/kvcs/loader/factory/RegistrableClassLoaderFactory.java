@@ -108,14 +108,14 @@ public class RegistrableClassLoaderFactory implements ClassLoaderFactory {
             Assert.notNull(loader);
             int modifiers = loader.getModifiers();
             if (Modifier.isAbstract(modifiers))
-                throw new IllegalArgumentException("Class loader can not be abstracted!");
+                throw new IllegalArgumentException("Class loader cannot be abstracted!");
 
             try {
                 loader.newInstance();
             } catch (InstantiationException e) {
-                e.printStackTrace();
+                throw new IllegalArgumentException("Class loader cannot be instantiated with the nullary constructor !", e);
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                throw new IllegalArgumentException("Class loader does not have access to the nullary constructor!", e);
             }
         }
 

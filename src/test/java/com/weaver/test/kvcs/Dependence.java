@@ -1,13 +1,10 @@
 package com.weaver.test.kvcs;
 
-public class Dependence {
+public class Dependence implements ShowNum{
 
-    Short d;
-    int a;
-
-    {
-        a = 2;
-        d = 123;
+    @Override
+    public void print() {
+        System.out.println(1);
     }
 
 }

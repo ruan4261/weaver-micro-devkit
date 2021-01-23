@@ -1,7 +1,11 @@
 package com.weaver.test.kvcs;
 
-public class Entity {
+public class Entity implements ShowNum {
 
-    static int num = 1;
+    @Override
+    public void print() {
+        Dependence dependence = new Dependence();
+        dependence.print();
+    }
 
 }
