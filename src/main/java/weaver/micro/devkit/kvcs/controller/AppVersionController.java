@@ -6,7 +6,9 @@ import weaver.micro.devkit.kvcs.VersionController;
 import weaver.micro.devkit.kvcs.loader.BaseClassLoader;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 对于每个类, 都使用单独的类加载器进行定义, 保证更新影响到其他依赖其的类 todo 可行性待验证
@@ -36,6 +38,11 @@ public class AppVersionController implements VersionController {
     private final Map<String, BaseClassLoader> versionCache = new HashMap<String, BaseClassLoader>();
 
     /**
+     * 排除管理的类
+     */
+    private final Set<String> exclusion = new HashSet<String>();
+
+    /**
      * 管理策略, 用于判断接受加载的目标类可否通过当前版本控制器进行管理
      */
     private ManagementStrategy managementStrategy;
@@ -45,6 +52,8 @@ public class AppVersionController implements VersionController {
      */
     private ClassLoaderFactory classLoaderFactory;
 
+    private final Object lock = new Object();
+
     /**
      * 加载器接口, 不会返回空值, 仅会抛异常
      * 先判断目标类能否进行管理, 并优先提供缓存
@@ -52,11 +61,12 @@ public class AppVersionController implements VersionController {
      */
     @Override
     public Class<?> load(String name) throws ClassNotFoundException {
-        if (this.isManagedClass(name)) {
+        // has class loader and is not excluded managed
+        if (this.isManagedClass(name) && !this.exclusion.contains(name)) {
             BaseClassLoader cache = this.versionCache.get(name);
             if (cache == null) {
                 // no cache
-                synchronized (name.intern()) {
+                synchronized (this.lock) {
                     // get target class loader
                     Class<? extends BaseClassLoader> loader = this.classLoaderFactory.getClassLoader(name);
                     if (loader == null)
@@ -82,13 +92,27 @@ public class AppVersionController implements VersionController {
     }
 
     @Override
-    public void clearAll() {
+    public void unload(String name) {
+        this.versionCache.remove(name);
+    }
+
+    @Override
+    public void clear() {
         this.versionCache.clear();
     }
 
     @Override
-    public void clear(String name) {
-        this.versionCache.remove(name);
+    public void excludeClass(String name) {
+        synchronized (this.lock) {
+            this.exclusion.add(name);
+            // 排除已有缓存
+            this.versionCache.remove(name);
+        }
+    }
+
+    @Override
+    public void cancelExclusion(String name) {
+        this.exclusion.remove(name);
     }
 
     /**
@@ -105,7 +129,8 @@ public class AppVersionController implements VersionController {
     }
 
     /**
-     * 无法管理, 使用系统的双亲委派机制
+     * 无法管理, 交由外部加载
+     * 该类策略为使用系统类加载器(appclassloader)
      */
     protected Class<?> externalLoad(String name) throws ClassNotFoundException {
         return ClassLoader.getSystemClassLoader().loadClass(name);

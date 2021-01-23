@@ -53,9 +53,12 @@ public abstract class BaseClassLoader extends ClassLoader {
         // todo delete
         System.out.println("Load: " + name);
 
-        // 依赖类, 委派给所属版本管理器进行处理
+        // 不为own则为依赖类, 委派给所属版本管理器进行处理
         if (!name.equals(this.own))
             return this.controller.load(name);
+
+        // todo delete
+        System.out.println("Load own: " + name);
 
         // own, 自行加载
         synchronized (name.intern()) {

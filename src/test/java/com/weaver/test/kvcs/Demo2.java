@@ -8,18 +8,18 @@ import weaver.micro.devkit.kvcs.loader.factory.RegistrableClassLoaderFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 
 public class Demo2 {
 
-    public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException, IOException {
+    public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException, IOException, InstantiationException {
         ClassLoaderFactory factory = new RegistrableClassLoaderFactory();
         VersionController controller = AppVersionController.getInstance(factory);
         factory.getRegister().registerPackageLoader("com.weaver.test.kvcs", ClassPathClassLoader.class);
+        controller.excludeClass("com.weaver.test.kvcs.ShowNum");
 
         loop(controller);
-        controller.clearAll();
+        controller.unload("com.weaver.test.kvcs.Dependence");
 
         InputStream stream = System.in;
         byte[] data = new byte[256];
@@ -29,11 +29,9 @@ public class Demo2 {
         loop(controller);
     }
 
-    static void loop(VersionController controller) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
-        Class<?> entity = controller.load("com.weaver.test.kvcs.Entity");
-        Field field = entity.getDeclaredField("num");
-        field.setAccessible(true);
-        System.out.println(field.getInt(field));
+    static void loop(VersionController controller) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException, InstantiationException {
+        ShowNum showNum = (ShowNum) controller.load("com.weaver.test.kvcs.Entity").newInstance();
+        showNum.print();
     }
 
 }
