@@ -1,7 +1,7 @@
 package com.weaver.test.kvcs;
 
-import weaver.micro.devkit.kvcs.ClassLoaderFactory;
-import weaver.micro.devkit.kvcs.ClassLoaderFactoryRegister;
+import weaver.micro.devkit.kvcs.loader.ClassLoaderFactory;
+import weaver.micro.devkit.kvcs.loader.ClassLoaderFactoryRegister;
 import weaver.micro.devkit.kvcs.loader.factory.RegistrableClassLoaderFactory;
 
 import java.lang.reflect.InvocationTargetException;

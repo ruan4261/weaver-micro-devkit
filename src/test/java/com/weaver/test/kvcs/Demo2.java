@@ -1,9 +1,9 @@
 package com.weaver.test.kvcs;
 
-import weaver.micro.devkit.kvcs.ClassLoaderFactory;
+import weaver.micro.devkit.kvcs.loader.ClassLoaderFactory;
 import weaver.micro.devkit.kvcs.VersionController;
 import weaver.micro.devkit.kvcs.controller.AppVersionController;
-import weaver.micro.devkit.kvcs.loader.ClassPathClassLoader;
+import weaver.micro.devkit.kvcs.loader.impl.ClassPathClassLoader;
 import weaver.micro.devkit.kvcs.loader.factory.RegistrableClassLoaderFactory;
 
 import java.io.IOException;
@@ -14,7 +14,7 @@ public class Demo2 {
 
     public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException, IOException, InstantiationException {
         ClassLoaderFactory factory = new RegistrableClassLoaderFactory();
-        VersionController controller = AppVersionController.getInstance(factory);
+        VersionController controller = AppVersionController.getInstance("test-controller", factory);
         factory.getRegister().registerPackageLoader("com.weaver.test.kvcs", ClassPathClassLoader.class);
         controller.excludeClass("com.weaver.test.kvcs.ShowNum");
 
