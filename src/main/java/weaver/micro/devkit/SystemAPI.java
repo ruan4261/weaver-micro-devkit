@@ -61,6 +61,13 @@ public final class SystemAPI {
     }
 
     /**
+     * @since 0.9.1
+     */
+    public static StackTraceElement[] getStackTrace0() {
+        return Thread.currentThread().getStackTrace();
+    }
+
+    /**
      * 当前标准时间戳
      * UTC +0 1970-01-01 00:00:00.0至当前的毫秒数
      * 基于计算机系统，会产生误差
