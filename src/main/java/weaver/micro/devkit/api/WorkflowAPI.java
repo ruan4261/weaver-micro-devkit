@@ -193,9 +193,28 @@ public final class WorkflowAPI {
      *
      * @param requestId 流程请求id
      */
-    public static String queryBillTableByRequest(final int requestId) {
-        String sql = "select tablename from workflow_bill bill left outer join workflow_base base on bill.id=base.formid left outer join workflow_requestbase req on base.id=req.workflowid where req.requestid='" + requestId + "'";
+    public static String queryBillTableByRequest(int requestId) {
+        String sql = "select bill.tablename as tablename"
+                + " from workflow_bill bill"
+                + " left outer join workflow_base base on bill.id=base.formid"
+                + " left outer join workflow_requestbase req on base.id=req.workflowid"
+                + " where req.requestid=" + requestId;
         return CommonAPI.querySingleField(sql, "tablename");
+    }
+
+    public static int getBillIdByRequestId(int requestId) {
+        String sql = "select base.formid as formid"
+                + " from workflow_base base"
+                + " left outer join workflow_requestbase req on base.id=req.workflowid"
+                + " where req.requestid=" + requestId;
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "formid"));
+    }
+
+    public static int getWorkflowIdByRequestId(int requestId) {
+        String sql = "select req.workflowid as workflowid"
+                + " from workflow_requestbase req"
+                + " where req.requestid=" + requestId;
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "workflowid"));
     }
 
     /**
