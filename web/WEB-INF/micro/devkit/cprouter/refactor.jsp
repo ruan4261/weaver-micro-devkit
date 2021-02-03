@@ -15,7 +15,7 @@
 
     String mode = "uf_cprouter";
     int modeid = -1;// 需要手动修改
-    String dest = "/interface/micro/devkit/router.jsp";
+    String dest = "/micro/devkit/cprouter/router.jsp";
 
     RecordSet exe = new RecordSet();// 执行
     RecordSet rs = new RecordSet();// 查询
