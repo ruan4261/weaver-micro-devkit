@@ -5,7 +5,9 @@ import java.util.UUID;
 
 public class RandomUtil {
 
-    // 随机数是否允许为0, 默认禁止, 则为false情况下最小为1
+    /**
+     * 随机数是否允许为0, 默认禁止, 则为false情况下最小为1
+     */
     final static ThreadLocal<Boolean> allowZero = new ThreadLocal<Boolean>() {
         @Override
         protected Boolean initialValue() {

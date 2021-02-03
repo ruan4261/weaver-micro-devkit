@@ -41,7 +41,7 @@ public final class ModeAPI {
                     // 录入数据
                     StringBuilder sql = new StringBuilder("update " + modeMainTable + " set ");
                     Set<Map.Entry<String, Object>> set = data.entrySet();
-                    for (Map.Entry entry : set) {
+                    for (Map.Entry<String, Object> entry : set) {
                         sql.append(entry.getKey()).append("='").append(entry.getValue().toString()).append("',");
                     }
                     if (sql.charAt(sql.length() - 1) == ',') {
