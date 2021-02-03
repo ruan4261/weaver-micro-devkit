@@ -1,11 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" %>
 <html>
 <head>
-    <title>单点</title>
+    <title>登录窗口</title>
 </head>
 <body>
 <div style="text-align: center;margin-top: 40px">
-    <h3>OA Log In.</h3>
+    <h3>Just choose one to fill in.</h3>
     <form id="form" action="casNEW.jsp" method="POST">
 
         Id : <input name="id" type="text"/>
