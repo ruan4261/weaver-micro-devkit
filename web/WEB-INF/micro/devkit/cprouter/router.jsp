@@ -35,37 +35,40 @@
 --%>
 <%!
     /**
-     * Check whether s1 include s2
-     *
-     * todo 需要性能优化
+     * Check whether s1 include s2(val.toString())
      */
-    public static boolean isInclude(String s1, String s2) {
+    boolean isInclude(String s1, int val) {
+        int offset = 0;
         int len = s1.length();
-        int limit = s2.length();
+        String s2 = Integer.toString(val);
+        int wid = s2.length();
+        int lastPossible = len - wid;
 
-        char first = s2.charAt(0);
-        char separator = ',';
-        char initial = '~';
-        char prev = initial;
+        while (offset <= lastPossible) {
+            offset = s1.indexOf(s2, offset);
+            if (offset == -1)
+                return false;
 
-        int effectOffset = len - limit + 1;
-        for (int i = 0; i < effectOffset; i++) {
-            char ch = s1.charAt(i);
-            if (ch == first && (prev == initial || prev == separator)) {
-                int p1 = i;
-                int p2 = 0;
-                while (p1 < len && p2 < limit) {
-                    if (s1.charAt(p1) != s2.charAt(p2))
-                        break;
-
-                    p1++;
-                    p2++;
-
-                    if (p2 == limit && (p1 == len || s1.charAt(p1) == separator))
-                        return true;
+            int end = offset + wid;
+            // check start
+            if (offset > 0) {
+                char prev = s1.charAt(offset - 1);
+                if (prev >= '0' && prev <= '9') {
+                    offset = end;
+                    continue;
                 }
             }
-            prev = ch;
+
+            // check end
+            if (end < len) {
+                char next = s1.charAt(end);
+                if (next >= '0' && next <= '9') {
+                    offset = end;
+                    continue;
+                }
+            }
+
+            return true;
         }
 
         return false;
@@ -73,7 +76,7 @@
 %>
 <%
     int workflowid = Util.getIntValue(request.getParameter("workflowid"));
-    String nodeid = request.getParameter("nodeid");
+    int nodeid = Util.getIntValue(request.getParameter("nodeid"));
 
     RecordSet rs = new RecordSet();
     rs.execute("select model,nodeid,custompage from uf_cprouter where disable<>1 and workflowid=" + workflowid + " order by load_order asc");// 这玩意可以用缓存...
