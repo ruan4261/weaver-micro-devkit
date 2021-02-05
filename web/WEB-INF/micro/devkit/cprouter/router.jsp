@@ -13,6 +13,7 @@
     model       整形(可以优化为unsigned_tinyint), 必填, 当model为0时代表全匹配, 可不填写nodeid
     nodeid      长度可变字符串, 可选, 以半角逗号(',')分割的节点数组
     custompage  长度可变字符串, 必填, 绑定页面路径, 仅允许头部为contentType="text/html;charset=UTF-8" language="java"的jsp文件
+    file_type   整形, 可选, 区分文件类型, 通过不同方式加载, 详情见下方说明
     load_order  整形, 可选, 数值小则优先加载, 空值默认为-1
     disable     整形, 是否禁用, 为1代表禁用, 用于临时测试
     describe    长度可变字符串, 可选, 用作前端查看时描述custompage作用, 该字段不会被代码读取或修改
@@ -23,6 +24,12 @@
     case 0: 全节点匹配
     case 1: 指定节点匹配, nodeid以半角逗号','分隔, case1优先级高于case2
     case 2: 指定节点排除, nodeid以半角逗号','分隔
+
+    ## file_type文件类型
+    case 1: jsp
+    case 2: js
+    case 3: css
+    default: jsp
 
     ## load_order加载顺序
     越小越优先加载, order相同情况下顺序随机
@@ -73,15 +80,15 @@
 
         return false;
     }
+
 %>
 <%
     int workflowid = Util.getIntValue(request.getParameter("workflowid"));
     int nodeid = Util.getIntValue(request.getParameter("nodeid"));
 
     RecordSet rs = new RecordSet();
-    rs.execute("select model,nodeid,custompage from uf_cprouter where disable<>1 and workflowid=" + workflowid + " order by load_order asc");// 这玩意可以用缓存...
+    rs.execute("select model,nodeid,custompage,file_type from uf_cprouter where disable<>1 and workflowid=" + workflowid + " order by load_order asc");// 这玩意可以用缓存...
     while (rs.next()) {
-        String path = rs.getString("custompage");
         int model = rs.getInt("model");
         // 是否include
         boolean include = false;
@@ -97,9 +104,30 @@
         }
 
         if (include) {
+            String path = rs.getString("custompage");
+            int fileType = rs.getInt("file_type");
+            switch (fileType) {
+                case 1:
+                default: {
+
 %>
 <jsp:include page="<%=path%>"/>
 <%
-        }
     }
+    break;
+    case 2: {
+%>
+<script src="<%=path%>"></script>
+<%
+    }
+    break;
+    case 3: {
+%>
+<link href="<%=path%>" type="text/css" rel="stylesheet">
+<%
+                }
+                break;
+            }
+        }
+    }// record set loop tail
 %>
