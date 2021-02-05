@@ -17,6 +17,7 @@ public final class WorkflowAPI {
     static final String EMPTY = "";
     /** 流程中的签字意见类型映射 */
     static final Map<String, String> LOG_TYPE_MAPPER = new HashMap<String, String>() {
+
         public Map<String, String> construct() {
             super.put("0", "批准");
             super.put("1", "保存");
@@ -32,6 +33,12 @@ public final class WorkflowAPI {
             super.put("s", "督办");
             return this;
         }
+
+        @Override
+        public String put(String key, String value) {
+            throw new UnsupportedOperationException();
+        }
+
     }.construct();
 
     /**
@@ -165,7 +172,9 @@ public final class WorkflowAPI {
             String requestname = rs.getString("requestname");
             String creater = rs.getString("creater");
             rs2.execute("select status from hrmresource where id=" + Util.getIntValue(creater));
-            if (!rs2.next() || 5 == Util.getIntValue(rs2.getString("status"))) return false;
+            if (!rs2.next() || 5 == rs2.getInt("status"))
+                return false;
+
             return new WorkflowToDoc().Start(Util.null2String(requestId), creater, requestname, workflowid);
         } else return false;
     }
@@ -183,7 +192,8 @@ public final class WorkflowAPI {
 
         String sql = "select max(id) id from DocDetail where fromworkflow = " + requestId;
         int docid = Util.getIntValue(CommonAPI.querySingleField(sql, "id"));
-        if (docid == -1) return EMPTY;
+        if (docid == -1)
+            return EMPTY;
 
         return DocAPI.saveDocLocally(Cast.o2Integer(docid), path, requestId + ".html", null);
     }
@@ -293,7 +303,9 @@ public final class WorkflowAPI {
      */
     public static String getNodeNameByLogId(int logId) {
         int nodeid = Util.getIntValue(CommonAPI.querySingleField("select nodeid from workflow_requestlog where logid=" + logId, "nodeid"));
-        if (nodeid == -1) return EMPTY;
+        if (nodeid == -1)
+            return EMPTY;
+
         return CommonAPI.querySingleField("select nodename from workflow_nodebase where id=" + nodeid, "nodename");
     }
 
@@ -353,12 +365,16 @@ public final class WorkflowAPI {
      * @param orderId 明细表序号，为0时取主表名
      */
     public static String getDetailTableNameByBillIdAndOrderId(int billId, int orderId) {
-        if (orderId == 0) return getBillTableNameByBillId(billId);
+        if (orderId == 0)
+            return getBillTableNameByBillId(billId);
+
         return CommonAPI.querySingleField("select tablename from workflow_billdetailtable where billid=" + billId + " and orderid=" + orderId, "tablename");
     }
 
     public static String getDetailTableNameByBillTableNameAndOrderId(String billTableName, int orderId) {
-        if (orderId == 0) return billTableName;
+        if (orderId == 0)
+            return billTableName;
+
         int billId = getBillIdByBillTableName(billTableName);
         return getDetailTableNameByBillIdAndOrderId(billId, orderId);
     }
