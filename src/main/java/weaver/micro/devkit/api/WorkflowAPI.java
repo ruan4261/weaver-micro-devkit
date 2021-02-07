@@ -427,4 +427,9 @@ public final class WorkflowAPI {
 
         return idx == users.length ? users : ArrayUtil.arrayExtend(users, idx);
     }
+
+    public static int getCreator(int requestId) {
+        return Cast.o2Integer(CommonAPI.querySingleField("select creater from workflow_requestbase where requestid=" + requestId, "creater"));
+    }
+
 }
