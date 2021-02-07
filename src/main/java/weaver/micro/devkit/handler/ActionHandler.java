@@ -167,14 +167,12 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public final int getCurrentNodeId() {
-        String sql = "select nownodeid from workflow_nownode where requestid=" + this.getRequestId();
-        return Cast.o2Integer(CommonAPI.querySingleField(sql, "nownodeid"));
+        return WorkflowAPI.getNodeIdByRequestId(getRequestId());
     }
 
     public final String getCurrentNodeName() {
         int nodeId = getCurrentNodeId();
-        String sql = "select nodename from workflow_nodebase where id=" + nodeId;
-        return CommonAPI.querySingleField(sql, "nodename");
+        return WorkflowAPI.getNodeNameByNodeId(nodeId);
     }
 
     /**
