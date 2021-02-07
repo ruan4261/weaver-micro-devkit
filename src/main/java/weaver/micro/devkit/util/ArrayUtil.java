@@ -4,7 +4,9 @@ import weaver.micro.devkit.Assert;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * 所有操作不应该更改数组内顺序
@@ -127,9 +129,29 @@ public final class ArrayUtil {
     @SuppressWarnings("unchecked")
     public static <T> T[] delRepeat(T[] a) {
         Assert.notNull(a);
-        LinkedHashSet<T> set = new LinkedHashSet<T>(a.length, 1f);
+        Set<T> set = new LinkedHashSet<T>(a.length);
         set.addAll(Arrays.asList(a));
         return set.toArray((T[]) Array.newInstance(a.getClass().getComponentType(), 0));
+    }
+
+    public static Object delRepeat(Object a) {
+        Assert.notNull(a);
+        if (!a.getClass().isArray())
+            Assert.fail("arg0 must be an array");
+
+        int originLen = Array.getLength(a);
+        Set<Object> set = new LinkedHashSet<Object>(originLen);
+        for (int i = 0; i < originLen; i++)
+            set.add(Array.get(a, i));
+
+        int newLength = set.size();
+        Object dest = Array.newInstance(a.getClass().getComponentType(), newLength);
+        Iterator<?> it = set.iterator();
+        int i = 0;
+        while (it.hasNext() && i < newLength)
+            Array.set(dest, i++, it.next());
+
+        return dest;
     }
 
     /**
