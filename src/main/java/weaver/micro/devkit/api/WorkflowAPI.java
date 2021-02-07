@@ -5,6 +5,7 @@ import weaver.general.Util;
 import weaver.interfaces.workflow.action.WorkflowToDoc;
 import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
+import weaver.micro.devkit.util.ArrayUtil;
 
 import java.util.*;
 
@@ -387,5 +388,43 @@ public final class WorkflowAPI {
     public static String getWorkflowPathName(int workflowId) {
         String sql = "select workflowname from workflow_base where id=" + workflowId;
         return CommonAPI.querySingleField(sql, "workflowname");
+    }
+
+    /**
+     * 获取某一流程当前节点id
+     */
+    public static int getNodeIdByRequestId(int requestId) {
+        String sql = "select nownodeid from workflow_nownode where requestid=" + requestId;
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "nownodeid"));
+    }
+
+    /**
+     * 通过节点id获取节点名称
+     */
+    public static String getNodeNameByNodeId(int nodeId) {
+        String sql = "select nodename from workflow_nodebase where id=" + nodeId;
+        return CommonAPI.querySingleField(sql, "nodename");
+    }
+
+    public static int[] getCurrentNodeOperatorByRequestId(int requestId) {
+        int nodeId = getNodeIdByRequestId(requestId);
+        RecordSet rs = new RecordSet();
+        rs.execute("select userid" +
+                " from workflow_currentoperator" +
+                " where groupdetailid in" +
+                " (select id from workflow_groupdetail where groupid in (select id from workflow_nodegroup where nodeid = " + nodeId + "))" +
+                " and requestid = " + requestId);
+
+        // result
+        int[] users = new int[8];
+        int idx = 0;// 实际长度
+        while (rs.next()) {
+            if (idx == users.length)
+                users = ArrayUtil.arrayExtend(users, idx + 4);
+
+            users[idx++] = rs.getInt("userid");
+        }
+
+        return idx == users.length ? users : ArrayUtil.arrayExtend(users, idx);
     }
 }
