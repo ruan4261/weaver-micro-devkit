@@ -263,7 +263,7 @@ public final class ArrayUtil {
         return dest;
     }
 
-    public static void arrayFilter(Object a, ArrayFilter<Object> filter) {
+    public static Object arrayFilter(Object a, ArrayFilter<Object> filter) {
         Assert.notNull(a);
         if (!a.getClass().isArray())
             Assert.fail("arg0 must be an array!");
@@ -278,10 +278,12 @@ public final class ArrayUtil {
         }
 
         if (alive != len)
-            arrayExtend(a, alive);
+            return arrayExtend(a, alive);
+        else
+            return a;
     }
 
-    public static <T> void arrayFilter(T[] a, ArrayFilter<T> filter) {
+    public static <T> Object arrayFilter(T[] a, ArrayFilter<T> filter) {
         int alive = 0;
         for (T ele : a) {
             if (filter.filter(ele)) {
@@ -290,7 +292,9 @@ public final class ArrayUtil {
         }
 
         if (alive != a.length)
-            arrayExtend(a, alive);
+            return arrayExtend(a, alive);
+        else
+            return a;
     }
 
     public interface ArrayFilter<T> {
