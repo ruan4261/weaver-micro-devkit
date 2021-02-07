@@ -100,7 +100,7 @@ public final class ReflectUtil {
             }
         }
 
-        ArrayUtil.arrayFilter(fields, new ArrayUtil.ArrayFilter<Field>() {
+        fields = (Field[]) ArrayUtil.arrayFilter(fields, new ArrayUtil.ArrayFilter<Field>() {
             @Override
             public boolean filter(Field ele) {
                 int modifier = ele.getModifiers();
