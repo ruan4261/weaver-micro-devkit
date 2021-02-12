@@ -283,7 +283,7 @@ public final class ArrayUtil {
             return a;
     }
 
-    public static <T> Object arrayFilter(T[] a, ArrayFilter<T> filter) {
+    public static <T> T[] arrayFilter(T[] a, ArrayFilter<T> filter) {
         int alive = 0;
         for (T ele : a) {
             if (filter.filter(ele)) {
