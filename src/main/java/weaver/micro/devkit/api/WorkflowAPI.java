@@ -428,7 +428,20 @@ public final class WorkflowAPI {
         return idx == users.length ? users : ArrayUtil.arrayExtend(users, idx);
     }
 
+    /**
+     * @deprecated 方法名称意义不明确
+     */
+    @Deprecated
     public static int getCreator(int requestId) {
+        return getCreatorIdByRequestId(requestId);
+    }
+
+    /**
+     * 获取流程创建人的hrmid
+     *
+     * @param requestId 流程唯一标识
+     */
+    public static int getCreatorIdByRequestId(int requestId) {
         return Cast.o2Integer(CommonAPI.querySingleField("select creater from workflow_requestbase where requestid=" + requestId, "creater"));
     }
 

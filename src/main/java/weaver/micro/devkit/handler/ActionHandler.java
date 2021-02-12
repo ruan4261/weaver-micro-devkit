@@ -195,7 +195,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     public final int getCreatorId() {
-        return Cast.o2Integer(this.request.getCreatorid(), 1);
+        return WorkflowAPI.getCreatorIdByRequestId(getRequestId());
     }
 
     public RecordSetTrans getRsTrans() {
