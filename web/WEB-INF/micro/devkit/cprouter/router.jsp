@@ -17,7 +17,6 @@
     load_order      整形, 可选, 数值小则优先加载, 空值默认为-1
     disable         整形, 是否禁用, 为1代表禁用, 用于临时测试
     describe        长度可变字符串, 可选, 用作前端查看时描述custompage作用, 该字段不会被代码读取或修改
-    first_active    首节点是否启动, 整形, 可选
     uuid            长度可变字符串, 重构自动创建数据时会一次性地使用该字段
 
     # 部分字段详细说明
@@ -35,11 +34,6 @@
     ## load_order加载顺序
     越小越优先加载, order相同情况下顺序随机
     字段为空时默认为-1, 不推荐为空, 会导致性能降低
-
-    ## first_active首节点是否启动
-    当值为空或小于1时不在首节点生效, 即正整数都代表其在首节点生效
-    首节点因为ec原因, 无法获取到节点值, 故无法获取到节点值的情况下使用该条件判断是否生效
-    优先级高于模式匹配(首节点仅通过该值判断, 不会进行模式匹配), 优先级低于disable
 
     注意: 不会校验custompage重复
     jsp会通过<jsp:include/>标签加载, 请注意头部声明
@@ -66,7 +60,7 @@
             // check start
             if (offset > 0) {
                 char prev = s1.charAt(offset - 1);
-                if (prev >= '0' && prev <= '9') {
+                if (prev == '-' || (prev >= '0' && prev <= '9')) {
                     offset = end;
                     continue;
                 }
@@ -86,35 +80,27 @@
 
         return false;
     }
-
 %>
 <%
     RecordSet rs = new RecordSet();
     int workflowid = Util.getIntValue(request.getParameter("workflowid"));
     int nodeid = Util.getIntValue(request.getParameter("nodeid"));
-    boolean autoActive = nodeid <= 0;// 首节点通过sql判断, 所有查询结果自动生效
-
-    if (!autoActive)
-        rs.execute("select model,nodeid,custompage,file_type,first_active from uf_cprouter where disable<>1 and workflowid=" + workflowid + " order by load_order asc");// 这玩意可以用缓存...
-    else
-        rs.execute("select custompage,file_type from uf_cprouter where disable<>1 and first_active>0 order by load_order asc");
+    rs.execute("select model,nodeid,custompage,file_type from uf_cprouter where disable<>1 and workflowid=" + workflowid + " order by load_order asc");// 这玩意可以用缓存...
 
     while (rs.next()) {
         // 是否生效
-        boolean active = autoActive;
+        boolean active = false;
 
-        if (!active) {
-            int model = rs.getInt("model");
+        int model = rs.getInt("model");
 
-            if (model == 0) {
+        if (model == 0) {
+            active = true;
+        } else {
+            String nodeGroup = rs.getString("nodeid");
+            boolean modelMatch = isInclude(nodeGroup, nodeid);
+
+            if ((model == 1 && modelMatch) || (model == 2 && !modelMatch))
                 active = true;
-            } else {
-                String nodeGroup = rs.getString("nodeid");
-                boolean modelMatch = isInclude(nodeGroup, nodeid);
-
-                if ((model == 1 && modelMatch) || (model == 2 && !modelMatch))
-                    active = true;
-            }
         }
 
         if (active) {
