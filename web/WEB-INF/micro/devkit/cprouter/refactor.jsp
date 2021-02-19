@@ -39,6 +39,7 @@
                 data.put("load_order", 0);
                 data.put("custompage", custompage);
                 data.put("disable", 0);
+                data.put("first_active", 1);
                 data.put("describe", "Automatic created by refactoring program.");
 
                 ModeAPI.createModeData(mode, modeid, 1, data);
