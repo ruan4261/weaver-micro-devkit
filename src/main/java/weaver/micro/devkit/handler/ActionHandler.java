@@ -153,6 +153,13 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return docId;
     }
 
+    /**
+     * 获取当前流程在主表单中的id
+     */
+    public final int getMainId() {
+        return WorkflowAPI.getMainId(getRequestId());
+    }
+
     public final int getRequestId() {
         return Cast.o2Integer(this.request.getRequestid());
     }
@@ -424,4 +431,26 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     public final void setFieldVerifyFlag(boolean fieldVerifyFlag) {
         this.fieldVerifyFlag = fieldVerifyFlag;
     }
+
+    /**
+     * 获取明细表数量
+     */
+    public int getDetailTableCount() {
+        return WorkflowAPI.getDetailTableCountByRequestId(getRequestId());
+    }
+
+    /**
+     * 清除指定明细表数据
+     */
+    public void clearDetailTableData(int order) {
+        WorkflowAPI.clearDetailTableDataByRequestIdAndOrder(getRequestId(), order);
+    }
+
+    /**
+     * 清除所有明细表数据
+     */
+    public void clearAllDetailTableData() {
+        WorkflowAPI.clearAllDetailTableDataByRequestId(getRequestId());
+    }
+
 }

@@ -445,4 +445,50 @@ public final class WorkflowAPI {
         return Cast.o2Integer(CommonAPI.querySingleField("select creater from workflow_requestbase where requestid=" + requestId, "creater"));
     }
 
+    /**
+     * 获取某流程在主表单中的id
+     */
+    public static int getMainId(int requestId) {
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select id from " + queryBillTableByRequest(requestId) + " where requestid=" + requestId,
+                "id"));
+    }
+
+    public static void clearDetailTableDataByRequestIdAndOrder(int requestId, int order) {
+        int billId = getBillIdByRequestId(requestId);
+        String dt = getDetailTableNameByBillIdAndOrderId(billId, order);
+        int mainId = getMainId(requestId);
+        new RecordSet().execute("delete from " + dt + " where mainid=" + mainId);
+    }
+
+    public static void clearAllDetailTableDataByRequestId(int requestId) {
+        RecordSet rs = new RecordSet();
+        int dtCount = getDetailTableCountByRequestId(requestId);
+        int billId = getBillIdByRequestId(requestId);
+        int mainId = getMainId(requestId);
+
+        for (int i = 1; i <= dtCount; i++) {
+            String dt = getDetailTableNameByBillIdAndOrderId(billId, i);
+            rs.execute("delete from " + dt + " where mainid=" + mainId);
+        }
+    }
+
+    public static int getDetailTableCountByWorkflowId(int workflowId) {
+        int billId = getBillIdByWorkflowId(workflowId);
+        return Cast.o2Integer(
+                CommonAPI.querySingleField(
+                        "select max(orderid) cnt from workflow_billdetailtable where billid=" + billId,
+                        "cnt"),
+                0);
+    }
+
+    public static int getDetailTableCountByRequestId(int requestId) {
+        int billId = getBillIdByRequestId(requestId);
+        return Cast.o2Integer(
+                CommonAPI.querySingleField(
+                        "select max(orderid) cnt from workflow_billdetailtable where billid=" + billId,
+                        "cnt"),
+                0);
+    }
+
 }
