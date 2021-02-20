@@ -15,7 +15,9 @@ import java.util.*;
  * @author ruan4261
  */
 public final class WorkflowAPI {
+
     static final String EMPTY = "";
+
     /** 流程中的签字意见类型映射 */
     static final Map<String, String> LOG_TYPE_MAPPER = new HashMap<String, String>() {
 
