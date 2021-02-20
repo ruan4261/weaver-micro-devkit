@@ -18,6 +18,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import weaver.micro.devkit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +52,9 @@ public class CommonHttpAPI {
             .setRedirectsEnabled(true).build();
 
     final static Header[] DEFAULT_USER_AGENT = new Header[]{
-            new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36"),
+            new BasicHeader("User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" +
+                            " (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36"),
             new BasicHeader("Accept-Encoding", "Identity")
     };
 
@@ -59,7 +62,9 @@ public class CommonHttpAPI {
      * 基于默认请求配置构建一个新的客户端
      */
     public static CloseableHttpClient BUILD_DEFAULT_CLIENT() {
-        return HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build();
+        return HttpClientBuilder.create()
+                .setDefaultRequestConfig(DEFAULT_CONFIG)
+                .build();
     }
 
     /**
@@ -72,12 +77,19 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpResponse doGet(HttpClient client, final String uri, Map<String, String> headers, Map<String, String> param) throws IOException, URISyntaxException {
+    public static HttpResponse doGet(HttpClient client,
+                                     final String uri,
+                                     Map<String, String> headers,
+                                     Map<String, String> param)
+            throws IOException, URISyntaxException {
+        Assert.notNull(client);
+        Assert.notNull(uri);
+
         // entity
         String url = BasicQuery.buildUrl(param, uri);
 
         // method
-        HttpGet method = (HttpGet) buildMethod(new HttpGet(), url, headers);
+        HttpGet method = buildMethodHeader(new HttpGet(), url, headers);
 
         return client.execute(method);
     }
@@ -92,11 +104,20 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpResponse doPostURLEncode(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
-        // method
-        if (headers == null) headers = new HashMap<String, String>(1, 1f);
+    public static HttpResponse doPostURLEncode(HttpClient client,
+                                               String uri,
+                                               Map<String, String> headers,
+                                               Map<String, Object> param)
+            throws IOException, URISyntaxException {
+        Assert.notNull(client);
+        Assert.notNull(uri);
+
+        if (headers == null)
+            headers = new HashMap<String, String>(1, 1f);
         headers.put("Content-Type", "application/x-www-form-urlencoded");
-        HttpPost method = (HttpPost) buildMethod(new HttpPost(), uri, headers);
+
+        // method header
+        HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
         // body
         HttpEntity entity = new UrlEncodedFormEntity(BasicQuery.mapToNameValuePairList(param));
@@ -115,11 +136,20 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpResponse doPostJson(HttpClient client, String uri, Map<String, String> headers, String json) throws IOException, URISyntaxException {
-        // method
-        if (headers == null) headers = new HashMap<String, String>(1, 1f);
+    public static HttpResponse doPostJson(HttpClient client,
+                                          String uri,
+                                          Map<String, String> headers,
+                                          String json)
+            throws IOException, URISyntaxException {
+        Assert.notNull(client);
+        Assert.notNull(uri);
+
+        if (headers == null)
+            headers = new HashMap<String, String>(1, 1f);
         headers.put("Content-Type", "application/json");
-        HttpPost method = (HttpPost) buildMethod(new HttpPost(), uri, headers);
+
+        // method header
+        HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
         // body
         method.setEntity(new StringEntity(json, Charset.forName("UTF-8")));
@@ -137,11 +167,20 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpResponse doPostMultipart(HttpClient client, String uri, Map<String, String> headers, Map<String, Object> param) throws IOException, URISyntaxException {
-        // method
-        if (headers == null) headers = new HashMap<String, String>(1, 1f);
+    public static HttpResponse doPostMultipart(HttpClient client,
+                                               String uri,
+                                               Map<String, String> headers,
+                                               Map<String, Object> param)
+            throws IOException, URISyntaxException {
+        Assert.notNull(client);
+        Assert.notNull(uri);
+
+        if (headers == null)
+            headers = new HashMap<String, String>(1, 1f);
         headers.put("Content-Type", "multipart/form-data");
-        HttpPost method = (HttpPost) buildMethod(new HttpPost(), uri, headers);
+
+        // method header
+        HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
         // body
         final MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
@@ -149,6 +188,10 @@ public class CommonHttpAPI {
         for (Map.Entry<String, Object> entry : param.entrySet()) {
             String k = entry.getKey();
             Object v = entry.getValue();
+
+            if (k == null || k.equals(""))
+                continue;
+            v = (v == null ? "null" : v);
 
             if (v instanceof byte[]) {
                 entity.addPart(k, new ByteArrayBody((byte[]) v, k));
@@ -169,6 +212,7 @@ public class CommonHttpAPI {
      * http状态码
      */
     public static int getStatusCode(HttpResponse response) {
+        Assert.notNull(response);
         return response.getStatusLine().getStatusCode();
     }
 
@@ -176,6 +220,7 @@ public class CommonHttpAPI {
      * 它应该是对http状态的解释
      */
     public static String getReasonPhrase(HttpResponse response) {
+        Assert.notNull(response);
         return response.getStatusLine().getReasonPhrase();
     }
 
@@ -183,6 +228,7 @@ public class CommonHttpAPI {
      * 返回的主题内容，以指定字符编码获取，不包括http头
      */
     public static String getText(HttpResponse response, Charset charset) throws IOException {
+        Assert.notNull(response);
         return EntityUtils.toString(response.getEntity(), charset);
     }
 
@@ -193,6 +239,7 @@ public class CommonHttpAPI {
      * 通过这种方式获取请求体长度不一定正确，因为该信息存在http头中，可被服务端手动修改
      */
     public static long getContentLength(HttpResponse response) {
+        Assert.notNull(response);
         return response.getEntity().getContentLength();
     }
 
@@ -200,6 +247,7 @@ public class CommonHttpAPI {
      * 获取全部返回头
      */
     public static Header[] getAllHeaders(HttpResponse response) {
+        Assert.notNull(response);
         return response.getAllHeaders();
     }
 
@@ -212,17 +260,41 @@ public class CommonHttpAPI {
      * @return 可返回构建对象
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpRequestBase buildMethod(HttpRequestBase requestBase, String uri, Map<String, String> headers) throws URISyntaxException {
+    public static <T extends HttpRequestBase> T buildMethodHeader(T requestBase,
+                                                                  String uri,
+                                                                  Map<String, String> headers)
+            throws URISyntaxException {
+        Assert.notNull(requestBase);
+
         requestBase.setURI(new URI(uri));// url
         requestBase.setConfig(DEFAULT_CONFIG);// request config
         requestBase.setProtocolVersion(HttpVersion.HTTP_1_1);// http version
         requestBase.setHeaders(DEFAULT_USER_AGENT);// user agent
         if (headers != null) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
-                requestBase.setHeader(header.getKey(), header.getValue());
+                String k = header.getKey();
+                String v = header.getValue();
+
+                if (k == null || k.equals(""))
+                    continue;
+                v = (v == null ? "null" : v);
+
+                requestBase.setHeader(k, v);
             }
         }
         return requestBase;
+    }
+
+    /**
+     * @deprecated please use {@link #buildMethodHeader(HttpRequestBase, String, Map)}
+     */
+    @Deprecated
+    public static HttpRequestBase buildMethod(HttpRequestBase requestBase,
+                                              String uri,
+                                              Map<String, String> headers)
+            throws URISyntaxException {
+        Assert.notNull(requestBase);
+        return buildMethodHeader(requestBase, uri, headers);
     }
 
     public static void closeClient(CloseableHttpClient client) {
