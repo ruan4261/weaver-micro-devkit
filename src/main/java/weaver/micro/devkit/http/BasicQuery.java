@@ -24,15 +24,32 @@ public class BasicQuery {
      * @return (? a = xxx & b = xxx) || (protocol://www.site.com/rest?a=xxx&b=xxx)
      */
     public static String buildUrl(Map<String, String> param, String uri) {
-        if (param == null) return uri == null ? EMPTY : uri;
+        if (param == null || param.isEmpty())
+            return uri == null ? EMPTY : uri;
+
+        // build url
         StringBuilder builder;
         if (uri != null) {
-            builder = new StringBuilder((param.size() << 4) + uri.length()).append(uri).append('?');
-        } else
-            builder = new StringBuilder((param.size() << 4)).append('?');
+            builder = new StringBuilder((param.size() << 4) + uri.length())
+                    .append(uri);
+        } else {
+            builder = new StringBuilder((param.size() << 4));
+        }
+        builder.append('?');
 
+        // build params
         for (Map.Entry<String, String> entry : param.entrySet()) {
-            builder.append(entry.getKey()).append('=').append((entry.getValue())).append('&');
+            String k = entry.getKey();
+            Object v = entry.getValue();
+
+            if (k == null || k.equals(""))
+                continue;
+            v = (v == null ? "null" : v);
+
+            builder.append(k)
+                    .append('=')
+                    .append(v.toString())
+                    .append('&');
         }
 
         builder.deleteCharAt(builder.length() - 1);
@@ -43,8 +60,10 @@ public class BasicQuery {
      * overload
      */
     public static String buildQuery(Map<String, String> param) {
-        if (param == null) return EMPTY;
-        return buildUrl(param, null);
+        if (param == null)
+            return EMPTY;
+        else
+            return buildUrl(param, null);
     }
 
     /**
@@ -53,11 +72,20 @@ public class BasicQuery {
      */
     public static List<NameValuePair> mapToNameValuePairList(Map<String, Object> param) {
         List<NameValuePair> result = new ArrayList<NameValuePair>();
-        if (param == null) return result;
+        if (param == null)
+            return result;
 
         for (Map.Entry<String, Object> entry : param.entrySet()) {
-            result.add(new BasicNameValuePair(entry.getKey(), entry.getValue().toString()));
+            String k = entry.getKey();
+            Object v = entry.getValue();
+
+            if (k == null || k.equals(""))
+                continue;
+            v = (v == null ? "null" : v);
+
+            result.add(new BasicNameValuePair(k, v.toString()));
         }
+
         return result;
     }
 }
