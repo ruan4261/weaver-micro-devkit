@@ -58,6 +58,7 @@ public class BasicQuery {
 
     /**
      * overload
+     * @return ?param1=xx&param2=xx
      */
     public static String buildQuery(Map<String, String> param) {
         if (param == null)
