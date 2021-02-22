@@ -273,6 +273,14 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return Action.FAILURE_AND_CONTINUE;
     }
 
+    public final String failWithOnlyMessage(String msg) {
+        this.request.getRequestManager().setMessageid("0");
+        this.request.getRequestManager().setMessagecontent(msg);
+        this.endResult = Action.FAILURE_AND_CONTINUE;
+        this.endMessage = msg;
+        return Action.FAILURE_AND_CONTINUE;
+    }
+
     /** 接口执行完毕 */
     public final String success() {
         this.endResult = Action.SUCCESS;
