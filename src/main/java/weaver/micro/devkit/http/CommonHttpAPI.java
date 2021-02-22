@@ -10,6 +10,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
@@ -26,7 +27,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -45,7 +45,7 @@ public class CommonHttpAPI {
         }
     };
 
-    public static String getThreadEncoding(){
+    public static String getThreadEncoding() {
         return threadEncoding.get();
     }
 
@@ -64,11 +64,12 @@ public class CommonHttpAPI {
             // 等待连接池给出可用连接超时 ms
             .setConnectionRequestTimeout(5000)
             // 与目标服务器建立tcp连接超时 ms
-            .setConnectTimeout(5000)
+            .setConnectTimeout(15000)
             // 服务器响应超时 ms
-            .setSocketTimeout(30000)
+            .setSocketTimeout(15000)
             // 设置是否允许重定向(默认为true)
-            .setRedirectsEnabled(true).build();
+            .setRedirectsEnabled(true)
+            .build();
 
     final static Header[] DEFAULT_USER_AGENT = new Header[]{
             new BasicHeader("User-Agent",
@@ -88,6 +89,8 @@ public class CommonHttpAPI {
 
     /**
      * 最普通的GET请求
+     * param参数会拼接到url上
+     * 一般不推荐设置请求头, 很多应用服务器不会读取其以及请求的实体部分
      *
      * @param client  发信端
      * @param uri     资源定位
@@ -131,10 +134,6 @@ public class CommonHttpAPI {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        if (headers == null)
-            headers = new HashMap<String, String>(1, 1f);
-        headers.put("Content-Type", "application/x-www-form-urlencoded");
-
         // method header
         HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
@@ -165,15 +164,12 @@ public class CommonHttpAPI {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        if (headers == null)
-            headers = new HashMap<String, String>(1, 1f);
-        headers.put("Content-Type", "application/json");
-
         // method header
         HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
         // body
-        method.setEntity(new StringEntity(json, threadEncoding.get()));
+        method.setEntity(new StringEntity(json,
+                ContentType.create("application/json", threadEncoding.get())));
 
         return client.execute(method);
     }
@@ -196,15 +192,11 @@ public class CommonHttpAPI {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        if (headers == null)
-            headers = new HashMap<String, String>(1, 1f);
-        headers.put("Content-Type", "multipart/form-data");
-
         // method header
         HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
         // body
-        final MultipartEntity entity =
+        MultipartEntity entity =
                 new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE,
                         null,
                         Charset.forName(threadEncoding.get()));
