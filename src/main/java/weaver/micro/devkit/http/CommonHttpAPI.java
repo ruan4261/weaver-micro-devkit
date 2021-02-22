@@ -45,11 +45,15 @@ public class CommonHttpAPI {
         }
     };
 
-    public void setEncoding(String encoding) {
+    public static String getThreadEncoding(){
+        return threadEncoding.get();
+    }
+
+    public static void setThreadEncoding(String encoding) {
         threadEncoding.set(encoding);
     }
 
-    public void clearThreadLocal() {
+    public static void clearThreadLocal() {
         threadEncoding.remove();
     }
 
