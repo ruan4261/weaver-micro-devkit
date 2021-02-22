@@ -38,6 +38,21 @@ import java.util.Map;
  */
 public class CommonHttpAPI {
 
+    static ThreadLocal<String> threadEncoding = new ThreadLocal<String>() {
+        @Override
+        protected String initialValue() {
+            return "UTF-8";
+        }
+    };
+
+    public void setEncoding(String encoding) {
+        threadEncoding.set(encoding);
+    }
+
+    public void clearThreadLocal() {
+        threadEncoding.remove();
+    }
+
     /**
      * 默认请求配置，懒得提供修改，请自行构造
      */
@@ -120,7 +135,9 @@ public class CommonHttpAPI {
         HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
         // body
-        HttpEntity entity = new UrlEncodedFormEntity(BasicQuery.mapToNameValuePairList(param));
+        HttpEntity entity =
+                new UrlEncodedFormEntity(BasicQuery.mapToNameValuePairList(param),
+                        threadEncoding.get());
         method.setEntity(entity);
 
         return client.execute(method);
@@ -152,7 +169,7 @@ public class CommonHttpAPI {
         HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
         // body
-        method.setEntity(new StringEntity(json, Charset.forName("UTF-8")));
+        method.setEntity(new StringEntity(json, threadEncoding.get()));
 
         return client.execute(method);
     }
@@ -183,7 +200,10 @@ public class CommonHttpAPI {
         HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
 
         // body
-        final MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+        final MultipartEntity entity =
+                new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE,
+                        null,
+                        Charset.forName(threadEncoding.get()));
 
         for (Map.Entry<String, Object> entry : param.entrySet()) {
             String k = entry.getKey();
