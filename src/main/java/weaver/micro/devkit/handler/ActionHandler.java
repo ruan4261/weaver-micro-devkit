@@ -169,10 +169,16 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return this.request.getRequestManager().getRequestname();
     }
 
+    /**
+     * 流程路径的id
+     */
     public final int getWorkflowId() {
         return Cast.o2Integer(this.request.getWorkflowid());
     }
 
+    /**
+     * 这个接口在流转时并不准确, 大概率获取到的是流程流转之后的节点
+     */
     public final int getCurrentNodeId() {
         return WorkflowAPI.getNodeIdByRequestId(getRequestId());
     }
@@ -186,7 +192,9 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * 流程路径名称
      */
     public String getWorkflowPathName() {
-        return WorkflowAPI.getWorkflowPathName(this.getWorkflowId());
+        String workflowPath = WorkflowAPI.getWorkflowPathName(this.getWorkflowId());
+        log("workflow path: " + workflowPath);
+        return workflowPath;
     }
 
     public final int getBillId() {
@@ -290,10 +298,12 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
 
     public void actionStart() throws Throwable {
         this.setFieldVerifyFlag(true);
-        log(" start, bill table is " + this.getTableNameLower() +
-                ", currentNodeName is " + this.getCurrentNodeName() +
-                ", workflow title is " + this.getRequestName() +
+        log(" start" +
+                ", bill main id is " + this.getMainId() +
+                ", bill table is " + this.getTableNameLower() +
+                ", request name is " + this.getRequestName() +
                 ", creator hrmId is " + this.getCreatorId() +
+                ", currentNodeName is " + this.getCurrentNodeName() +
                 ", runTimes of this action instance is " + (++this.instanceRunTimes));
     }
 
@@ -324,7 +334,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     /**
      * 校验字段长度<br>
      * 正常情况下返回常量池中的EMPTY空字符串<br>
-     * 如字段超长则会返回可供显示的信息(包括引号)，例如 '字段A'
+     * 如字段超长则会返回字段显示名(从1.0.4版本开始不自动添加引号)
      * case:
      * <ul>
      * <li>1.如无法获取该字段，返回空字符串</li>
@@ -338,13 +348,16 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @return 字符串信息
      */
     public String fieldLengthLimit(int table, String field, int maxlength) {
-        if (table < 0) return "";
+        if (table < 0)
+            return "";
+
         boolean overLimit = false;
         if (table == 0) {
             // 主表
             Map<String, String> mainTable = getMainTableCache();
             String v = mainTable.get(field);
-            if (v.length() > maxlength) overLimit = true;
+            if (v.length() > maxlength)
+                overLimit = true;
         } else {
             // 明细表
             List<Map<String, String>> detailTable = getDetailTableCache(table);
@@ -357,10 +370,11 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
             }
         }
 
-        if (!overLimit) return "";
+        if (!overLimit)
+            return "";
         // 通过数据库字段名获取显示字段名
         String sql = "select indexdesc from htmllabelindex a left outer join workflow_billfield b on a.id=b.fieldlabel where b.fieldname='" + field + "' and b.billid='" + getBillId() + "'";
-        return '\'' + CommonAPI.querySingleField(sql, "indexdesc") + '\'';
+        return CommonAPI.querySingleField(sql, "indexdesc");
     }
 
     @Override
@@ -417,6 +431,8 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     /**
+     * 明细表有多行, 需要指定值
+     *
      * @param tableIdx 0代表主表，其余代表明细表
      * @param name     字段数据库名
      * @param value    字段下标值
@@ -444,7 +460,9 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * 获取明细表数量
      */
     public int getDetailTableCount() {
-        return WorkflowAPI.getDetailTableCountByRequestId(getRequestId());
+        int count = WorkflowAPI.getDetailTableCountByRequestId(getRequestId());
+        log("detail table count: " + count);
+        return count;
     }
 
     /**
@@ -452,6 +470,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      */
     public void clearDetailTableData(int order) {
         WorkflowAPI.clearDetailTableDataByRequestIdAndOrder(getRequestId(), order);
+        log("The detail table " + order + " has been cleaned.");
     }
 
     /**
@@ -459,6 +478,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      */
     public void clearAllDetailTableData() {
         WorkflowAPI.clearAllDetailTableDataByRequestId(getRequestId());
+        log("All detail tables have been cleaned.");
     }
 
 }
