@@ -1,15 +1,17 @@
 package weaver.micro.devkit.http;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
+import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.conn.routing.HttpRoutePlanner;
+import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -17,16 +19,22 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.*;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import weaver.micro.devkit.Assert;
 
+import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 /**
@@ -78,13 +86,43 @@ public class CommonHttpAPI {
             new BasicHeader("Accept-Encoding", "Identity")
     };
 
+    public static LayeredConnectionSocketFactory PASS_SSL_SOCKET_FACTORY() {
+        try {
+            SSLContext sslContext = SSLContextBuilder.create()
+                    .loadTrustMaterial(new TrustSelfSignedStrategy())
+                    .build();
+            return new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        } catch (KeyStoreException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static HttpRoutePlanner PROXY_ROUTER(String protocol, String ip, int port) {
+        HttpHost host = new HttpHost(ip, port, protocol);
+        return new DefaultProxyRoutePlanner(host);
+    }
+
     /**
      * 基于默认请求配置构建一个新的客户端
      */
     public static CloseableHttpClient BUILD_DEFAULT_CLIENT() {
-        return HttpClientBuilder.create()
-                .setDefaultRequestConfig(DEFAULT_CONFIG)
-                .build();
+        return buildClient(null, null, DEFAULT_CONFIG);
+    }
+
+    public static CloseableHttpClient buildClient(HttpRoutePlanner routePlanner, LayeredConnectionSocketFactory socketFactory, RequestConfig requestConfig) {
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        if (requestConfig != null)
+            builder.setDefaultRequestConfig(requestConfig);
+        if (socketFactory != null)
+            builder.setSSLSocketFactory(socketFactory);
+        if (routePlanner != null)
+            builder.setRoutePlanner(routePlanner);
+
+        return builder.build();
     }
 
     /**
@@ -107,13 +145,17 @@ public class CommonHttpAPI {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        // entity
         String url = BasicQuery.buildUrl(param, uri);
 
-        // method
-        HttpGet method = buildMethodHeader(new HttpGet(), url, headers);
+        HttpGet method = null;
+        try {
+            method = buildMethodHeader(new HttpGet(), url, headers);
 
-        return client.execute(method);
+            return client.execute(method);
+        } finally {
+            if (method != null)
+                method.abort();
+        }
     }
 
     /**
@@ -134,16 +176,21 @@ public class CommonHttpAPI {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        // method header
-        HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
+        HttpPost post = null;
+        try {
+            // request header
+            post = buildMethodHeader(new HttpPost(), uri, headers);
+            // request body
+            HttpEntity entity =
+                    new UrlEncodedFormEntity(BasicQuery.mapToNameValuePairList(param),
+                            threadEncoding.get());
+            post.setEntity(entity);
 
-        // body
-        HttpEntity entity =
-                new UrlEncodedFormEntity(BasicQuery.mapToNameValuePairList(param),
-                        threadEncoding.get());
-        method.setEntity(entity);
-
-        return client.execute(method);
+            return client.execute(post);
+        } finally {
+            if (post != null)
+                post.abort();
+        }
     }
 
     /**
@@ -164,14 +211,20 @@ public class CommonHttpAPI {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        // method header
-        HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
+        HttpPost post = null;
+        try {
+            // request header
+            post = buildMethodHeader(new HttpPost(), uri, headers);
 
-        // body
-        method.setEntity(new StringEntity(json,
-                ContentType.create("application/json", threadEncoding.get())));
+            // request body
+            post.setEntity(new StringEntity(json,
+                    ContentType.create("application/json", threadEncoding.get())));
 
-        return client.execute(method);
+            return client.execute(post);
+        } finally {
+            if (post != null)
+                post.abort();
+        }
     }
 
     /**
@@ -192,36 +245,42 @@ public class CommonHttpAPI {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        // method header
-        HttpPost method = buildMethodHeader(new HttpPost(), uri, headers);
+        HttpPost post = null;
+        try {
+            // request header
+            post = buildMethodHeader(new HttpPost(), uri, headers);
 
-        // body
-        MultipartEntity entity =
-                new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE,
-                        null,
-                        Charset.forName(threadEncoding.get()));
+            // request body
+            MultipartEntity entity =
+                    new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE,
+                            null,
+                            Charset.forName(threadEncoding.get()));
 
-        for (Map.Entry<String, Object> entry : param.entrySet()) {
-            String k = entry.getKey();
-            Object v = entry.getValue();
+            for (Map.Entry<String, Object> entry : param.entrySet()) {
+                String k = entry.getKey();
+                Object v = entry.getValue();
 
-            if (k == null || k.equals(""))
-                continue;
-            v = (v == null ? "null" : v);
+                if (k == null || k.equals(""))
+                    continue;
+                v = (v == null ? "null" : v);
 
-            if (v instanceof byte[]) {
-                entity.addPart(k, new ByteArrayBody((byte[]) v, k));
-            } else if (v instanceof File) {
-                entity.addPart(k, new FileBody((File) v));
-            } else if (v instanceof InputStream) {
-                entity.addPart(k, new InputStreamBody((InputStream) v, k));
-            } else {
-                entity.addPart(k, new StringBody(v.toString()));
+                if (v instanceof byte[]) {
+                    entity.addPart(k, new ByteArrayBody((byte[]) v, k));
+                } else if (v instanceof File) {
+                    entity.addPart(k, new FileBody((File) v));
+                } else if (v instanceof InputStream) {
+                    entity.addPart(k, new InputStreamBody((InputStream) v, k));
+                } else {
+                    entity.addPart(k, new StringBody(v.toString()));
+                }
             }
-        }
 
-        method.setEntity(entity);
-        return client.execute(method);
+            post.setEntity(entity);
+            return client.execute(post);
+        } finally {
+            if (post != null)
+                post.abort();
+        }
     }
 
     /**
