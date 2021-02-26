@@ -69,11 +69,11 @@ public class CommonHttpAPI {
      * 默认请求配置，懒得提供修改，请自行构造
      */
     final static RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
-            // 等待连接池给出可用连接超时 ms
+            // ms, 请求本地连接超时(请求未发出)
             .setConnectionRequestTimeout(5000)
-            // 与目标服务器建立tcp连接超时 ms
+            // ms, 请求目标服务器超时(未响应请求)
             .setConnectTimeout(15000)
-            // 服务器响应超时 ms
+            // ms, 与目标服务器连接超时(非正常结束)
             .setSocketTimeout(15000)
             // 设置是否允许重定向(默认为true)
             .setRedirectsEnabled(true)
@@ -102,15 +102,18 @@ public class CommonHttpAPI {
     }
 
     public static HttpRoutePlanner PROXY_ROUTER(String protocol, String ip, int port) {
-        HttpHost host = new HttpHost(ip, port, protocol);
-        return new DefaultProxyRoutePlanner(host);
+        return new DefaultProxyRoutePlanner(PROXY_HOST(protocol, ip, port));
+    }
+
+    public static HttpHost PROXY_HOST(String protocol, String ip, int port) {
+        return new HttpHost(ip, port, protocol);
     }
 
     /**
      * 基于默认请求配置构建一个新的客户端
      */
     public static CloseableHttpClient BUILD_DEFAULT_CLIENT() {
-        return buildClient(null, null, DEFAULT_CONFIG);
+        return buildClient(DEFAULT_CONFIG, null, null);
     }
 
     public static CloseableHttpClient buildClient(HttpRoutePlanner routePlanner, LayeredConnectionSocketFactory socketFactory, RequestConfig requestConfig) {
@@ -121,6 +124,18 @@ public class CommonHttpAPI {
             builder.setSSLSocketFactory(socketFactory);
         if (routePlanner != null)
             builder.setRoutePlanner(routePlanner);
+
+        return builder.build();
+    }
+
+    public static CloseableHttpClient buildClient(RequestConfig requestConfig, HttpHost proxy, LayeredConnectionSocketFactory socketFactory) {
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        if (requestConfig != null)
+            builder.setDefaultRequestConfig(requestConfig);
+        if (socketFactory != null)
+            builder.setSSLSocketFactory(socketFactory);
+        if (proxy != null)
+            builder.setProxy(proxy);
 
         return builder.build();
     }
@@ -292,7 +307,7 @@ public class CommonHttpAPI {
     }
 
     /**
-     * 它应该是对http状态的解释
+     * http状态解释
      */
     public static String getReasonPhrase(HttpResponse response) {
         Assert.notNull(response);
@@ -300,11 +315,27 @@ public class CommonHttpAPI {
     }
 
     /**
-     * 返回的主题内容，以指定字符编码获取，不包括http头
+     * http报文主体内容, 通过线程本地设置的字符集读取, 默认utf8
+     */
+    public static String getText(HttpResponse response) throws IOException {
+        Assert.notNull(response);
+        return EntityUtils.toString(response.getEntity(), threadEncoding.get());
+    }
+
+    /**
+     * http报文主体内容，以指定字符编码获取
      */
     public static String getText(HttpResponse response, Charset charset) throws IOException {
         Assert.notNull(response);
         return EntityUtils.toString(response.getEntity(), charset);
+    }
+
+    /**
+     * http报文主体内容
+     */
+    public static byte[] getBytes(HttpResponse response) throws IOException {
+        Assert.notNull(response);
+        return EntityUtils.toByteArray(response.getEntity());
     }
 
     /**
