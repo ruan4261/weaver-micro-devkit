@@ -230,6 +230,7 @@ public class CommonHttpAPI {
             post = buildMethodHeader(new HttpPost(), uri, headers);
 
             // request body
+            json = (json == null ? "{}" : json);
             post.setEntity(new StringEntity(json,
                     ContentType.create("application/json", threadEncoding.get())));
 
@@ -269,24 +270,25 @@ public class CommonHttpAPI {
                             null,
                             Charset.forName(threadEncoding.get()));
 
-            for (Map.Entry<String, Object> entry : param.entrySet()) {
-                String k = entry.getKey();
-                Object v = entry.getValue();
+            if (param != null && !param.isEmpty())
+                for (Map.Entry<String, Object> entry : param.entrySet()) {
+                    String k = entry.getKey();
+                    Object v = entry.getValue();
 
-                if (k == null || k.equals(""))
-                    continue;
-                v = (v == null ? "null" : v);
+                    if (k == null || k.equals(""))
+                        continue;
+                    v = (v == null ? "null" : v);
 
-                if (v instanceof byte[]) {
-                    entity.addPart(k, new ByteArrayBody((byte[]) v, k));
-                } else if (v instanceof File) {
-                    entity.addPart(k, new FileBody((File) v));
-                } else if (v instanceof InputStream) {
-                    entity.addPart(k, new InputStreamBody((InputStream) v, k));
-                } else {
-                    entity.addPart(k, new StringBody(v.toString()));
+                    if (v instanceof byte[]) {
+                        entity.addPart(k, new ByteArrayBody((byte[]) v, k));
+                    } else if (v instanceof File) {
+                        entity.addPart(k, new FileBody((File) v));
+                    } else if (v instanceof InputStream) {
+                        entity.addPart(k, new InputStreamBody((InputStream) v, k));
+                    } else {
+                        entity.addPart(k, new StringBody(v.toString()));
+                    }
                 }
-            }
 
             post.setEntity(entity);
             return client.execute(post);
