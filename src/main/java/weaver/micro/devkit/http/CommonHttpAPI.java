@@ -342,7 +342,6 @@ public class CommonHttpAPI {
         Assert.notNull(requestBase);
 
         requestBase.setURI(new URI(uri));// url
-        requestBase.setConfig(DEFAULT_CONFIG);// request config
         requestBase.setProtocolVersion(HttpVersion.HTTP_1_1);// http version
         requestBase.setHeaders(DEFAULT_USER_AGENT);// user agent
         if (headers != null) {
