@@ -68,15 +68,13 @@ public class CommonHttpAPI {
     /**
      * 默认请求配置，懒得提供修改，请自行构造
      */
-    final static RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
+    public final static RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
             // ms, 请求本地连接超时(请求未发出)
             .setConnectionRequestTimeout(5000)
             // ms, 请求目标服务器超时(未响应请求)
             .setConnectTimeout(15000)
             // ms, 与目标服务器连接超时(非正常结束)
             .setSocketTimeout(15000)
-            // 设置是否允许重定向(默认为true)
-            .setRedirectsEnabled(true)
             .build();
 
     final static Header[] DEFAULT_USER_AGENT = new Header[]{
