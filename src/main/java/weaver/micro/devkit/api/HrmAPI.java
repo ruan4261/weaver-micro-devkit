@@ -84,5 +84,8 @@ public final class HrmAPI {
         return CommonAPI.querySingleField("select subcompanyname from hrmsubcompany where id=" + id, "subcompanyname");
     }
 
+    public static String getJobLevelByHrmId(int hrmId) {
+        return CommonAPI.querySingleField("select joblevel from hrmresource where id=" + hrmId, "joblevel");
+    }
 
 }
