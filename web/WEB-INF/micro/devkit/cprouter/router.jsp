@@ -14,7 +14,7 @@
     nodeid          长度可变字符串, 可选, 以半角逗号(',')分割的节点数组
     custompage      长度可变字符串, 必填, 绑定页面路径, 仅允许头部为contentType="text/html;charset=UTF-8" language="java"的jsp文件
     file_type       整形, 可选, 区分文件类型, 通过不同方式加载, 详情见下方说明
-    load_order      整形, 可选, 数值小则优先加载, 空值默认为-1
+    load_order      整形, 可选, 数值小则优先加载, null值根据数据库规则(最小或最大)
     disable         整形, 是否禁用, 为1代表禁用, 用于临时测试
     describe        长度可变字符串, 可选, 用作前端查看时描述custompage作用, 该字段不会被代码读取或修改
     uuid            长度可变字符串, 重构自动创建数据时会一次性地使用该字段
