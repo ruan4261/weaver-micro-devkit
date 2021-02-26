@@ -85,7 +85,7 @@
     RecordSet rs = new RecordSet();
     int workflowid = Util.getIntValue(request.getParameter("workflowid"));
     int nodeid = Util.getIntValue(request.getParameter("nodeid"));
-    rs.execute("select model,nodeid,custompage,file_type from uf_cprouter where disable<>1 and workflowid=" + workflowid + " order by load_order asc");// 这玩意可以用缓存...
+    rs.execute("select model,nodeid,custompage,file_type from uf_cprouter where (disable<>1 or disable is null or disable='') and workflowid=" + workflowid + " order by load_order asc");// 这玩意可以用缓存...
 
     while (rs.next()) {
         // 是否生效
