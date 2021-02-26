@@ -23,7 +23,7 @@ public final class ModeAPI {
      * @param modeMainTable 建模
      * @param modeId        建模id
      * @param creatorId     数据创建者
-     * @param data          数据集，可为空
+     * @param data          数据集，可为空, 值会直接toString()插表
      * @return 建模主表数据行id，方法执行失败返回-1
      */
     public static int createModeData(final String modeMainTable, final int modeId, final int creatorId, final Map<String, Object> data) {
@@ -36,17 +36,28 @@ public final class ModeAPI {
             rs.next();
             id = Util.getIntValue(rs.getString("id"));
 
-            if (id >= 0) {
-                if (data != null) {
+            if (id != -1) {
+                if (data != null && !data.isEmpty()) {
                     // 录入数据
                     StringBuilder sql = new StringBuilder("update " + modeMainTable + " set ");
-                    Set<Map.Entry<String, Object>> set = data.entrySet();
-                    for (Map.Entry<String, Object> entry : set) {
-                        sql.append(entry.getKey()).append("='").append(entry.getValue().toString()).append("',");
+                    for (Map.Entry<String, Object> entry : data.entrySet()) {
+                        String k = entry.getKey();
+                        Object v = entry.getValue();
+
+                        if (k == null || k.equals("") || v == null)
+                            continue;
+
+                        sql.append(k)
+                                .append("='")
+                                .append(v.toString())
+                                .append("',");
                     }
+
                     if (sql.charAt(sql.length() - 1) == ',') {
-                        sql = new StringBuilder(sql.substring(0, sql.length() - 1));
-                        sql.append(" where id=").append(id);
+                        sql.deleteCharAt(sql.length() - 1);
+                        sql.append(" where id=")
+                                .append(id);
+                        // execute
                         rs.execute(sql.toString());
                     }
                 }
