@@ -21,7 +21,7 @@ public final class WorkflowAPI {
     /** 流程中的签字意见类型映射 */
     static final Map<String, String> LOG_TYPE_MAPPER = new HashMap<String, String>() {
 
-        public Map<String, String> construct() {
+        {
             super.put("0", "批准");
             super.put("1", "保存");
             super.put("2", "提交");
@@ -34,7 +34,6 @@ public final class WorkflowAPI {
             super.put("e", "强制归档");
             super.put("t", "抄送");
             super.put("s", "督办");
-            return this;
         }
 
         @Override
@@ -42,7 +41,38 @@ public final class WorkflowAPI {
             throw new UnsupportedOperationException();
         }
 
-    }.construct();
+        @Override
+        public void putAll(Map<? extends String, ? extends String> m) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String remove(Object key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException();
+        }
+
+        public String putIfAbsent(String key, String value) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean remove(Object key, Object value) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean replace(String key, String oldValue, String newValue) {
+            throw new UnsupportedOperationException();
+        }
+
+        public String replace(String key, String value) {
+            throw new UnsupportedOperationException();
+        }
+
+    };
 
     /**
      * 根据requestId获取流程实例标题
@@ -77,14 +107,14 @@ public final class WorkflowAPI {
 
         while (rs.next()) {
             Map<String, String> map = new HashMap<String, String>();
-            map.put("logid", Util.null2String(rs.getString("logid")));// 签字日志id
-            map.put("nodeid", Util.null2String(rs.getString("nodeid")));// 节点id
-            map.put("nodename", Util.null2String(rs.getString("nodename")));// 节点名称
-            map.put("operator", Util.null2String(rs.getString("operator")));// 操作者的id
-            map.put("logtype", Util.null2String(LOG_TYPE_MAPPER.get(rs.getString("logtype"))));// 签字类型
-            map.put("remark", Util.delHtml(Util.null2String(rs.getString("remark"))));// 签字意见
-            map.put("operatedate", Util.null2String(rs.getString("operatedate")));// 操作日期
-            map.put("operatetime", Util.null2String(rs.getString("operatetime")));// 操作时间
+            map.put("logid", rs.getString("logid"));// 签字日志id
+            map.put("nodeid", rs.getString("nodeid"));// 节点id
+            map.put("nodename", rs.getString("nodename"));// 节点名称
+            map.put("operator", rs.getString("operator"));// 操作者的id
+            map.put("logtype", LOG_TYPE_MAPPER.get(rs.getString("logtype")));// 签字类型
+            map.put("remark", Util.delHtml(rs.getString("remark")));// 签字意见
+            map.put("operatedate", rs.getString("operatedate"));// 操作日期
+            map.put("operatetime", rs.getString("operatetime"));// 操作时间
             result.add(map);
         }
         return result;
@@ -112,7 +142,7 @@ public final class WorkflowAPI {
 
         rs.execute(sql);
         while (rs.next()) {
-            result.put(Util.null2String(rs.getString("fieldname")).toLowerCase(), Util.null2String(rs.getString("id")));
+            result.put(rs.getString("fieldname"), rs.getString("id"));
         }
 
         return result;
@@ -159,9 +189,9 @@ public final class WorkflowAPI {
     }
 
     /**
-     * 流程存为文档
-     * 在E8系统中，这个接口是同步的。
-     * 在E9系统中，这个接口是异步的，无法保证何时完成文档转换，调用完本接口再通过接口查询文档不能及时获取到文档。
+     * 流程存为文档.
+     * 在E9系统中，接口是异步执行的，无法保证何时完成文档转换.
+     * 调用本接口可实现同步操作.
      *
      * @param requestId 请求id
      * @return 是否成功
@@ -277,7 +307,7 @@ public final class WorkflowAPI {
         String sql = "select id from " + billTableName + " where requestid = '" + requestId + "'";
         rs.execute(sql);
         if (!rs.next()) return result;
-        int mainid = Util.getIntValue(rs.getString("id"));
+        int mainid = rs.getInt("id");
 
         // 获取明细表名
         String detailTableName = getDetailTableNameByBillTableNameAndOrderId(billTableName, orderId);
@@ -305,11 +335,16 @@ public final class WorkflowAPI {
      * 根据logid获取节点名称
      */
     public static String getNodeNameByLogId(int logId) {
-        int nodeid = Util.getIntValue(CommonAPI.querySingleField("select nodeid from workflow_requestlog where logid=" + logId, "nodeid"));
+        int nodeid = Util.getIntValue(
+                CommonAPI.querySingleField(
+                        "select nodeid from workflow_requestlog where logid=" + logId,
+                        "nodeid"));
         if (nodeid == -1)
             return EMPTY;
 
-        return CommonAPI.querySingleField("select nodename from workflow_nodebase where id=" + nodeid, "nodename");
+        return CommonAPI.querySingleField(
+                "select nodename from workflow_nodebase where id=" + nodeid,
+                "nodename");
     }
 
     /**
@@ -333,7 +368,8 @@ public final class WorkflowAPI {
 
         rs.execute(sql);
         if (!rs.next())
-            throw new RuntimeException("No such field, input : billId=" + billId + ", orderId=" + orderId + ", field(notExist)=" + name);
+            throw new RuntimeException("No such field, input : billId=" + billId
+                    + ", orderId=" + orderId + ", field(notExist)=" + name);
 
         return rs.getInt("id");
     }
@@ -346,9 +382,11 @@ public final class WorkflowAPI {
      */
     public static String getDropdownBoxValue(int fieldId, int valueIdx) {
         RecordSet rs = new RecordSet();
-        rs.execute("select selectvalue,selectname from workflow_selectitem where fieldid=" + fieldId + " and selectvalue=" + valueIdx);
+        rs.execute("select selectvalue,selectname from workflow_selectitem where fieldid=" + fieldId
+                + " and selectvalue=" + valueIdx);
         if (!rs.next())
-            throw new RuntimeException("No such select item, input : fieldId=" + fieldId + ", selectvalue=" + valueIdx);
+            throw new RuntimeException("No such select item, input : fieldId=" + fieldId
+                    + ", selectvalue=" + valueIdx);
 
         return rs.getString("selectname");
     }
@@ -371,7 +409,10 @@ public final class WorkflowAPI {
         if (orderId == 0)
             return getBillTableNameByBillId(billId);
 
-        return CommonAPI.querySingleField("select tablename from workflow_billdetailtable where billid=" + billId + " and orderid=" + orderId, "tablename");
+        return CommonAPI.querySingleField(
+                "select tablename from workflow_billdetailtable where billid=" + billId
+                        + " and orderid=" + orderId,
+                "tablename");
     }
 
     public static String getDetailTableNameByBillTableNameAndOrderId(String billTableName, int orderId) {
@@ -414,7 +455,8 @@ public final class WorkflowAPI {
         rs.execute("select userid" +
                 " from workflow_currentoperator" +
                 " where groupdetailid in" +
-                " (select id from workflow_groupdetail where groupid in (select id from workflow_nodegroup where nodeid = " + nodeId + "))" +
+                " (select id from workflow_groupdetail where groupid in" +
+                " (select id from workflow_nodegroup where nodeid = " + nodeId + "))" +
                 " and requestid = " + requestId);
 
         // result
@@ -444,7 +486,9 @@ public final class WorkflowAPI {
      * @param requestId 流程唯一标识
      */
     public static int getCreatorIdByRequestId(int requestId) {
-        return Cast.o2Integer(CommonAPI.querySingleField("select creater from workflow_requestbase where requestid=" + requestId, "creater"));
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select creater from workflow_requestbase where requestid=" + requestId,
+                "creater"));
     }
 
     /**
