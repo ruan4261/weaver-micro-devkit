@@ -12,7 +12,7 @@
 
     // confirm start program
     String verify = Util.null2String(request.getParameter("auth"));
-    if (verify.equals("1")) {
+    if (verify.equals("1") && modeid != -1) {
         out.print("认证通过, 开始重构, 模块id: " + modeid + ".<br>");
     } else {
         out.print("请通过auth, modeid参数确认执行重构.");
