@@ -4,10 +4,10 @@ import weaver.conn.RecordSetTrans;
 import weaver.general.BaseBean;
 import weaver.interfaces.workflow.action.Action;
 import weaver.micro.devkit.Cast;
-import weaver.micro.devkit.SystemAPI;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
+import weaver.micro.devkit.util.StringUtils;
 import weaver.soa.workflow.request.*;
 import weaver.workflow.request.RequestManager;
 
@@ -202,7 +202,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     /**
-     * 所有打印的日志前缀为 StackTrace@requestid~
+     * 所有流程打印的日志前缀为 $request:?$
      * 用于便捷查询
      */
     private String getLogPrefix() {
@@ -213,6 +213,9 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return WorkflowAPI.getCreatorIdByRequestId(getRequestId());
     }
 
+    /**
+     * 可能返回null
+     */
     public RecordSetTrans getRsTrans() {
         return this.request.getRsTrans();
     }
@@ -239,22 +242,26 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return WorkflowAPI.getBillTableNameByWorkflowId(this.getWorkflowId());
     }
 
+    /** main log */
     public final void log(String msg) {
         writeLog(getLogPrefix() + " -> " + msg);
     }
 
+    /** main log */
     public final void logLine(String msg) {
-        writeLog(getLogPrefix() + " -> " + SystemAPI.LINE_SEPARATOR + msg);
+        writeLog(getLogPrefix() + " ->\n" + msg);
     }
 
-    public final void log(Throwable throwable) {
-        StackTraceElement[] trace = throwable.getStackTrace();
-        StringBuilder builder = new StringBuilder(trace.length << 5);
-        builder.append(throwable.getClass().getName()).append(':').append(throwable.getMessage());
-        for (StackTraceElement traceElement : trace) {
-            builder.append(SystemAPI.LINE_SEPARATOR).append("\tat ").append(traceElement);
-        }
-        logLine(builder.toString());
+    public final void log(Throwable cause) {
+        logLine(StringUtils.makeStackTraceInfo(cause));
+    }
+
+    /**
+     * @since 1.0.5
+     */
+    public final void log(String msg, Throwable cause) {
+        String trace = StringUtils.makeStackTraceInfo(cause);
+        logLine(msg + "\n" + trace);
     }
 
     /**
@@ -281,6 +288,11 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return Action.FAILURE_AND_CONTINUE;
     }
 
+    /**
+     * 将流程打回, 不显示参考信息
+     *
+     * @param msg 前端显示信息
+     */
     public final String failWithOnlyMessage(String msg) {
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(msg);
@@ -312,7 +324,8 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         log(" end with result:" + this.endResult + ", message:" + this.endMessage);
         try {
             clearCache();
-        } catch (Throwable ignored) {
+        } catch (Throwable e) {
+            log("Throw exception by #clearCache()", e);
         }
     }
 
@@ -327,7 +340,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
 
     /** 发生异常情况下在action结束时执行，该方法用于自定义重写 */
     public String ifException(Throwable e) {
-        this.log(e);
+        this.log("Auto catch exception by ActionHandler.", e);
         return this.fail(e);
     }
 
