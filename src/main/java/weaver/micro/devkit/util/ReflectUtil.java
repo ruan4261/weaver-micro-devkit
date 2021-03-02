@@ -1,6 +1,8 @@
 package weaver.micro.devkit.util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * @author ruan4261
@@ -11,7 +13,7 @@ public final class ReflectUtil {
     }
 
     /**
-     * 获取类本类, 超类, 实现接口
+     * 获取类本类, 超类, 实现接口<br>
      * 数组顺序是：自身->自身接口->超类->超类接口->超类的超类->超类的超类的接口->...
      */
     public static Class<?>[] getAllSuper(Class<?> clazz) {
@@ -46,8 +48,8 @@ public final class ReflectUtil {
     }
 
     /**
-     * 根据名称获取字段状态
-     * 包括继承下来的字段
+     * 根据名称获取字段状态<br>
+     * 包括继承下来的字段<br>
      * 如果自身的字段名称与继承的字段名称相同，将选择自身的字段
      */
     public static Object getProperty(Object object, String fieldName) throws NoSuchFieldException {
@@ -71,20 +73,56 @@ public final class ReflectUtil {
     }
 
     /**
-     * 获取类的字段，参数为true时过滤对应关键字字段
-     * 进制从低位到高位的分部如下，step=1     位值
-     * public                              1
-     * private                             2
-     * protected                           4
-     * static                              8
-     * final                               16
-     * synchronized                        32
-     * volatile                            64
-     * transient                           128
-     * native                              256
-     * interface                           512
-     * abstract                            1024
-     * strict                              2048
+     * 通过getter方法获取实例属性<br>
+     * 使用的getter方法必须可访问()
+     * 方法优先级
+     * <ol>
+     *     <li>getXx</li>
+     *     <li>isXx</li>
+     * </ol>
+     */
+    public static Object getPropertyWithGetter(Object object, String fieldName) throws NoSuchMethodException {
+        Class<?> clazz = object.getClass();
+
+        String pn = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+        Method m = null;
+        try {
+            m = clazz.getMethod("get" + pn);
+        } catch (NoSuchMethodException ignored) {
+            try {
+                m = clazz.getMethod("is" + pn);
+            } catch (NoSuchMethodException ignored2) {
+            }
+        }
+
+        if (m != null) {
+            try {
+                return m.invoke(object);
+            } catch (IllegalAccessException e) {// no access permission
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {// internal exception
+                throw new RuntimeException(e);
+            }
+        }
+
+        throw new NoSuchMethodException("get" + pn + "() | is" + pn + "()");
+    }
+
+    /**
+     * 获取类的字段，参数为true时过滤对应关键字字段<br>
+     * 修饰符 ---- 位值<br>
+     * public ---- 1<br>
+     * private ---- 2<br>
+     * protected ---- 4<br>
+     * static ---- 8<br>
+     * final ---- 16<br>
+     * synchronized ---- 32<br>
+     * volatile ---- 64<br>
+     * transient ---- 128<br>
+     * native ---- 256<br>
+     * interface ---- 512<br>
+     * abstract ---- 1024<br>
+     * strict ---- 2048<br>
      *
      * @param filter 该参数bit对应关键字将被过滤
      * @param parent 是否获取父类的字段
@@ -100,7 +138,7 @@ public final class ReflectUtil {
             }
         }
 
-        fields = (Field[]) ArrayUtil.arrayFilter(fields, new ArrayUtil.ArrayFilter<Field>() {
+        fields = ArrayUtil.arrayFilter(fields, new ArrayUtil.ArrayFilter<Field>() {
             @Override
             public boolean filter(Field ele) {
                 int modifier = ele.getModifiers();
