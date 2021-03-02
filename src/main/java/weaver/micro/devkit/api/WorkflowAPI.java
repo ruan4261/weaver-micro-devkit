@@ -132,7 +132,7 @@ public final class WorkflowAPI {
         Map<String, String> result = new HashMap<String, String>();
         RecordSet rs = new RecordSet();
 
-        String sql = "select id,fieldname from workflow_billfield where billid=-" + billId;
+        String sql = "select id,fieldname from workflow_billfield where billid=" + billId;
         if (orderId == 0)
             sql += " and (detailtable is null or detailtable = '') ";
         else {
