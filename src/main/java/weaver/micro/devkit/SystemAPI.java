@@ -8,6 +8,7 @@ import java.security.PrivilegedAction;
  * 通用接口
  *
  * @author ruan4261
+ * @deprecated 语义有问题, 接口无缺陷但不推荐使用
  */
 public final class SystemAPI {
 
