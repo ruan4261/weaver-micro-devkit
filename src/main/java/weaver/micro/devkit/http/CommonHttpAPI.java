@@ -1,9 +1,9 @@
 package weaver.micro.devkit.http;
 
 import org.apache.http.*;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -26,6 +26,7 @@ import org.apache.http.util.EntityUtils;
 import weaver.micro.devkit.Assert;
 
 import javax.net.ssl.SSLContext;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -150,25 +151,33 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpResponse doGet(HttpClient client,
-                                     final String uri,
-                                     Map<String, String> headers,
-                                     Map<String, String> param)
+    public static CloseableHttpResponse doGet(CloseableHttpClient client,
+                                              final String uri,
+                                              Map<String, String> headers,
+                                              Map<String, String> param)
             throws IOException, URISyntaxException {
         Assert.notNull(client);
         Assert.notNull(uri);
 
         String url = BasicQuery.buildUrl(param, uri);
 
-        HttpGet method = null;
-        try {
-            method = buildMethodHeader(new HttpGet(), url, headers);
+        HttpGet get = buildMethodHeader(new HttpGet(), url, headers);
 
-            return client.execute(method);
-        } finally {
-            if (method != null)
-                method.abort();
-        }
+        return client.execute(get);
+    }
+
+    /**
+     * 包装重载
+     *
+     * @see #doGet(CloseableHttpClient, String, Map, Map)
+     * @since 1.1.0
+     */
+    public static HttpResponseHolder doGetWithHolder(CloseableHttpClient client,
+                                                     final String uri,
+                                                     Map<String, String> headers,
+                                                     Map<String, String> param)
+            throws IOException, URISyntaxException {
+        return new HttpResponseHolder(doGet(client, uri, headers, param));
     }
 
     /**
@@ -181,29 +190,36 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpResponse doPostURLEncode(HttpClient client,
-                                               String uri,
-                                               Map<String, String> headers,
-                                               Map<String, Object> param)
+    public static CloseableHttpResponse doPostURLEncode(CloseableHttpClient client,
+                                                        String uri,
+                                                        Map<String, String> headers,
+                                                        Map<String, Object> param)
             throws IOException, URISyntaxException {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        HttpPost post = null;
-        try {
-            // request header
-            post = buildMethodHeader(new HttpPost(), uri, headers);
-            // request body
-            HttpEntity entity =
-                    new UrlEncodedFormEntity(BasicQuery.mapToNameValuePairList(param),
-                            threadEncoding.get());
-            post.setEntity(entity);
+        HttpPost post = buildMethodHeader(new HttpPost(), uri, headers);
+        // request body
+        HttpEntity entity =
+                new UrlEncodedFormEntity(BasicQuery.mapToNameValuePairList(param),
+                        threadEncoding.get());
+        post.setEntity(entity);
 
-            return client.execute(post);
-        } finally {
-            if (post != null)
-                post.abort();
-        }
+        return client.execute(post);
+    }
+
+    /**
+     * 包装重载
+     *
+     * @see #doPostURLEncode(CloseableHttpClient, String, Map, Map)
+     * @since 1.1.0
+     */
+    public static HttpResponseHolder doPostURLEncodeWithHolder(CloseableHttpClient client,
+                                                               String uri,
+                                                               Map<String, String> headers,
+                                                               Map<String, Object> param)
+            throws IOException, URISyntaxException {
+        return new HttpResponseHolder(doPostURLEncode(client, uri, headers, param));
     }
 
     /**
@@ -216,29 +232,36 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpResponse doPostJson(HttpClient client,
-                                          String uri,
-                                          Map<String, String> headers,
-                                          String json)
+    public static CloseableHttpResponse doPostJson(CloseableHttpClient client,
+                                                   String uri,
+                                                   Map<String, String> headers,
+                                                   String json)
             throws IOException, URISyntaxException {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        HttpPost post = null;
-        try {
-            // request header
-            post = buildMethodHeader(new HttpPost(), uri, headers);
+        HttpPost post = buildMethodHeader(new HttpPost(), uri, headers);
 
-            // request body
-            json = (json == null ? "{}" : json);
-            post.setEntity(new StringEntity(json,
-                    ContentType.create("application/json", threadEncoding.get())));
+        // request body
+        json = (json == null ? "{}" : json);
+        post.setEntity(new StringEntity(json,
+                ContentType.create("application/json", threadEncoding.get())));
 
-            return client.execute(post);
-        } finally {
-            if (post != null)
-                post.abort();
-        }
+        return client.execute(post);
+    }
+
+    /**
+     * 包装重载
+     *
+     * @see #doPostJson(CloseableHttpClient, String, Map, String)
+     * @since 1.1.0
+     */
+    public static HttpResponseHolder doPostJsonWithHolder(CloseableHttpClient client,
+                                                          String uri,
+                                                          Map<String, String> headers,
+                                                          String json)
+            throws IOException, URISyntaxException {
+        return new HttpResponseHolder(doPostJson(client, uri, headers, json));
     }
 
     /**
@@ -251,51 +274,59 @@ public class CommonHttpAPI {
      * @throws IOException        IO流异常，检查网络环境
      * @throws URISyntaxException 资源定位不符合RFC2396规范
      */
-    public static HttpResponse doPostMultipart(HttpClient client,
-                                               String uri,
-                                               Map<String, String> headers,
-                                               Map<String, Object> param)
+    public static CloseableHttpResponse doPostMultipart(CloseableHttpClient client,
+                                                        String uri,
+                                                        Map<String, String> headers,
+                                                        Map<String, Object> param)
             throws IOException, URISyntaxException {
         Assert.notNull(client);
         Assert.notNull(uri);
 
-        HttpPost post = null;
-        try {
-            // request header
-            post = buildMethodHeader(new HttpPost(), uri, headers);
+        HttpPost post = buildMethodHeader(new HttpPost(), uri, headers);
 
-            // request body
-            MultipartEntity entity =
-                    new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE,
-                            null,
-                            Charset.forName(threadEncoding.get()));
+        // request body
+        MultipartEntity entity =
+                new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE,
+                        null,
+                        Charset.forName(threadEncoding.get()));
 
-            if (param != null && !param.isEmpty())
-                for (Map.Entry<String, Object> entry : param.entrySet()) {
-                    String k = entry.getKey();
-                    Object v = entry.getValue();
+        if (param != null && !param.isEmpty())
+            for (Map.Entry<String, Object> entry : param.entrySet()) {
+                String k = entry.getKey();
+                Object v = entry.getValue();
 
-                    if (k == null || k.equals(""))
-                        continue;
-                    v = (v == null ? "null" : v);
+                if (k == null || k.equals(""))
+                    continue;
+                v = (v == null ? "null" : v);
 
-                    if (v instanceof byte[]) {
-                        entity.addPart(k, new ByteArrayBody((byte[]) v, k));
-                    } else if (v instanceof File) {
-                        entity.addPart(k, new FileBody((File) v));
-                    } else if (v instanceof InputStream) {
-                        entity.addPart(k, new InputStreamBody((InputStream) v, k));
-                    } else {
-                        entity.addPart(k, new StringBody(v.toString()));
-                    }
+                if (v instanceof byte[]) {
+                    entity.addPart(k, new ByteArrayBody((byte[]) v, k));
+                } else if (v instanceof File) {
+                    entity.addPart(k, new FileBody((File) v));
+                } else if (v instanceof InputStream) {
+                    entity.addPart(k, new InputStreamBody((InputStream) v, k));
+                } else {
+                    entity.addPart(k, new StringBody(v.toString()));
                 }
+            }
+        post.setEntity(entity);
 
-            post.setEntity(entity);
-            return client.execute(post);
-        } finally {
-            if (post != null)
-                post.abort();
-        }
+        return client.execute(post);
+    }
+
+
+    /**
+     * 包装重载
+     *
+     * @see #doPostMultipart(CloseableHttpClient, String, Map, Map)
+     * @since 1.1.0
+     */
+    public static HttpResponseHolder doPostMultipartWithHolder(CloseableHttpClient client,
+                                                               String uri,
+                                                               Map<String, String> headers,
+                                                               Map<String, Object> param)
+            throws IOException, URISyntaxException {
+        return new HttpResponseHolder(doPostMultipart(client, uri, headers, param));
     }
 
     /**
@@ -402,11 +433,24 @@ public class CommonHttpAPI {
         return buildMethodHeader(requestBase, uri, headers);
     }
 
+    /**
+     * @see #close(Closeable)
+     */
+    @Deprecated
     public static void closeClient(CloseableHttpClient client) {
         if (client != null)
             try {
                 client.close();
-            } catch (IOException ignore) {
+            } catch (IOException ignored) {
             }
     }
+
+    public static void close(Closeable closeable) {
+        if (closeable != null)
+            try {
+                closeable.close();
+            } catch (IOException ignored) {
+            }
+    }
+
 }
