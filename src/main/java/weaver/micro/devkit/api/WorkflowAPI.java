@@ -121,31 +121,65 @@ public final class WorkflowAPI {
     }
 
     /**
-     * 获取表单字段简写到id的映射
-     * 只可获取表单名称为formtable_main_{billid}的表单及其明细表_dt{tableIdx}字段映射
+     * 获取表单字段数据库名称到id的映射
      *
      * @param billId  流程表单id
      * @param orderId 0：主表，大于0为明细表
      * @return 字段映射
+     * @see #getFieldIdMapperByBillIdAndOrderId(int, int)
      */
     public static Map<String, String> queryFieldMapper(int billId, int orderId) {
         Map<String, String> result = new HashMap<String, String>();
+
+        String sql = constructFieldMapperSql(billId, orderId);
         RecordSet rs = new RecordSet();
-
-        String sql = "select id,fieldname from workflow_billfield where billid=" + billId;
-        if (orderId == 0)
-            sql += " and (detailtable is null or detailtable = '') ";
-        else {
-            String detailTableName = getDetailTableNameByBillIdAndOrderId(billId, orderId);
-            sql += " and detailtable='" + detailTableName + "'";
-        }
-
         rs.execute(sql);
         while (rs.next()) {
             result.put(rs.getString("fieldname"), rs.getString("id"));
         }
 
         return result;
+    }
+
+    /**
+     * 获取表单字段数据库名称到id的映射
+     *
+     * @param billId  表单id
+     * @param orderId 明细表序号, 0代表主表
+     */
+    public static Map<String, Integer> getFieldIdMapperByBillIdAndOrderId(int billId, int orderId) {
+        Map<String, Integer> result = new HashMap<String, Integer>();
+
+        String sql = constructFieldMapperSql(billId, orderId);
+        RecordSet rs = new RecordSet();
+        rs.execute(sql);
+        while (rs.next()) {
+            result.put(rs.getString("fieldname"), rs.getInt("id"));
+        }
+
+        return result;
+    }
+
+    /**
+     * 获取表单字段数据库名称到id的映射
+     *
+     * @param workflowId 流程路径id
+     * @param orderId    明细表序号, 0代表主表
+     */
+    public static Map<String, Integer> getFieldIdMapperByWorkflowIdAndOrderId(int workflowId, int orderId) {
+        int billId = getBillIdByWorkflowId(workflowId);
+        return getFieldIdMapperByBillIdAndOrderId(billId, orderId);
+    }
+
+    static String constructFieldMapperSql(int billId, int orderId) {
+        String sql = "select id,fieldname from workflow_billfield where billid=" + billId;
+        if (orderId == 0) {
+            sql += " and (detailtable is null or detailtable = '') ";
+        } else {
+            String detailTableName = getDetailTableNameByBillIdAndOrderId(billId, orderId);
+            sql += " and detailtable='" + detailTableName + "'";
+        }
+        return sql;
     }
 
     @Deprecated
