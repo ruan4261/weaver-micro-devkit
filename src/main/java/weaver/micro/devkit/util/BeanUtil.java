@@ -4,8 +4,7 @@ import weaver.micro.devkit.Assert;
 
 import java.lang.reflect.*;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ruan4261
@@ -17,13 +16,15 @@ public final class BeanUtil {
     }
 
     /**
-     * 将所有实例字段作为键值
-     * 值为实例当前的字段状态
+     * 将所有实例字段作为键值<br>
+     * 值为实例当前的字段状态<br>
      * 获取的字段包括父类
      *
      * @param filter 该参数bit对应关键字将被过滤
      * @see ReflectUtil#queryFields(Class, int, boolean)
+     * @deprecated 如果子类有与父类同名字段, 值将取自父类字段
      */
+    @Deprecated
     public static Map<String, Object> object2Map(Object object, int filter) {
         Assert.notNull(object);
         Class<?> clazz = object.getClass();
@@ -33,13 +34,27 @@ public final class BeanUtil {
         Map<String, Object> map = new HashMap<String, Object>(fields.length);
         for (Field field : fields) {
             try {
-                field.setAccessible(true);
+                if (!field.isAccessible())
+                    field.setAccessible(true);
 
                 map.put(field.getName(), field.get(object));
             } catch (IllegalAccessException ignore) {
             }
         }
         return map;
+    }
+
+    /**
+     * 将所有实例字段作为键值<br>
+     * 使用getter方法获取字段, 要求空参且访问修饰为public
+     *
+     * todo 当前暂不可用, 会在接下来的版本更新
+     *
+     * @param filter 该参数bit对应关键字将被过滤
+     * @see ReflectUtil#queryFields(Class, int, boolean)
+     */
+    public static Map<String, Object> obj2Map(Object obj, int filter) {
+        return object2Map(obj, filter);
     }
 
     /**
@@ -54,14 +69,19 @@ public final class BeanUtil {
         Field[] fields = ReflectUtil.queryFields(clazz, filter, true);
         for (Field field : fields) {
             String key = field.getName();
-            Object value = state.get(key);
-            if (value != null) {
+            if (state.containsKey(key)) {
+                Object value = state.get(key);
                 try {
-                    field.setAccessible(true);
+                    if (!field.isAccessible())
+                        field.setAccessible(true);
+
+                    if (value == null) {
+                        field.set(object, value);
+                        continue;
+                    }
 
                     Class<?> destType = field.getType();
                     Class<?> oriType = value.getClass();
-
                     if (isConvertible(oriType, destType)) {
                         field.set(object, value);
                         continue;
@@ -70,37 +90,36 @@ public final class BeanUtil {
                     if (isPrimitive(destType)) {
                         field.set(object, o2Primitive(destType, value));
                     }
-                } catch (IllegalAccessException ignore) {
+                } catch (IllegalAccessException ignored) {
+                } catch (RuntimeException ignored) {
                 }
             }
         }
     }
 
     public static boolean isPrimitive(Class<?> clazz) {
-        String name = clazz.getSimpleName();
-        return "Byte".equals(name) || "Integer".equals(name) || "Float".equals(name) || "Double".equals(name) || "Short".equals(name) || "Long".equals(name) || "Boolean".equals(name) || "Character".equals(name) || "Void".equals(name);
+        return clazz.isPrimitive();
     }
 
     @SuppressWarnings("unchecked")
     public static <T> T o2Primitive(Class<T> clazz, Object val) {
-        String name = clazz.getSimpleName();
-        if ("Byte".equals(name)) {
+        if (clazz == byte.class || clazz == Byte.class) {
             return (T) o2Byte(val);
-        } else if ("Integer".equals(name)) {
-            return (T) o2Integer(val);
-        } else if ("Float".equals(name)) {
-            return (T) o2Float(val);
-        } else if ("Double".equals(name)) {
-            return (T) o2Double(val);
-        } else if ("Short".equals(name)) {
-            return (T) o2Short(val);
-        } else if ("Long".equals(name)) {
-            return (T) o2Long(val);
-        } else if ("Boolean".equals(name)) {
-            return (T) o2Boolean(val);
-        } else if ("Character".equals(name)) {
+        } else if (clazz == char.class || clazz == Character.class) {
             return (T) o2Character(val);
-        } else if ("Void".equals(name)) {
+        } else if (clazz == int.class || clazz == Integer.class) {
+            return (T) o2Integer(val);
+        } else if (clazz == boolean.class || clazz == Boolean.class) {
+            return (T) o2Boolean(val);
+        } else if (clazz == long.class || clazz == Long.class) {
+            return (T) o2Long(val);
+        } else if (clazz == double.class || clazz == Double.class) {
+            return (T) o2Double(val);
+        } else if (clazz == float.class || clazz == Float.class) {
+            return (T) o2Float(val);
+        } else if (clazz == short.class || clazz == Short.class) {
+            return (T) o2Short(val);
+        } else if (clazz == void.class || clazz == Void.class) {
             return null;
         }
         throw new RuntimeException(clazz.toString() + " is not a primitive class.");
@@ -150,7 +169,7 @@ public final class BeanUtil {
     }
 
     public static Integer o2Integer(Object val) {
-        if (val == null) return null;
+        if (val == null) return 0;
         if (val instanceof Number) return ((Number) val).intValue();
         if (val instanceof Boolean) return ((Boolean) val) ? 1 : 0;
         if (val instanceof Character) return val.hashCode();
@@ -166,7 +185,7 @@ public final class BeanUtil {
     }
 
     public static Double o2Double(Object val) {
-        if (val == null) return null;
+        if (val == null) return 0d;
         if (val instanceof Number) return ((Number) val).doubleValue();
         if (val instanceof Boolean) return ((Boolean) val) ? 1D : 0D;
         if (val instanceof CharSequence || hasOwnMethod(val.getClass(), "toString")) {
@@ -181,7 +200,7 @@ public final class BeanUtil {
     }
 
     public static Float o2Float(Object val) {
-        if (val == null) return null;
+        if (val == null) return 0f;
         if (val instanceof Number) return ((Number) val).floatValue();
         if (val instanceof Boolean) return ((Boolean) val) ? 1F : 0F;
         if (val instanceof CharSequence || hasOwnMethod(val.getClass(), "toString")) {
@@ -196,7 +215,7 @@ public final class BeanUtil {
     }
 
     public static Short o2Short(Object val) {
-        if (val == null) return null;
+        if (val == null) return (short) 0;
         if (val instanceof Number) return ((Number) val).shortValue();
         if (val instanceof Boolean) return ((Boolean) val) ? (short) 1 : (short) 0;
         if (val instanceof CharSequence || hasOwnMethod(val.getClass(), "toString")) {
@@ -211,7 +230,7 @@ public final class BeanUtil {
     }
 
     public static Long o2Long(Object val) {
-        if (val == null) return null;
+        if (val == null) return 0L;
         if (val instanceof Number) return ((Number) val).longValue();
         if (val instanceof Boolean) return ((Boolean) val) ? 1L : 0L;
         if (val instanceof CharSequence || hasOwnMethod(val.getClass(), "toString")) {
@@ -226,7 +245,7 @@ public final class BeanUtil {
     }
 
     public static Byte o2Byte(Object val) {
-        if (val == null) return null;
+        if (val == null) return (byte) 0;
         if (val instanceof Number) return ((Number) val).byteValue();
         if (val instanceof Boolean) return ((Boolean) val) ? (byte) 1 : (byte) 0;
         if (val instanceof CharSequence || hasOwnMethod(val.getClass(), "toString")) {
@@ -241,7 +260,7 @@ public final class BeanUtil {
     }
 
     public static Character o2Character(Object val) {
-        if (val == null) return null;
+        if (val == null) return (char) 0;
         if (val instanceof Character) return (Character) val;
         if (val instanceof Number) return (char) ((Number) val).intValue();
         if (val instanceof CharSequence || hasOwnMethod(val.getClass(), "toString")) {
@@ -295,6 +314,7 @@ public final class BeanUtil {
      */
     public static <T> boolean hasOwnMethod(Class<T> clazz, String methodName, Class<?>... paramTypes) {
         Assert.notNull(clazz);
+        Assert.notEmpty(methodName);
 
         try {
             clazz.getDeclaredMethod(methodName, paramTypes);
