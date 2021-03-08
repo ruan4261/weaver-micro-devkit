@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * @author ruan4261
  */
-public class Collections {
+public final class Collections {
 
     private Collections() {
     }
@@ -23,18 +23,30 @@ public class Collections {
         return new NotNullMap<K, V>(m, defaultVal);
     }
 
+    /**
+     * @since 1.1.1
+     */
     public static <K, V> Map<K, V> immutableMap(Map<K, V> m) {
         return new ImmutableMap<K, V>(m);
     }
 
+    /**
+     * @since 1.1.1
+     */
     public static <E> Set<E> immutableSet(Set<E> set) {
         return new ImmutableSet<E>(set);
     }
 
+    /**
+     * @since 1.1.1
+     */
     public static <E> Collection<E> immutableCollection(Collection<E> collection) {
         return new ImmutableCollection<E>(collection);
     }
 
+    /**
+     * @since 1.1.1
+     */
     public static <E> Iterator<E> immutableIterator(Iterator<E> iterator) {
         return new ImmutableIterator<E>(iterator);
     }
@@ -42,7 +54,7 @@ public class Collections {
     /**
      * 将get替换为getOrDefault
      */
-    private static final class NotNullMap<K, V> implements Map<K, V>, Serializable {
+    private static class NotNullMap<K, V> implements Map<K, V>, Serializable {
         private static final long serialVersionUID = 1L;
         private final Map<K, V> m;
         private V defaultVal;
@@ -226,7 +238,7 @@ public class Collections {
             throw new UnsupportedOperationException();
         }
 
-        static class ImmutableEntry<K, V> implements Entry<K, V> {
+        private static class ImmutableEntry<K, V> implements Entry<K, V> {
             private final Entry<K, V> entry;
 
             public ImmutableEntry(Entry<K, V> entry) {
@@ -252,7 +264,7 @@ public class Collections {
 
     }
 
-    static class ImmutableSet<E> extends ImmutableCollection<E> implements Set<E> {
+    private static class ImmutableSet<E> extends ImmutableCollection<E> implements Set<E> {
 
         public ImmutableSet(Collection<E> collection) {
             super(collection);
@@ -260,7 +272,7 @@ public class Collections {
 
     }
 
-    static class ImmutableCollection<E> implements Collection<E> {
+    private static class ImmutableCollection<E> implements Collection<E> {
         private final Collection<E> collection;
 
         public ImmutableCollection(Collection<E> collection) {
@@ -334,7 +346,7 @@ public class Collections {
 
     }
 
-    static class ImmutableIterator<E> implements Iterator<E> {
+    private static class ImmutableIterator<E> implements Iterator<E> {
         private final Iterator<E> iterator;
 
         public ImmutableIterator(Iterator<E> iterator) {

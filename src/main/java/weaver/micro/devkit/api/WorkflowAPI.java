@@ -6,6 +6,7 @@ import weaver.interfaces.workflow.action.WorkflowToDoc;
 import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.util.ArrayUtil;
+import weaver.micro.devkit.util.Collections;
 
 import java.util.*;
 
@@ -19,60 +20,24 @@ public final class WorkflowAPI {
     static final String EMPTY = "";
 
     /** 流程中的签字意见类型映射 */
-    static final Map<String, String> LOG_TYPE_MAPPER = new HashMap<String, String>() {
+    static final Map<String, String> LOG_TYPE_MAPPER;
 
-        {
-            super.put("0", "批准");
-            super.put("1", "保存");
-            super.put("2", "提交");
-            super.put("3", "退回");
-            super.put("4", "重新打开");
-            super.put("5", "删除");
-            super.put("6", "激活");
-            super.put("7", "转发");
-            super.put("9", "批注");
-            super.put("e", "强制归档");
-            super.put("t", "抄送");
-            super.put("s", "督办");
-        }
-
-        @Override
-        public String put(String key, String value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void putAll(Map<? extends String, ? extends String> m) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String remove(Object key) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void clear() {
-            throw new UnsupportedOperationException();
-        }
-
-        public String putIfAbsent(String key, String value) {
-            throw new UnsupportedOperationException();
-        }
-
-        public boolean remove(Object key, Object value) {
-            throw new UnsupportedOperationException();
-        }
-
-        public boolean replace(String key, String oldValue, String newValue) {
-            throw new UnsupportedOperationException();
-        }
-
-        public String replace(String key, String value) {
-            throw new UnsupportedOperationException();
-        }
-
-    };
+    static {
+        Map<String, String> m = new HashMap<String, String>();
+        m.put("0", "批准");
+        m.put("1", "保存");
+        m.put("2", "提交");
+        m.put("3", "退回");
+        m.put("4", "重新打开");
+        m.put("5", "删除");
+        m.put("6", "激活");
+        m.put("7", "转发");
+        m.put("9", "批注");
+        m.put("e", "强制归档");
+        m.put("t", "抄送");
+        m.put("s", "督办");
+        LOG_TYPE_MAPPER = Collections.immutableMap(m);
+    }
 
     /**
      * 根据requestId获取流程实例标题
