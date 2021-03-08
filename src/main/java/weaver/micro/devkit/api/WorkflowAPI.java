@@ -126,7 +126,7 @@ public final class WorkflowAPI {
      * @param billId  流程表单id
      * @param orderId 0：主表，大于0为明细表
      * @return 字段映射
-     * @see #getFieldIdMapperByBillIdAndOrderId(int, int)
+     * @see #getFieldIdMapperByBillIdAndOrderId(int, int) 泛型优化
      */
     public static Map<String, String> queryFieldMapper(int billId, int orderId) {
         Map<String, String> result = new HashMap<String, String>();
