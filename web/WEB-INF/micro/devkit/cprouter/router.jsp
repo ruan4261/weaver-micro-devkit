@@ -1,5 +1,6 @@
 <%@ page import="weaver.conn.RecordSet" %>
 <%@ page import="weaver.general.Util" %>
+<%@ page import="weaver.micro.devkit.util.StringUtils" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%--
     -- START --
@@ -40,47 +41,6 @@
 
     -- END --
 --%>
-<%!
-    /**
-     * Check whether s1 include s2(val.toString())
-     */
-    boolean isInclude(String s1, int val) {
-        int offset = 0;
-        int len = s1.length();
-        String s2 = Integer.toString(val);
-        int wid = s2.length();
-        int lastPossible = len - wid;
-
-        while (offset <= lastPossible) {
-            offset = s1.indexOf(s2, offset);
-            if (offset == -1)
-                return false;
-
-            int end = offset + wid;
-            // check start
-            if (offset > 0) {
-                char prev = s1.charAt(offset - 1);
-                if (prev == '-' || (prev >= '0' && prev <= '9')) {
-                    offset = end;
-                    continue;
-                }
-            }
-
-            // check end
-            if (end < len) {
-                char next = s1.charAt(end);
-                if (next >= '0' && next <= '9') {
-                    offset = end;
-                    continue;
-                }
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-%>
 <%
     RecordSet rs = new RecordSet();
     int workflowid = Util.getIntValue(request.getParameter("workflowid"));
@@ -97,7 +57,7 @@
             active = true;
         } else {
             String nodeGroup = rs.getString("nodeid");
-            boolean modelMatch = isInclude(nodeGroup, nodeid);
+            boolean modelMatch = StringUtils.isInclude(nodeGroup, nodeid);
 
             if ((model == 1 && modelMatch) || (model == 2 && !modelMatch))
                 active = true;
