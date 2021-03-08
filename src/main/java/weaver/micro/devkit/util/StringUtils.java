@@ -24,13 +24,16 @@ public class StringUtils {
      * The minus sign cannot be used as separators.
      */
     public static boolean isInclude(String s1, int val) {
-        Assert.notEmpty(s1);
-        int offset = 0;
+        Assert.notNull(s1);
         int len = s1.length();
+        if (len == 0)
+            return false;
+
         String s2 = Integer.toString(val);
         int wid = s2.length();
         int lastPossible = len - wid;
 
+        int offset = 0;
         while (offset <= lastPossible) {
             offset = s1.indexOf(s2, offset);
             if (offset == -1)

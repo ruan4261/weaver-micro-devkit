@@ -49,21 +49,12 @@
 
     while (rs.next()) {
         // 是否生效
-        boolean active = false;
-
         int model = rs.getInt("model");
+        String nodeGroup = rs.getString("nodeid");
 
-        if (model == 0) {
-            active = true;
-        } else {
-            String nodeGroup = rs.getString("nodeid");
-            boolean modelMatch = StringUtils.isInclude(nodeGroup, nodeid);
-
-            if ((model == 1 && modelMatch) || (model == 2 && !modelMatch))
-                active = true;
-        }
-
-        if (active) {
+        if (model == 0
+                || (model == 1 && StringUtils.isInclude(nodeGroup, nodeid))
+                || (model == 2 && !StringUtils.isInclude(nodeGroup, nodeid))) {
             String path = rs.getString("custompage");
             int fileType = rs.getInt("file_type");
             switch (fileType) {
