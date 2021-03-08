@@ -20,7 +20,8 @@ public class StringUtils {
     }
 
     /**
-     * Check whether s1 include s2(val.toString())
+     * Check whether s1 include s2(val.toString()).
+     * The minus sign cannot be used as separators.
      */
     public static boolean isInclude(String s1, int val) {
         Assert.notEmpty(s1);
