@@ -42,6 +42,9 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     // 字段校验
     private boolean fieldVerifyFlag;
 
+    /**
+     * Unique construction method
+     */
     public ActionHandler(String actionInfo) {
         this.actionInfo = actionInfo;
         this.instanceRunTimes = 0;
@@ -156,34 +159,34 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     /**
      * 获取当前流程在主表单中的id
      */
-    public final int getMainId() {
+    public int getMainId() {
         return WorkflowAPI.getMainId(getRequestId());
     }
 
-    public final int getRequestId() {
+    public int getRequestId() {
         return Cast.o2Integer(this.request.getRequestid());
     }
 
     /** 流程标题 */
-    public final String getRequestName() {
+    public String getRequestName() {
         return this.request.getRequestManager().getRequestname();
     }
 
     /**
      * 流程路径的id
      */
-    public final int getWorkflowId() {
+    public int getWorkflowId() {
         return Cast.o2Integer(this.request.getWorkflowid());
     }
 
     /**
      * 这个接口在流转时并不准确, 大概率获取到的是流程流转之后的节点
      */
-    public final int getCurrentNodeId() {
+    public int getCurrentNodeId() {
         return WorkflowAPI.getNodeIdByRequestId(getRequestId());
     }
 
-    public final String getCurrentNodeName() {
+    public String getCurrentNodeName() {
         int nodeId = getCurrentNodeId();
         return WorkflowAPI.getNodeNameByNodeId(nodeId);
     }
@@ -197,7 +200,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return workflowPath;
     }
 
-    public final int getBillId() {
+    public int getBillId() {
         return WorkflowAPI.getBillIdByWorkflowId(this.getWorkflowId());
     }
 
@@ -221,24 +224,24 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     }
 
     @Deprecated
-    public final String getTableNameLower() {
+    public String getTableNameLower() {
         return this.getBillTableName().toLowerCase();
     }
 
     @Deprecated
-    public final String getTableNameUpper() {
+    public String getTableNameUpper() {
         return this.getBillTableName().toUpperCase();
     }
 
     /** 明细order从1开始, 为0时返回主表名称, 不存在该明细表则会抛出运行时异常 */
-    public final String getDetailTableName(int order) {
+    public String getDetailTableName(int order) {
         String name = WorkflowAPI.getDetailTableNameByBillIdAndOrderId(getBillId(), order);
         if ("".equals(name))
             throw new RuntimeException("BillTable [" + getBillTableName() + "] doesn't have such detail table which order number is " + order + ".");
         return name;
     }
 
-    public final String getBillTableName() {
+    public String getBillTableName() {
         return WorkflowAPI.getBillTableNameByWorkflowId(this.getWorkflowId());
     }
 
@@ -325,7 +328,8 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         try {
             clearCache();
         } catch (Throwable e) {
-            log("Throw exception by #clearCache()", e);
+            // action is over, exception cannot be output to the front end
+            ifExceptionAfterEnd(e);
         }
     }
 
@@ -342,6 +346,15 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
     public String ifException(Throwable e) {
         this.log("Auto catch exception by ActionHandler.", e);
         return this.fail(e);
+    }
+
+    /**
+     * action执行结束后抛出的异常处理
+     *
+     * @since 1.1.2
+     */
+    public void ifExceptionAfterEnd(Throwable e) {
+        log("Throw exception through #end()", e);
     }
 
     /**
@@ -416,7 +429,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @deprecated 错拼
      */
     @Deprecated
-    public final int getFiledId(int tableIdx, String name) {
+    public int getFiledId(int tableIdx, String name) {
         return this.getFieldId(tableIdx, name);
     }
 
@@ -425,7 +438,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @param name     字段数据库名
      * @return 字段id
      */
-    public final int getFieldId(int tableIdx, String name) {
+    public int getFieldId(int tableIdx, String name) {
         return WorkflowAPI.getFieldIdByFieldName(this.getBillId(), tableIdx, name);
     }
 
@@ -436,7 +449,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @deprecated cannot get detail table values
      */
     @Deprecated
-    public final String getDropdownBoxValue(int tableIdx, String name) {
+    public String getDropdownBoxValue(int tableIdx, String name) {
         // tableIdx can only be zero
         int fieldId = this.getFieldId(tableIdx, name);
         int fieldValue = Cast.o2Integer(this.getMainTableCache().get(name));
@@ -451,7 +464,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
      * @param value    字段下标值
      * @return 字段显示值
      */
-    public final String getDropdownBoxShowValue(int tableIdx, String name, int value) {
+    public String getDropdownBoxShowValue(int tableIdx, String name, int value) {
         int fieldId = this.getFieldId(tableIdx, name);
         return WorkflowAPI.getDropdownBoxValue(fieldId, value);
     }
@@ -465,7 +478,7 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return "";
     }
 
-    public final void setFieldVerifyFlag(boolean fieldVerifyFlag) {
+    public void setFieldVerifyFlag(boolean fieldVerifyFlag) {
         this.fieldVerifyFlag = fieldVerifyFlag;
     }
 
