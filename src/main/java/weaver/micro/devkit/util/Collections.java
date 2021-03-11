@@ -31,6 +31,13 @@ public final class Collections {
     }
 
     /**
+     * @since 1.1.2
+     */
+    public static <K, V> Map<K, V> immutableMap(MapConstructor<K, V> constructor) {
+        return new ImmutableMap<K, V>(constructor);
+    }
+
+    /**
      * @since 1.1.1
      */
     public static <E> Set<E> immutableSet(Set<E> set) {
@@ -142,12 +149,45 @@ public final class Collections {
 
     /**
      * 禁止修改内容的映射表
+     *
+     * @since 1.1.1
      */
     private static class ImmutableMap<K, V> implements Map<K, V> {
         private final Map<K, V> m;
 
+        /**
+         * @since 1.1.2
+         */
+        private final Ref<Map<K, V>> ref;
+
+        /**
+         * @since 1.1.1
+         */
         public ImmutableMap(Map<K, V> m) {
             this.m = m;
+            this.ref = new Ref<Map<K, V>>();
+        }
+
+        /**
+         * @since 1.1.2
+         */
+        public ImmutableMap(MapConstructor<K, V> constructor) {
+            this.m = new HashMap<K, V>();
+            this.ref = new Ref<Map<K, V>>(this.m);
+
+            class ImmutableMapConstructionFiller implements MapFiller<K, V> {
+
+                @Override
+                public void put(K key, V value) {
+                    ref.get().put(key, value);
+                }
+
+            }
+
+            MapFiller<K, V> filler = new ImmutableMapConstructionFiller();
+
+            constructor.construct(filler);
+            this.ref.remove();
         }
 
         @Override
@@ -238,32 +278,86 @@ public final class Collections {
             throw new UnsupportedOperationException();
         }
 
-        private static class ImmutableEntry<K, V> implements Entry<K, V> {
-            private final Entry<K, V> entry;
+    }
 
-            public ImmutableEntry(Entry<K, V> entry) {
-                this.entry = entry;
-            }
+    /**
+     * @since 1.1.2
+     */
+    private static class Ref<T> {
+        private T ref;
 
-            @Override
-            public K getKey() {
-                return this.entry.getKey();
-            }
+        public Ref() {
+        }
 
-            @Override
-            public V getValue() {
-                return this.entry.getValue();
-            }
+        public Ref(T obj) {
+            this.ref = obj;
+        }
 
-            @Override
-            public V setValue(V value) {
+        public T get() {
+            if (this.ref == null)
                 throw new UnsupportedOperationException();
-            }
 
+            return this.ref;
+        }
+
+        public void set(T obj) {
+            this.ref = obj;
+        }
+
+        public void remove() {
+            this.ref = null;
         }
 
     }
 
+    /**
+     * @since 1.1.2
+     */
+    private static class ImmutableEntry<K, V> implements Map.Entry<K, V> {
+        private final Map.Entry<K, V> entry;
+
+        public ImmutableEntry(Map.Entry<K, V> entry) {
+            this.entry = entry;
+        }
+
+        @Override
+        public K getKey() {
+            return this.entry.getKey();
+        }
+
+        @Override
+        public V getValue() {
+            return this.entry.getValue();
+        }
+
+        @Override
+        public V setValue(V value) {
+            throw new UnsupportedOperationException();
+        }
+
+    }
+
+    /**
+     * @since 1.1.2
+     */
+    public interface MapFiller<K, V> {
+
+        void put(K key, V value);
+
+    }
+
+    /**
+     * @since 1.1.2
+     */
+    public interface MapConstructor<K, V> {
+
+        void construct(MapFiller<K, V> filler);
+
+    }
+
+    /**
+     * @since 1.1.1
+     */
     private static class ImmutableSet<E> extends ImmutableCollection<E> implements Set<E> {
 
         public ImmutableSet(Collection<E> collection) {
@@ -272,6 +366,9 @@ public final class Collections {
 
     }
 
+    /**
+     * @since 1.1.1
+     */
     private static class ImmutableCollection<E> implements Collection<E> {
         private final Collection<E> collection;
 
@@ -346,6 +443,9 @@ public final class Collections {
 
     }
 
+    /**
+     * @since 1.1.1
+     */
     private static class ImmutableIterator<E> implements Iterator<E> {
         private final Iterator<E> iterator;
 
