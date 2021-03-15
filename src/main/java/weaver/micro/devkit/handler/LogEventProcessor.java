@@ -6,7 +6,7 @@ import weaver.micro.devkit.util.StringUtils;
 /**
  * @since 1.1.3
  */
-public final class LogEventProcessor implements Loggable {
+public class LogEventProcessor implements Loggable {
 
     private final BaseBean baseBean;
 
