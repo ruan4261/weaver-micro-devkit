@@ -3,7 +3,9 @@ package weaver.micro.devkit.api;
 import weaver.conn.RecordSet;
 import weaver.micro.devkit.Assert;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,12 +33,45 @@ public final class CommonAPI {
      */
     public static Map<String, String> mapFromRecordRow(final RecordSet rs) {
         Assert.notNull(rs, "RecordSet");
-        Map<String, String> result = new HashMap<String, String>();
         String[] cols = rs.getColumnName();
+        Map<String, String> result = new HashMap<String, String>(cols.length + (cols.length >> 1));
         for (String key : cols) {
             String value = rs.getString(key);
             result.put(key, value);
         }
         return result;
     }
+
+    /**
+     * @param table      目标表名
+     * @param fields     目标字段名, 为空时默认获取所有字段
+     * @param conditions 查询字符串: xx='xx' 自动用and连接
+     */
+    public static List<Map<String, String>> query(String table, String fields, String... conditions) {
+        Assert.notEmpty(table);
+        if (fields == null || fields.equals(""))
+            fields = "*";
+
+        StringBuilder builder = null;
+        if (conditions != null && conditions.length > 0) {
+            builder = new StringBuilder(" where ");
+            for (int i = 0; i < conditions.length; i++) {
+                if (i > 0)
+                    builder.append(" and ");
+
+                builder.append(conditions[i]);
+            }
+        }
+
+        RecordSet rs = new RecordSet();
+        rs.execute("select " + fields + " from " + table + (builder == null ? "" : builder.toString()));
+
+        List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+        while (rs.next()) {
+            result.add(mapFromRecordRow(rs));
+        }
+
+        return result;
+    }
+
 }

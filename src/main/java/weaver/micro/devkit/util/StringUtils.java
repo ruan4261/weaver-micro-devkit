@@ -7,14 +7,25 @@ public class StringUtils {
     public static String makeStackTraceInfo(Throwable t) {
         Assert.notNull(t);
         StackTraceElement[] trace = t.getStackTrace();
-        StringBuilder builder = new StringBuilder(trace.length << 5);
-        builder.append(t.getClass().getName())
-                .append(':')
-                .append(t.getMessage());
+
+        return t.toString() + '\n' + makeStackTraceInfo(trace, "\tat ");
+    }
+
+    /**
+     * 自动跨行, 前缀加载每行行头
+     * 返回字符串的尾部有空行
+     */
+    public static String makeStackTraceInfo(StackTraceElement[] trace, String prefix) {
+        if (trace == null || trace.length == 0)
+            return "";
+
+        StringBuilder builder = new StringBuilder(trace.length << 6);
         for (StackTraceElement traceElement : trace) {
-            builder.append("\n")
-                    .append("\tat ")
-                    .append(traceElement);
+            if (prefix != null)
+                builder.append(prefix);
+
+            builder.append(traceElement)
+                    .append('\n');
         }
         return builder.toString();
     }
