@@ -1,13 +1,11 @@
 package weaver.micro.devkit.handler;
 
 import weaver.conn.RecordSetTrans;
-import weaver.general.BaseBean;
 import weaver.interfaces.workflow.action.Action;
 import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
-import weaver.micro.devkit.util.StringUtils;
 import weaver.soa.workflow.request.*;
 import weaver.workflow.request.RequestManager;
 
@@ -23,24 +21,57 @@ import java.util.Map;
  *
  * @author ruan4261
  */
-public abstract class ActionHandler extends BaseBean implements Handler, Action {
-    // 该实例被执行次数
+public abstract class ActionHandler implements Handler, Action, Loggable {
+
+    /**
+     * 该实例被执行次数
+     */
     private int instanceRunTimes;
-    // 每次的请求
+
+    /**
+     * 每次的请求
+     */
     private RequestInfo request;
-    // 接口说明信息
+
+    /**
+     * 接口说明信息
+     */
     private final String actionInfo;
-    // 返回值信息
+
+    /**
+     * 当前接口的返回值
+     */
     private String endResult;
+
+    /**
+     * 当前接口的返回信息
+     */
     private String endMessage;
-    // 主表缓存
+
+    /**
+     * 主表缓存
+     */
     private Map<String, String> mainTableCache;
-    // 明细表缓存
+
+    /**
+     * 明细表缓存
+     */
     private Map<Integer, List<Map<String, String>>> detailTableListCache;
-    // 明细表缓存，原型
+
+    /**
+     * 明细表缓存，原型
+     */
     private DetailTable[] detailTablesCache;
-    // 字段校验
+
+    /**
+     * 字段校验成功标识
+     */
     private boolean fieldVerifyFlag;
+
+    /**
+     * log process
+     */
+    private final Loggable logProcess = LogEventProcessor.getInstance();
 
     /**
      * Unique construction method
@@ -245,26 +276,26 @@ public abstract class ActionHandler extends BaseBean implements Handler, Action 
         return WorkflowAPI.getBillTableNameByWorkflowId(this.getWorkflowId());
     }
 
-    /** main log */
+    @Override
     public final void log(String msg) {
-        writeLog(getLogPrefix() + " -> " + msg);
+        this.logProcess.log(getLogPrefix() + " -> " + msg);
     }
 
-    /** main log */
     public final void logLine(String msg) {
-        writeLog(getLogPrefix() + " ->\n" + msg);
+        this.logProcess.log(getLogPrefix() + " ->\n" + msg);
     }
 
+    @Override
     public final void log(Throwable cause) {
-        logLine(StringUtils.makeStackTraceInfo(cause));
+        this.logProcess.log(getLogPrefix() + " ->", cause);
     }
 
     /**
      * @since 1.0.5
      */
+    @Override
     public final void log(String msg, Throwable cause) {
-        String trace = StringUtils.makeStackTraceInfo(cause);
-        logLine(msg + "\n" + trace);
+        this.logProcess.log(getLogPrefix() + " -> " + msg, cause);
     }
 
     /**
