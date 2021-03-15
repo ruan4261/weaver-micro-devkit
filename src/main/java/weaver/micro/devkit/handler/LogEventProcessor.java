@@ -22,35 +22,46 @@ public class LogEventProcessor implements Loggable {
 
     @Override
     public void log(String mes) {
-        writeLog(mes);
+        this.writeLog(mes);
     }
 
     @Override
     public void log(Throwable throwable) {
-        writeLog("\n" + StringUtils.makeStackTraceInfo(throwable));
+        String mes = "\n" + StringUtils.makeStackTraceInfo(throwable);
+        writeLog(mes);
     }
 
     @Override
     public void log(String title, Throwable throwable) {
-        writeLog(title + "\n" + StringUtils.makeStackTraceInfo(throwable));
+        String mes = title + "\n" + StringUtils.makeStackTraceInfo(throwable);
+        writeLog(mes);
     }
 
     /**
      * internal use
      */
     void writeLog(String mes) {
-        baseBean.writeLog(getCallerClassName(4), mes);
-    }
-
-    void writeLog(Class<?> printer, String mes) {
-        baseBean.writeLog(printer.getName(), mes);
+        StackTraceElement caller = getCallerClassName(2);
+        String callerName = caller.getClassName();
+        baseBean.writeLog(callerName, mes);
     }
 
     /**
      * internal use
      */
-    String getCallerClassName(int arrIdx) {
-        return Thread.currentThread().getStackTrace()[arrIdx].getClassName();
+    void writeLog(Class<?> caller, String mes) {
+        String callerName = caller.getName();
+        baseBean.writeLog(callerName, mes);
+    }
+
+    /**
+     * internal use
+     * 入参为0代表调用该方法的栈帧
+     * 入参为-1代表当前这个栈帧
+     */
+    StackTraceElement getCallerClassName(int arrIdx) {
+        arrIdx += 2;
+        return Thread.currentThread().getStackTrace()[arrIdx];
     }
 
 }
