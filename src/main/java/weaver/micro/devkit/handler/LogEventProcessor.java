@@ -1,57 +1,64 @@
 package weaver.micro.devkit.handler;
 
-import weaver.general.BaseBean;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import weaver.micro.devkit.util.StringUtils;
 
 /**
+ * 实例在创建时就会确定日志的类签名
+ *
  * @since 1.1.3
  */
 public class LogEventProcessor implements Loggable {
 
-    private final BaseBean baseBean;
-
-    LogEventProcessor() {
-        this.baseBean = new BaseBean();
+    LogEventProcessor(Log log) {
+        this.log = log;
     }
 
-    private final static LogEventProcessor instance = new LogEventProcessor();
+    private final Log log;
 
+    /**
+     * @since 1.1.3
+     */
     public static LogEventProcessor getInstance() {
-        return instance;
+        StackTraceElement caller = getCallerClassName(1);
+        String callerName = caller.getClassName();
+        return getInstance(callerName);
+    }
+
+    /**
+     * @since 1.1.4
+     */
+    public static LogEventProcessor getInstance(String name) {
+        return new LogEventProcessor(LogFactory.getLog(name));
+    }
+
+    /**
+     * @since 1.1.4
+     */
+    public static LogEventProcessor getInstance(Class<?> clazz) {
+        return new LogEventProcessor(LogFactory.getLog(clazz));
     }
 
     @Override
     public void log(String mes) {
-        this.writeLog(mes);
+        this.internalLog(mes);
     }
 
     @Override
     public void log(Throwable throwable) {
         String mes = "\n" + StringUtils.makeStackTraceInfo(throwable);
-        writeLog(mes);
+        this.internalLog(mes);
     }
 
     @Override
     public void log(String title, Throwable throwable) {
         String mes = title + "\n" + StringUtils.makeStackTraceInfo(throwable);
-        writeLog(mes);
+        this.internalLog(mes);
     }
 
-    /**
-     * internal use
-     */
-    void writeLog(String mes) {
-        StackTraceElement caller = getCallerClassName(2);
-        String callerName = caller.getClassName();
-        baseBean.writeLog(callerName, mes);
-    }
-
-    /**
-     * internal use
-     */
-    void writeLog(Class<?> caller, String mes) {
-        String callerName = caller.getName();
-        baseBean.writeLog(callerName, mes);
+    void internalLog(String msg) {
+        this.log.error(msg);
     }
 
     /**
@@ -59,7 +66,7 @@ public class LogEventProcessor implements Loggable {
      * 入参为0代表调用该方法的栈帧
      * 入参为-1代表当前这个栈帧
      */
-    StackTraceElement getCallerClassName(int arrIdx) {
+    static StackTraceElement getCallerClassName(int arrIdx) {
         arrIdx += 2;
         return Thread.currentThread().getStackTrace()[arrIdx];
     }
