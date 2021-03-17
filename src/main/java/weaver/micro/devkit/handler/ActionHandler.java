@@ -6,6 +6,7 @@ import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
+import weaver.micro.devkit.util.StringUtils;
 import weaver.soa.workflow.request.*;
 import weaver.workflow.request.RequestManager;
 
@@ -71,7 +72,12 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     /**
      * log process
      */
-    private final Loggable logProcess = LogEventProcessor.getInstance();
+    private final Loggable logProcess;
+
+    /**
+     * log prefix
+     */
+    private String logPrefix;
 
     /**
      * Unique construction method
@@ -79,6 +85,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     public ActionHandler(String actionInfo) {
         this.actionInfo = actionInfo;
         this.instanceRunTimes = 0;
+        this.logProcess = LogEventProcessor.getInstance(actionInfo);
     }
 
     public RequestInfo requestInfo() {
@@ -218,7 +225,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     public String getCurrentNodeName() {
-        int nodeId = getCurrentNodeId();
+        int nodeId = this.getCurrentNodeId();
         return WorkflowAPI.getNodeNameByNodeId(nodeId);
     }
 
@@ -227,7 +234,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     public String getWorkflowPathName() {
         String workflowPath = WorkflowAPI.getWorkflowPathName(this.getWorkflowId());
-        log("workflow path: " + workflowPath);
+        this.log("workflow path: " + workflowPath);
         return workflowPath;
     }
 
@@ -240,11 +247,11 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 用于便捷查询
      */
     private String getLogPrefix() {
-        return this.actionInfo + "$request:" + this.getRequestId() + '$';
+        return this.logPrefix;
     }
 
     public final int getCreatorId() {
-        return WorkflowAPI.getCreatorIdByRequestId(getRequestId());
+        return WorkflowAPI.getCreatorIdByRequestId(this.getRequestId());
     }
 
     /**
@@ -276,18 +283,29 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         return WorkflowAPI.getBillTableNameByWorkflowId(this.getWorkflowId());
     }
 
+    /**
+     * full recursion
+     */
     @Override
-    public final void log(String msg) {
-        this.logProcess.log(getLogPrefix() + " -> " + msg);
+    public final void log(Object o) {
+        this.logLine(StringUtils.fullRecursionPrint(o));
     }
 
+    @Override
+    public final void log(String msg) {
+        this.logProcess.log(this.getLogPrefix() + " -> " + msg);
+    }
+
+    /**
+     * 打印实际内容时另起一行
+     */
     public final void logLine(String msg) {
-        this.logProcess.log(getLogPrefix() + " ->\n" + msg);
+        this.logProcess.log(this.getLogPrefix() + " ->\n" + msg);
     }
 
     @Override
     public final void log(Throwable cause) {
-        this.logProcess.log(getLogPrefix() + " ->", cause);
+        this.logProcess.log(this.getLogPrefix() + " ->", cause);
     }
 
     /**
@@ -295,7 +313,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     @Override
     public final void log(String msg, Throwable cause) {
-        this.logProcess.log(getLogPrefix() + " -> " + msg, cause);
+        this.logProcess.log(this.getLogPrefix() + " -> " + msg, cause);
     }
 
     /**
@@ -305,7 +323,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @return FAILURE_AND_CONTINUE
      */
     public final String fail(String msg) {
-        String mes = msg + "【参考信息:" + getLogPrefix() + '】';
+        String mes = this.actionInfo + " :: " + msg;
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(mes);
         this.endResult = Action.FAILURE_AND_CONTINUE;
@@ -314,7 +332,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     public final String fail(Throwable throwable) {
-        String mes = throwable.getClass().getName() + ':' + throwable.getMessage() + "【参考信息:" + getLogPrefix() + '】';
+        String mes = this.actionInfo + " :: " + throwable.toString();
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(mes);
         this.endResult = Action.FAILURE_AND_CONTINUE;
@@ -343,24 +361,25 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     public void actionStart() throws Throwable {
+        this.logPrefix = "$request:" + this.getRequestId() + '$';
         this.setFieldVerifyFlag(true);
-        log(" start" +
+        this.log(" action start" +
                 ", bill main id is " + this.getMainId() +
-                ", bill table is " + this.getTableNameLower() +
+                ", bill table name is " + this.getTableNameLower() +
                 ", request name is " + this.getRequestName() +
-                ", creator hrmId is " + this.getCreatorId() +
-                ", currentNodeName is " + this.getCurrentNodeName() +
-                ", runTimes of this action instance is " + (++this.instanceRunTimes));
+                ", creator is " + this.getCreatorId() +
+                ", current node is " + this.getCurrentNodeName() +
+                ", run times of this action instance is " + (++this.instanceRunTimes));
     }
 
     /** 每次执行execute结束时必然执行此方法 */
     public final void end() {
-        log(" end with result:" + this.endResult + ", message:" + this.endMessage);
+        this.log(" end with result:" + this.endResult + ", message:" + this.endMessage);
         try {
-            clearCache();
+            this.clearCache();
         } catch (Throwable e) {
             // action is over, exception cannot be output to the front end
-            ifExceptionAfterEnd(e);
+            this.ifExceptionAfterEnd(e);
         }
     }
 
@@ -371,6 +390,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         this.mainTableCache = null;
         this.detailTableListCache = null;
         this.detailTablesCache = null;
+        this.logPrefix = "";
+        this.log("Auto clear cache success.");
     }
 
     /** 发生异常情况下在action结束时执行，该方法用于自定义重写 */
@@ -385,7 +406,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @since 1.1.2
      */
     public void ifExceptionAfterEnd(Throwable e) {
-        log("Throw exception through #end()", e);
+        this.log("Throw exception through #end()", e);
     }
 
     /**
@@ -411,13 +432,13 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         boolean overLimit = false;
         if (table == 0) {
             // 主表
-            Map<String, String> mainTable = getMainTableCache();
+            Map<String, String> mainTable = this.getMainTableCache();
             String v = mainTable.get(field);
             if (v.length() > maxlength)
                 overLimit = true;
         } else {
             // 明细表
-            List<Map<String, String>> detailTable = getDetailTableCache(table);
+            List<Map<String, String>> detailTable = this.getDetailTableCache(table);
             for (Map<String, String> map : detailTable) {
                 String v = map.get(field);
                 if (v.length() > maxlength) {
@@ -518,7 +539,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     public int getDetailTableCount() {
         int count = WorkflowAPI.getDetailTableCountByRequestId(getRequestId());
-        log("detail table count: " + count);
+        this.log("detail table count: " + count);
         return count;
     }
 
@@ -527,7 +548,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     public void clearDetailTableData(int order) {
         WorkflowAPI.clearDetailTableDataByRequestIdAndOrder(getRequestId(), order);
-        log("The detail table " + order + " has been cleaned.");
+        this.log("The detail table " + order + " has been cleaned.");
     }
 
     /**
@@ -535,7 +556,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     public void clearAllDetailTableData() {
         WorkflowAPI.clearAllDetailTableDataByRequestId(getRequestId());
-        log("All detail tables have been cleaned.");
+        this.log("All detail tables have been cleaned.");
     }
 
 }

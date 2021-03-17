@@ -18,21 +18,20 @@ public final class BeanUtil {
     /**
      * 将所有实例字段作为键值<br>
      * 值为实例当前的字段状态<br>
-     * 获取的字段包括父类
+     * 如果子类有与父类同名字段, 子类值会覆盖父类的值
      *
-     * @param filter 该参数bit对应关键字将被过滤
+     * @param filter 该参数bit对应修饰符的字段将被过滤
      * @see ReflectUtil#queryFields(Class, int, boolean)
-     * @deprecated 如果子类有与父类同名字段, 值将取自父类字段
      */
-    @Deprecated
     public static Map<String, Object> object2Map(Object object, int filter) {
         Assert.notNull(object);
         Class<?> clazz = object.getClass();
 
         Field[] fields = ReflectUtil.queryFields(clazz, filter, true);
 
-        Map<String, Object> map = new HashMap<String, Object>(fields.length);
-        for (Field field : fields) {
+        Map<String, Object> map = new HashMap<String, Object>(fields.length + (fields.length >> 1));
+        for (int i = fields.length - 1; i >= 0; i--) {
+            Field field = fields[i];
             try {
                 if (!field.isAccessible())
                     field.setAccessible(true);
@@ -50,7 +49,7 @@ public final class BeanUtil {
      *
      * todo 当前暂不可用, 会在接下来的版本更新
      *
-     * @param filter 该参数bit对应关键字将被过滤
+     * @param filter 该参数bit对应修饰符的字段将被过滤
      * @see ReflectUtil#queryFields(Class, int, boolean)
      */
     public static Map<String, Object> obj2Map(Object obj, int filter) {
@@ -76,7 +75,7 @@ public final class BeanUtil {
                         field.setAccessible(true);
 
                     if (value == null) {
-                        field.set(object, value);
+                        field.set(object, null);
                         continue;
                     }
 
@@ -97,8 +96,20 @@ public final class BeanUtil {
         }
     }
 
+    /**
+     * 元类型包装类也算作元类型
+     */
     public static boolean isPrimitive(Class<?> clazz) {
-        return clazz.isPrimitive();
+        return (clazz.isPrimitive()
+                || clazz == Byte.class
+                || clazz == Character.class
+                || clazz == Integer.class
+                || clazz == Boolean.class
+                || clazz == Long.class
+                || clazz == Double.class
+                || clazz == Float.class
+                || clazz == Short.class
+                || clazz == Void.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -335,4 +346,5 @@ public final class BeanUtil {
         Map<String, Object> dat = object2Map(origin, filter);
         fillObject(dat, dest, filter);
     }
+
 }
