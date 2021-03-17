@@ -20,4 +20,9 @@ public interface Loggable {
      */
     void log(String title, Throwable throwable);
 
+    /**
+     * @since 1.1.4
+     */
+    void log(Object o);
+
 }

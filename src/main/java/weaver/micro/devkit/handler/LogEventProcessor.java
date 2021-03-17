@@ -57,6 +57,15 @@ public class LogEventProcessor implements Loggable {
         this.internalLog(mes);
     }
 
+    /**
+     * Full recursion.
+     */
+    @Override
+    public void log(Object o) {
+        String mes = StringUtils.fullRecursionPrint(o);
+        this.internalLog(mes);
+    }
+
     void internalLog(String msg) {
         this.log.error(msg);
     }
