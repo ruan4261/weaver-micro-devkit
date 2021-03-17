@@ -105,16 +105,17 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @return 流程主表对应的单行数据，字段名到流程数据的映射。
      */
     public Map<String, String> getMainTableCache() {
-        if (mainTableCache != null) return mainTableCache;
-        else mainTableCache = new HashMap<String, String>();
+        if (this.mainTableCache != null)
+            return this.mainTableCache;
+        else this.mainTableCache = new HashMap<String, String>();
 
         Property[] properties = this.request.getMainTableInfo().getProperty();
         for (Property property : properties) {
-            mainTableCache.put(property.getName(), property.getValue());
+            this.mainTableCache.put(property.getName(), property.getValue());
         }
 
-        logLine("MAIN FORM DATA(Cache) : " + mainTableCache.toString());
-        return mainTableCache;
+        this.logLine("MAIN FORM DATA(Cache) : " + this.mainTableCache.toString());
+        return this.mainTableCache;
     }
 
     /**
@@ -127,19 +128,20 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @return 明细表下标！流程第(tableIdx + 1)个明细表的对应多行数据，字段名到流程数据的映射，数据值可能为NULL。
      */
     public List<Map<String, String>> getDetailTableCache(int table) {
-        if (detailTableListCache == null) detailTableListCache = new HashMap<Integer, List<Map<String, String>>>(8);
+        if (this.detailTableListCache == null)
+            this.detailTableListCache = new HashMap<Integer, List<Map<String, String>>>(8);
 
-        List<Map<String, String>> data = detailTableListCache.get(table);
+        List<Map<String, String>> data = this.detailTableListCache.get(table);
         if (data != null) return data;
         else {
             data = new ArrayList<Map<String, String>>();
-            detailTableListCache.put(table, data);
+            this.detailTableListCache.put(table, data);
         }
 
-        if (detailTablesCache == null)
-            detailTablesCache = this.request.getDetailTableInfo().getDetailTable();
+        if (this.detailTablesCache == null)
+            this.detailTablesCache = this.request.getDetailTableInfo().getDetailTable();
 
-        DetailTable dt = detailTablesCache[table - 1];
+        DetailTable dt = this.detailTablesCache[table - 1];
         Row[] rows = dt.getRow();
         for (Row row : rows) {
             Cell[] cells = row.getCell();
@@ -150,7 +152,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
             data.add(map);
         }
 
-        logLine("DETAIL(dt_" + table + ") FORM DATA(Cache) : " + data.toString());
+        this.logLine("DETAIL(dt_" + table + ") FORM DATA(Cache) : " + data.toString());
         return data;
     }
 
@@ -158,8 +160,9 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 通过数据库查询获取最新流程主表信息
      */
     public Map<String, String> getMainTableNewest() {
-        Map<String, String> res = WorkflowAPI.queryRequestMainData(getBillTableName(), getRequestId());
-        logLine("MAIN FORM DATA(Newest) : " + res.toString());
+        Map<String, String> res =
+                WorkflowAPI.queryRequestMainData(this.getBillTableName(), this.getRequestId());
+        this.logLine("MAIN FORM DATA(Newest) : " + res.toString());
         return res;
     }
 
@@ -169,8 +172,9 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @param table 明细表序号，从1开始
      */
     public List<Map<String, String>> getDetailTableNewest(int table) {
-        List<Map<String, String>> res = WorkflowAPI.queryRequestDetailData(getBillTableName(), getRequestId(), table);
-        logLine("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res.toString());
+        List<Map<String, String>> res =
+                WorkflowAPI.queryRequestDetailData(this.getBillTableName(), this.getRequestId(), table);
+        this.logLine("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res.toString());
         return res;
     }
 
@@ -180,7 +184,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     public List<Map<String, String>> getRemarkList() {
         List<Map<String, String>> res = WorkflowAPI.queryRemarkList(this.getRequestId());
-        logLine("Remark list : " + res.toString());
+        this.logLine("Remark list : " + res.toString());
         return res;
     }
 
@@ -190,7 +194,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     public String getDocIdLatest() {
         String docId = DocAPI.queryDocIdByRequestId(this.getRequestId());
-        log("Newest document id : " + docId);
+        this.log("Newest document id : " + docId);
         return docId;
     }
 
@@ -198,7 +202,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 获取当前流程在主表单中的id
      */
     public int getMainId() {
-        return WorkflowAPI.getMainId(getRequestId());
+        return WorkflowAPI.getMainId(this.getRequestId());
     }
 
     public int getRequestId() {
@@ -221,7 +225,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 这个接口在流转时并不准确, 大概率获取到的是流程流转之后的节点
      */
     public int getCurrentNodeId() {
-        return WorkflowAPI.getNodeIdByRequestId(getRequestId());
+        return WorkflowAPI.getNodeIdByRequestId(this.getRequestId());
     }
 
     public String getCurrentNodeName() {
