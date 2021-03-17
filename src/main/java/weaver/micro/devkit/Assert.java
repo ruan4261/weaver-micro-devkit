@@ -167,9 +167,26 @@ public final class Assert {
      */
     public static Number notNeg(Number num, String mes) {
         consume(notNull(num, mes));
-        if (num.intValue() < 0) fail(mes);
+        if (num.intValue() < 0)
+            fail(mes);
 
         return num;
+    }
+
+    public static Object checkArray(Object arr) {
+        notNull(arr);
+        if (!arr.getClass().isArray())
+            fail(null);
+
+        return arr;
+    }
+
+    public static Object checkArray(Object arr, String mes) {
+        notNull(arr, mes);
+        if (!arr.getClass().isArray())
+            fail(mes);
+
+        return arr;
     }
 
     /**
