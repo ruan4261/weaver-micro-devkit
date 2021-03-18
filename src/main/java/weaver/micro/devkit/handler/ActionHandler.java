@@ -180,10 +180,21 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
 
     /**
      * @return 流程签字意见列表
-     * @see WorkflowAPI#queryRemarkList(int)
+     * @see WorkflowAPI#queryRemarkListNew(int, String[])
      */
     public List<Map<String, String>> getRemarkList() {
-        List<Map<String, String>> res = WorkflowAPI.queryRemarkList(this.getRequestId());
+        List<Map<String, String>> res = WorkflowAPI.queryRemarkListNew(this.getRequestId(), null);
+        this.logLine("Remark list : " + res.toString());
+        return res;
+    }
+
+    /**
+     * @param expandFields 自定义字段
+     * @return 流程签字意见列表
+     * @see WorkflowAPI#queryRemarkListNew(int, String[])
+     */
+    public List<Map<String, String>> getRemarkList(String[] expandFields) {
+        List<Map<String, String>> res = WorkflowAPI.queryRemarkListNew(this.getRequestId(), expandFields);
         this.logLine("Remark list : " + res.toString());
         return res;
     }
