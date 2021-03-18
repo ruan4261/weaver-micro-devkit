@@ -161,4 +161,25 @@ public final class DocAPI {
         imageFileManager.setData(data);
         return imageFileManager.saveImageFile();
     }
+
+    /**
+     * 创建附件文档
+     *
+     * @param title    文档标题
+     * @param fileName 文件名
+     * @param data     文件数据
+     * @param category 子文档目录
+     * @param creator  文档创建者
+     */
+    public static int createFileDoc(String title, String fileName, byte[] data, int category, int creator) {
+        int imageFileId = createImageFile(fileName, data);
+        try {
+            int docId = autoArchiving(category, title, null, creator);
+            createDocImageFile(docId, imageFileId, fileName);
+            return docId;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
