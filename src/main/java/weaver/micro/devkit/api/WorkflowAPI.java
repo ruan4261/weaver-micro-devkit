@@ -6,8 +6,9 @@ import weaver.interfaces.workflow.action.WorkflowToDoc;
 import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.util.ArrayUtil;
-import weaver.micro.devkit.util.Collections;
+import weaver.soa.workflow.request.*;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -36,7 +37,14 @@ public final class WorkflowAPI {
         m.put("e", "强制归档");
         m.put("t", "抄送");
         m.put("s", "督办");
-        LOG_TYPE_MAPPER = Collections.immutableMap(m);
+        LOG_TYPE_MAPPER = Collections.unmodifiableMap(m);
+    }
+
+    /**
+     * 可能返回null值
+     */
+    public static String queryLogTypeMean(String type) {
+        return LOG_TYPE_MAPPER.get(type);
     }
 
     /**
@@ -62,12 +70,17 @@ public final class WorkflowAPI {
      *         remark 签字意见
      *         operatedate 操作日期
      *         operatetime 操作时间
+     * @deprecated 意义不明
      */
+    @Deprecated
     public static List<Map<String, String>> queryRemarkList(final int requestId) {
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
 
         RecordSet rs = new RecordSet();
-        String sql = "select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark,a.operatedate,a.operatetime from workflow_requestLog a left outer join workflow_nodebase b on a.nodeid=b.id where a.requestid=" + requestId + " order by a.nodeid";
+        String sql = "select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark,a.operatedate,a.operatetime" +
+                " from workflow_requestLog a" +
+                " left outer join workflow_nodebase b on a.nodeid=b.id" +
+                " where a.requestid=" + requestId + " order by a.nodeid";
         rs.execute(sql);
 
         while (rs.next()) {
@@ -76,12 +89,41 @@ public final class WorkflowAPI {
             map.put("nodeid", rs.getString("nodeid"));// 节点id
             map.put("nodename", rs.getString("nodename"));// 节点名称
             map.put("operator", rs.getString("operator"));// 操作者的id
-            map.put("logtype", LOG_TYPE_MAPPER.get(rs.getString("logtype")));// 签字类型
+            map.put("logtype", LOG_TYPE_MAPPER.get(rs.getString("logtype")));// 操作类型
             map.put("remark", Util.delHtml(rs.getString("remark")));// 签字意见
             map.put("operatedate", rs.getString("operatedate"));// 操作日期
             map.put("operatetime", rs.getString("operatetime"));// 操作时间
             result.add(map);
         }
+        return result;
+    }
+
+    /**
+     * 新的签字意见列表获取方法
+     * 排序按照时间从后往前, 可自定义字段查询
+     *
+     * @param expandFields 拓展字段, 只能来自workflow_requestLog表
+     */
+    public static List<Map<String, String>> queryRemarkListNew(int requestId, String[] expandFields) {
+        StringBuilder enhance = new StringBuilder();
+        if (expandFields != null && expandFields.length > 0) {
+            for (String field : expandFields) {
+                enhance.append(",a.")
+                        .append(field);
+            }
+        }
+
+        List<Map<String, String>> result = new ArrayList<Map<String, String>>();
+        RecordSet rs = new RecordSet();
+        rs.execute("select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark," +
+                "a.operatedate,a.operatetime" + enhance.toString() +
+                " from workflow_requestLog a" +
+                " left outer join workflow_nodebase b on a.nodeid=b.id" +
+                " where a.requestid=" + requestId + " order by a.id desc");
+        while (rs.next()) {
+            result.add(CommonAPI.mapFromRecordRow(rs));
+        }
+
         return result;
     }
 
@@ -534,6 +576,123 @@ public final class WorkflowAPI {
                         "select max(orderid) cnt from workflow_billdetailtable where billid=" + billId,
                         "cnt"),
                 0);
+    }
+
+    public static String queryDetailTableNameByWorkflowIdAndOrderId(int workflowId, int orderId) {
+        if (orderId == 0)
+            return getBillTableNameByWorkflowId(workflowId);
+
+        return CommonAPI.querySingleField(
+                "select a.tablename from workflow_billdetailtable a left outer join workflow_base b"
+                        + " on a.billid=b.formid where b.id=" + workflowId + " and a.orderid=" + orderId,
+                "tablename");
+    }
+
+    /**
+     * <ul>
+     *     <li>requestid > 0	创建流程成功，返回请求id</li>
+     *     <li>requestid = -1	创建流程失败</li>
+     *     <li>requestid = -2	用户没有流程创建权限</li>
+     *     <li>requestid = -3	创建流程基本信息失败</li>
+     *     <li>requestid = -4	保存表单主表信息失败</li>
+     *     <li>requestid = -5	更新紧急程度失败</li>
+     *     <li>requestid = -6	流程操作者失败</li>
+     *     <li>requestid = -7	流转至下一节点失败</li>
+     *     <li>requestid = -8	节点附加操作失败</li>
+     * </ul>
+     *
+     * @param workflowId  发起的流程id
+     * @param creator     流程发起人
+     * @param title       系统流程标题 request name
+     * @param isNext      是否直接流转至下一个节点
+     * @param mainInfo    主表数据
+     * @param detailInfos 明细表数据, 数组下标与明细表orderid对应, 从1开始,
+     *                    任何元素可以为null, 下标为0的元素应该永远为空
+     * @return requestId
+     * @throws Exception 创建流程时可能出现的各种问题?
+     * @since 1.1.4
+     */
+    public static int createWorkflow(int workflowId,
+                                     int creator,
+                                     String title,
+                                     boolean isNext,
+                                     Map<String, String> mainInfo,
+                                     List<Map<String, String>>[] detailInfos) throws Exception {
+        if (title == null) {
+            String pathName = getWorkflowPathName(workflowId);
+            String creatorName = creator == 1 ? "系统管理员" : HrmAPI.queryHrmName(creator);
+            String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+            title = pathName + "-" + creatorName + "-" + date;
+        }
+
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setCreatorid(String.valueOf(creator));// 流程创建人
+        requestInfo.setWorkflowid(String.valueOf(workflowId));// 流程ID
+        requestInfo.setDescription(title);// request name
+        requestInfo.setIsNextFlow(isNext ? "1" : "0");// 是否提交下个节点 0: 否 | 非0: 是
+        requestInfo.setRequestlevel("0");
+        requestInfo.setRemindtype("0");
+
+        // 主表信息录入
+        MainTableInfo mainTableInfo = new MainTableInfo();
+        requestInfo.setMainTableInfo(mainTableInfo);
+        if (mainInfo != null) {
+            Set<Map.Entry<String, String>> entrySet = mainInfo.entrySet();
+            for (Map.Entry<String, String> entry : entrySet) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+
+                if (key == null || key.equals(""))
+                    continue;
+
+                Property property = new Property();
+                property.setName(key);
+                property.setValue(value);
+                mainTableInfo.addProperty(property);
+            }
+        }
+
+        // 明细表信息录入
+        DetailTableInfo detailTableInfos = new DetailTableInfo();
+        requestInfo.setDetailTableInfo(detailTableInfos);
+        if (detailInfos != null) {
+            // 明细表1到明细表n, 下标0默认为null
+            for (int i = 1; i < detailInfos.length; i++) {
+                List<Map<String, String>> detailInfo = detailInfos[i];
+                if (detailInfo != null) {
+                    DetailTable detailTable = new DetailTable();
+                    // 调用createRequest时需要设置此项
+                    detailTable.setId(String.valueOf(i));// orderId
+                    // 调用saveRequest方法时需要设置此项
+                    //detailTable.setTableDBName("");
+
+                    // 创建明细行
+                    for (Map<String, String> detailRow : detailInfo) {
+                        Row row = new Row();
+
+                        // 构造明细行中每一列
+                        Set<Map.Entry<String, String>> entrySet = detailRow.entrySet();
+                        for (Map.Entry<String, String> entry : entrySet) {
+                            String key = entry.getKey();
+                            String value = entry.getValue();
+
+                            if (key == null || key.equals(""))
+                                continue;
+
+                            Cell cell = new Cell();
+                            cell.setName(key);
+                            cell.setValue(value);
+                            row.addCell(cell);
+                        }
+
+                        detailTable.addRow(row);
+                    }
+                    detailTableInfos.addDetailTable(detailTable);
+                }
+            }
+        }
+
+        return Util.getIntValue(new RequestService().createRequest(requestInfo));
     }
 
 }
