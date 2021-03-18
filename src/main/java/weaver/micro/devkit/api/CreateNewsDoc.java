@@ -56,7 +56,7 @@ public class CreateNewsDoc {
         RecordSet recordSet = new RecordSet();
         int newDocId = docManager.getNextDocId(recordSet);
         //先设置分享
-        docViewer.setDocShareByDoc("" + newDocId);
+        docViewer.setDocShareByDoc(String.valueOf(newDocId));
         docManager.AddShareInfo();
         //设置内容
         docManager.setId(newDocId);//设置新建文档的ID
@@ -96,7 +96,12 @@ public class CreateNewsDoc {
         docManager.AddDocInfo();
         docComInfo.addDocInfoCache(String.valueOf(newDocId));
         //更新 权限
-        new ShareManageDocOperation().SynchronousDocShareBySec(String.valueOf(seccategory), String.valueOf(newDocId), String.valueOf(departmentid), String.valueOf(creater), "1");
+        new ShareManageDocOperation().SynchronousDocShareBySec(
+                String.valueOf(seccategory),
+                String.valueOf(newDocId),
+                String.valueOf(departmentid),
+                String.valueOf(creater),
+                "1");
         return newDocId;
     }
 
