@@ -202,76 +202,13 @@ public class XMLElement implements Serializable, Cloneable {
     严格地讲，在 XML 中仅有字符 "<"和"&" 是非法的。省略号、引号和大于号是合法的，但是把它们替换为实体引用是个好的习惯。
      */
 
-    static final List<String> token_list = new ArrayList<String>() {
-
-        {
-            super.add("lt");
-            super.add("gt");
-            super.add("apos");
-            super.add("quot");
-            super.add("amp");
-        }
-
-        @Override
-        public boolean retainAll(Collection<?> c) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean add(String s) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        protected void removeRange(int fromIndex, int toIndex) {
-            throw new UnsupportedOperationException();
-        }
-
-        public void sort(Comparator<? super String> c) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String set(int index, String element) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void add(int index, String element) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String remove(int index) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean remove(Object o) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void clear() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean addAll(Collection<? extends String> c) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean addAll(int index, Collection<? extends String> c) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean removeAll(Collection<?> c) {
-            throw new UnsupportedOperationException();
-        }
-
-    };
+    static final List<String> token_list = Collections.unmodifiableList(Arrays.asList(
+            "lt",
+            "gt",
+            "apos",
+            "quot",
+            "amp"
+    ));
 
     /**
      * 文本内容转义
