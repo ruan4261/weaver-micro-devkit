@@ -10,7 +10,7 @@ public class StringUtils {
     /**
      * 用于{@link #fullRecursionPrint(Object)}方法内部去重
      */
-    private final static ThreadLocal<Set<Object>> REPEAT_POND = new ThreadLocal<Set<Object>>() {
+    private final static ThreadLocal<Set<Object>> repeatObjects = new ThreadLocal<Set<Object>>() {
 
         @Override
         protected Set<Object> initialValue() {
@@ -90,20 +90,26 @@ public class StringUtils {
     }
 
     /**
-     * 元类型直接输出, array, collection, map会被解析
-     * 如有toString方法会优先调用toString方法
-     * 否则递归输出所有字段
-     *
-     * 输出格式不固定
+     * 元类型, 数值类型及字符序列类型直接输出<br>
+     * 集合对象如array, collection, map会解析输出内部元素<br>
+     * 非以上情况下如有toString方法会优先调用toString方法<br>
+     * 否则递归输出对象内所有字段
+     * <br><br>
+     * 输出格式无特别规范
      *
      * @since 1.1.4
      */
     public static String fullRecursionPrint(Object obj) {
         String str = fullRecursionPrint0(obj);
-        REPEAT_POND.remove();
+        repeatObjects.remove();
         return str;
     }
 
+    /**
+     * internal method
+     *
+     * @see #fullRecursionPrint(Object)
+     */
     static String fullRecursionPrint0(Object obj) {
         Class<?> clazz;
         if (obj == null || (clazz = obj.getClass()) == null) {
@@ -112,7 +118,7 @@ public class StringUtils {
 
         // 该信息用于提示重复
         String nativeInfo = '<' + toStringNative(obj) + '>';
-        Set<Object> repeated = REPEAT_POND.get();
+        Set<Object> repeated = repeatObjects.get();
         if (repeated.contains(obj)) {
             return "(repeat object: " + nativeInfo + ")";
         }
@@ -143,15 +149,10 @@ public class StringUtils {
     }
 
     /**
-     * java原生toString方式
+     * internal method
+     *
+     * @see #fullRecursionPrint(Object)
      */
-    public static String toStringNative(Object o) {
-        if (o == null)
-            return "null";
-
-        return o.getClass().getName() + "@" + Integer.toHexString(o.hashCode());
-    }
-
     static String fullRecursionPrintMap(Map<?, ?> m) {
         if (m == null)
             return "null";
@@ -176,6 +177,11 @@ public class StringUtils {
         }
     }
 
+    /**
+     * internal method
+     *
+     * @see #fullRecursionPrint(Object)
+     */
     static String fullRecursionPrintCollection(Collection<?> collection) {
         if (collection == null)
             return "null";
@@ -196,6 +202,11 @@ public class StringUtils {
         }
     }
 
+    /**
+     * internal method
+     *
+     * @see #fullRecursionPrint(Object)
+     */
     static String fullRecursionPrintArray(Object arr) {
         if (arr == null)
             return "null";
@@ -212,6 +223,16 @@ public class StringUtils {
             sb.append(',')
                     .append(' ');
         }
+    }
+
+    /**
+     * java原生toString方式
+     */
+    public static String toStringNative(Object o) {
+        if (o == null)
+            return "null";
+
+        return o.getClass().getName() + "@" + Integer.toHexString(o.hashCode());
     }
 
 }
