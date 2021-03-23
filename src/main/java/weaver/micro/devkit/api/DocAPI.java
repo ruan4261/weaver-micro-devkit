@@ -21,8 +21,6 @@ import java.util.Map;
  */
 public final class DocAPI {
 
-    final static String EMPTY = "";
-
     /**
      * 通过流程requestId获取该流程最新的文档id
      *
@@ -88,13 +86,14 @@ public final class DocAPI {
 
         Map<String, String> imageFileInfo = queryImageFileInfo(docId);
         String fid = imageFileInfo.get("imagefileid");
-        if (fid == null || "".equals(fid)) return EMPTY;
+        if (fid == null || "".equals(fid))
+            return "";
 
         InputStream inputStream;
         try {
             inputStream = ImageFileManager.getInputStreamById(Integer.parseInt(fid));
         } catch (NumberFormatException e) {
-            return EMPTY;
+            return "";
         }
 
         // 如果filename参数为空，则使用真实文件名作为保存的文件名
@@ -109,7 +108,7 @@ public final class DocAPI {
             else// 有字符集使用字符流
                 LocalAPI.saveCharStream(inputStream, savePath, charset);
         } catch (IOException e) {
-            return EMPTY;
+            return "";
         }
         return savePath;
     }
@@ -174,7 +173,15 @@ public final class DocAPI {
     public static int createFileDoc(String title, String fileName, byte[] data, int category, int creator) {
         int imageFileId = createImageFile(fileName, data);
         try {
-            int docId = autoArchiving(category, title, null, creator);
+            // 获取附件后缀名
+            String extName = null;
+            int lastDot = fileName.lastIndexOf('.');
+            if (lastDot != -1) {
+                extName = fileName.substring(lastDot + 1);
+            }
+
+            CreateNewsDoc createNewsDoc = new CreateNewsDoc(category);
+            int docId = createNewsDoc.createDoc(title, null, creator, extName);
             createDocImageFile(docId, imageFileId, fileName);
             return docId;
         } catch (Exception e) {

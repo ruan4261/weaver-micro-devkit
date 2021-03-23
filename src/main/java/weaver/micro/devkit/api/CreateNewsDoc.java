@@ -30,6 +30,9 @@ public class CreateNewsDoc {
         this.seccategory = seccategory;
     }
 
+    /**
+     * 忽略文档拓展名
+     */
     public int createDoc(String title, String body, int creator) throws Exception {
         return createDoc(title, body, creator, null);
     }
@@ -40,10 +43,13 @@ public class CreateNewsDoc {
      * @param title         文档标题
      * @param body          文档内容  可为空
      * @param creater       创建人id
-     * @param docextendname 可为空
+     * @param docextendname 文档拓展名, 如果当做附件, 此处请填写附件的后缀名
      * @return 返回docid
      */
     public int createDoc(String title, String body, int creater, String docextendname) throws Exception {
+        title = body == null ? "null" : title;
+        body = body == null ? "" : body;
+
         ResourceComInfo r = new ResourceComInfo();
         int departmentid = Integer.parseInt(r.getDepartmentID(String.valueOf(creater)));
 
