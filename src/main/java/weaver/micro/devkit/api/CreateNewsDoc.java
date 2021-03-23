@@ -47,7 +47,7 @@ public class CreateNewsDoc {
      * @return 返回docid
      */
     public int createDoc(String title, String body, int creater, String docextendname) throws Exception {
-        title = body == null ? "null" : title;
+        title = title == null ? "null" : title;
         body = body == null ? "" : body;
 
         ResourceComInfo r = new ResourceComInfo();
