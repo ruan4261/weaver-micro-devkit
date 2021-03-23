@@ -22,7 +22,20 @@ public class StringUtils {
     public static String makeStackTraceInfo(Throwable t) {
         Assert.notNull(t);
         StackTraceElement[] trace = t.getStackTrace();
-        return t.toString() + '\n' + makeStackTraceInfo(trace, "\tat ");
+        StringBuilder traceInfo = new StringBuilder(trace.length << 6);
+        traceInfo.append(t.toString())
+                .append('\n')
+                .append(makeStackTraceInfo(trace, "\tat "));
+
+        Throwable cause = t;
+        while ((cause = cause.getCause()) != null) {
+            traceInfo.append("Caused by: ")
+                    .append(cause.toString())
+                    .append('\n')
+                    .append(makeStackTraceInfo(t.getStackTrace(), "\tat "));
+        }
+
+        return traceInfo.toString();
     }
 
     /**
