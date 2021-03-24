@@ -119,7 +119,7 @@ public final class WorkflowAPI {
                 "a.operatedate,a.operatetime" + enhance.toString() +
                 " from workflow_requestLog a" +
                 " left outer join workflow_nodebase b on a.nodeid=b.id" +
-                " where a.requestid=" + requestId + " order by a.id desc");
+                " where a.requestid=" + requestId + " order by a.logid desc");
         while (rs.next()) {
             result.add(CommonAPI.mapFromRecordRow(rs));
         }
