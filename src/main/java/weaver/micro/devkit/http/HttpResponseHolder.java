@@ -53,11 +53,21 @@ public class HttpResponseHolder {
      */
     private byte[] responseEntity;
 
+    /**
+     * httpClient封装返回对象的引用, 返回值解析时不会关闭连接
+     * 需要通过该引用手动关闭连接
+     */
+    private final CloseableHttpResponse closeableHttpResponse;
+
     public HttpResponseHolder(CloseableHttpResponse response) {
+        this.closeableHttpResponse = response;
+        HttpEntity entity = null;
         try {
             // response header
             this.httpStatusLine = Assert.notNull(response.getStatusLine());
             this.protocolVersion = Assert.notNull(response.getProtocolVersion());
+
+            // header resolve
             Header[] allHeaders = Assert.notNull(response.getAllHeaders());
             this.headerMap = new HashMap<String, String>(allHeaders.length + (allHeaders.length >> 1));
             for (Header header : allHeaders) {
@@ -68,17 +78,13 @@ public class HttpResponseHolder {
             }
 
             // response body from input stream
-            HttpEntity entity = Assert.notNull(response.getEntity());
+            entity = Assert.notNull(response.getEntity());
             this.responseEntity = EntityUtils.toByteArray(entity);
             this.resolveSuccess = true;
         } catch (Throwable e) {
             this.resolveException = e;
             this.resolveSuccess = false;
-        } finally {
-            try {
-                response.close();
-            } catch (IOException ignored) {
-            }
+            EntityUtils.consumeQuietly(entity);
         }
     }
 
@@ -153,6 +159,18 @@ public class HttpResponseHolder {
      */
     public String getResponseText(Charset charset) {
         return new String(this.responseEntity, charset);
+    }
+
+    /**
+     * 关闭该连接, 请注意是否为连接池情况
+     */
+    public void closeConnection() {
+        if (this.closeableHttpResponse != null) {
+            try {
+                this.closeableHttpResponse.close();
+            } catch (IOException ignored) {
+            }
+        }
     }
 
 }

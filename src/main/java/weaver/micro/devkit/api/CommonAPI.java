@@ -30,14 +30,18 @@ public final class CommonAPI {
 
     /**
      * 从RecordSet当前行读取一张键值映射表
+     * <hr>
+     * 所有键值将会使用小写!!
      */
     public static Map<String, String> mapFromRecordRow(final RecordSet rs) {
         Assert.notNull(rs, "RecordSet");
         String[] cols = rs.getColumnName();
         Map<String, String> result = new HashMap<String, String>(cols.length + (cols.length >> 1));
         for (String key : cols) {
-            String value = rs.getString(key);
-            result.put(key, value);
+            if (key != null && !key.equals("")) {
+                String value = rs.getString(key);
+                result.put(key.toLowerCase(), value);
+            }
         }
         return result;
     }
