@@ -15,6 +15,4 @@ public final class Version {
 
     public final static int BUILD_VERSION = 5;
 
-    public final static String RELEASE_DATE = "2021-03-25";
-
 }

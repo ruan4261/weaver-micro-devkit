@@ -52,8 +52,15 @@ public class RandomUtil {
         return new Random(System.nanoTime()).nextInt(limit + p) + low;
     }
 
+    /**
+     * @since 1.1.5
+     */
+    public static String UUID() {
+        return UUID.randomUUID().toString();
+    }
+
     public static String UUID32() {
-        return UUID.randomUUID().toString().replaceAll("-", "");
+        return UUID().replaceAll("-", "");
     }
 
 }
