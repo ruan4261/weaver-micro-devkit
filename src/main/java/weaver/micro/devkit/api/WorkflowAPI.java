@@ -24,7 +24,7 @@ public final class WorkflowAPI {
     static final Map<String, String> LOG_TYPE_MAPPER;
 
     static {
-        Map<String, String> m = new HashMap<String, String>();
+        Map<String, String> m = new HashMap<String, String>(32);
         m.put("0", "批准");
         m.put("1", "保存");
         m.put("2", "提交");
@@ -34,9 +34,14 @@ public final class WorkflowAPI {
         m.put("6", "激活");
         m.put("7", "转发");
         m.put("9", "批注");
+        m.put("a", "意见征询");
+        m.put("b", "意见征询回复");
+        m.put("h", "转办");
+        m.put("i", "干预");
+        m.put("j", "转办反馈");
         m.put("e", "强制归档");
-        m.put("t", "抄送");
         m.put("s", "督办");
+        m.put("t", "抄送");
         LOG_TYPE_MAPPER = Collections.unmodifiableMap(m);
     }
 
