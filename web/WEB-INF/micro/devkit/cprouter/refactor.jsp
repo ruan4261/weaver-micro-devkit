@@ -15,7 +15,7 @@
     if (verify.equals("1") && modeid != -1) {
         out.print("认证通过, 开始重构, 模块id: " + modeid + ".<br>");
     } else {
-        out.print("<h1>请通过auth, modeid参数确认执行重构.<h1>");
+        out.print("<h1>请通过auth, modeid参数确认执行重构.</h1>");
         return;
     }
 
