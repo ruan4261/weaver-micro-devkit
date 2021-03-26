@@ -47,13 +47,13 @@ public class LogEventProcessor implements Loggable {
 
     @Override
     public void log(Throwable throwable) {
-        String mes = "\n" + StringUtils.makeStackTraceInfo(throwable);
+        String mes = "\n" + StringUtils.toString(throwable);
         this.internalLog(mes);
     }
 
     @Override
     public void log(String title, Throwable throwable) {
-        String mes = title + "\n" + StringUtils.makeStackTraceInfo(throwable);
+        String mes = title + "\n" + StringUtils.toString(throwable);
         this.internalLog(mes);
     }
 
