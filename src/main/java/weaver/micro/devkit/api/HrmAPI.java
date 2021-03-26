@@ -70,6 +70,11 @@ public final class HrmAPI {
         return CommonAPI.querySingleField(sql, "departmentname");
     }
 
+    public static String queryDepartNameByHrmId(int hrmId) {
+        String sql = "select departmentname from hrmdepartment a left outer join hrmresource b on a.id=b.departmentid where b.id=" + hrmId;
+        return CommonAPI.querySingleField(sql, "departmentname");
+    }
+
     public static int queryHrmIdByHrmName(String hrmName) {
         String sql = "select id from HrmResource where lastname='" + hrmName + "'";
         return Cast.o2Integer(CommonAPI.querySingleField(sql, "id"));
