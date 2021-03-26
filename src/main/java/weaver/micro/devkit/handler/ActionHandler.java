@@ -308,19 +308,19 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
 
     @Override
     public final void log(String msg) {
-        this.logProcess.log(this.getLogPrefix() + " -> " + msg);
+        this.logProcess.log(this.getLogPrefix() + msg);
     }
 
     /**
      * 打印实际内容时另起一行
      */
     public final void logLine(String msg) {
-        this.logProcess.log(this.getLogPrefix() + " ->\n" + msg);
+        this.logProcess.log(this.getLogPrefix() + "\n" + msg);
     }
 
     @Override
     public final void log(Throwable cause) {
-        this.logProcess.log(this.getLogPrefix() + " ->", cause);
+        this.logProcess.log(this.getLogPrefix(), cause);
     }
 
     /**
@@ -328,7 +328,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     @Override
     public final void log(String msg, Throwable cause) {
-        this.logProcess.log(this.getLogPrefix() + " -> " + msg, cause);
+        this.logProcess.log(this.getLogPrefix() + msg, cause);
     }
 
     /**
@@ -376,7 +376,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     public void actionStart() throws Throwable {
-        this.logPrefix = "$request:" + this.getRequestId() + '$';
+        this.logPrefix = "$request:" + this.getRequestId() + "$ -> ";
         this.setFieldVerifyFlag(true);
         this.log(" action start" +
                 ", bill main id is " + this.getMainId() +
@@ -398,6 +398,10 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         }
     }
 
+    /**
+     * 可以通过复写该方法的方式取消缓存清理
+     * 但请注意控制实例的作用域(E8,9默认使用单例)
+     */
     public void clearCache() throws Throwable {
         this.request = null;
         this.endResult = null;
@@ -405,8 +409,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         this.mainTableCache = null;
         this.detailTableListCache = null;
         this.detailTablesCache = null;
-        this.logPrefix = "";
         this.log("Auto clear cache success.");
+        this.logPrefix = "";
     }
 
     /** 发生异常情况下在action结束时执行，该方法用于自定义重写 */
