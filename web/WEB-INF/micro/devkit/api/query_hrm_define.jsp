@@ -18,7 +18,7 @@
     List<Map<String, String>> result = CommonAPI.query("hrmresource", fields, "id=" + hrmId);
 
     if (result.isEmpty()) {
-        response.sendError(418);
+        response.setStatus(418);
     } else {
         out.print(JSONObject.toJSONString(result.get(0)));
     }
