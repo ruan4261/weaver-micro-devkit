@@ -2,6 +2,9 @@ package weaver.micro.devkit.util;
 
 import weaver.micro.devkit.Assert;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -19,23 +22,29 @@ public class StringUtils {
 
     };
 
-    public static String makeStackTraceInfo(Throwable t) {
-        Assert.notNull(t);
-        StackTraceElement[] trace = t.getStackTrace();
-        StringBuilder traceInfo = new StringBuilder(trace.length << 6);
-        traceInfo.append(t.toString())
-                .append('\n')
-                .append(makeStackTraceInfo(trace, "\tat "));
+    public static String toString(Throwable t) {
+        if (t == null)
+            return "null";
 
-        Throwable cause = t;
-        while ((cause = cause.getCause()) != null) {
-            traceInfo.append("Caused by: ")
-                    .append(cause.toString())
-                    .append('\n')
-                    .append(makeStackTraceInfo(t.getStackTrace(), "\tat "));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream printStream = new PrintStream(out, true);
+        t.printStackTrace(printStream);
+
+        String res = out.toString();
+        try {
+            out.close();
+        } catch (IOException ignored) {
+            // ByteArrayOutputStream不会出现此类异常
         }
+        return res;
+    }
 
-        return traceInfo.toString();
+    /**
+     * @see #toString(Throwable)
+     */
+    @Deprecated
+    public static String makeStackTraceInfo(Throwable t) {
+        return toString(t);
     }
 
     /**
