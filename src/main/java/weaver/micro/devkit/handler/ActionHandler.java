@@ -85,7 +85,13 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     public ActionHandler(String actionInfo) {
         this.actionInfo = actionInfo;
         this.instanceRunTimes = 0;
-        this.logProcess = LogEventProcessor.getInstance(actionInfo);
+        this.logProcess = LogEventProcessor.getInstance(this.actionInfo);
+    }
+
+    public ActionHandler() {
+        this.actionInfo = this.getClass().getName();
+        this.instanceRunTimes = 0;
+        this.logProcess = LogEventProcessor.getInstance(this.actionInfo);
     }
 
     public RequestInfo requestInfo() {
