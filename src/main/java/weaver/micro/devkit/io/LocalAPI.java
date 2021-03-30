@@ -3,6 +3,10 @@ package weaver.micro.devkit.io;
 import java.io.*;
 import java.nio.charset.Charset;
 
+/**
+ * @deprecated 不完善的工具, 毫无意义
+ */
+@Deprecated
 public class LocalAPI {
 
     /**
@@ -38,7 +42,7 @@ public class LocalAPI {
      * @param stream   输入流
      * @throws IOException IO流异常
      */
-    public static void saveCharStream(InputStream stream,String savePath, String charset) throws IOException {
+    public static void saveCharStream(InputStream stream, String savePath, String charset) throws IOException {
         PrintWriter out = null;
         InputStreamReader input = new InputStreamReader(stream);
         try {
@@ -59,7 +63,7 @@ public class LocalAPI {
     /**
      * 通过字符流读取本地文件, 平台默认字符集
      *
-     * @param path    路径
+     * @param path 路径
      */
     public static String readLocalFileText(String path) throws IOException {
         return readLocalFileText(path, null);
@@ -95,8 +99,8 @@ public class LocalAPI {
     /**
      * 通过字符流将数据写入本地文本文件, 平台默认字符集
      *
-     * @param path    路径
-     * @param data    写入内容
+     * @param path 路径
+     * @param data 写入内容
      */
     public static void writeLocalFileText(String path, String data) throws IOException {
         writeLocalFileText(path, data, Charset.defaultCharset().name());
