@@ -79,9 +79,6 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     private String logPrefix;
 
-    /**
-     * Unique construction method
-     */
     public ActionHandler(String actionInfo) {
         this.actionInfo = actionInfo;
         this.instanceRunTimes = 0;
