@@ -58,22 +58,21 @@
         while (rs.next()) {
             int id = rs.getInt("id");
             String custompage = rs.getString("custompage");
-            if (custompage.equals(""))
-                continue;
 
             log(out, "Origin: workflowid=" + id + ",custompage=" + custompage + "<br>");
-            // 数据录入建模
             try {
-                // 原先存在custompage
-                Map<String, Object> data = new HashMap<String, Object>();
-                data.put("workflowid", id);
-                data.put("model", 0);
-                data.put("load_order", 0);
-                data.put("custompage", custompage);
-                data.put("disable", 0);
-                data.put("describe", "Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]");
+                if (!custompage.equals("")) {
+                    // 原先存在custompage
+                    Map<String, Object> data = new HashMap<String, Object>();
+                    data.put("workflowid", id);
+                    data.put("model", 0);
+                    data.put("load_order", 0);
+                    data.put("custompage", custompage);
+                    data.put("disable", 0);
+                    data.put("describe", "Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]");
 
-                ModeAPI.createModeData(mode, modeid, 1, data);
+                    ModeAPI.createModeData(mode, modeid, 1, data);
+                }
 
                 // 更新workflow_base
                 String sqlUpdate = "update workflow_base set custompage='" + dest + "' where id=" + id;
