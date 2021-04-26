@@ -36,11 +36,19 @@
         RecordSet rs = new RecordSet();
         RecordSet exe = new RecordSet();
 
-        // 一般数据库使用null做比较时会返回null, 所以为null的数据不会被查询出来
-        String sql = String.format("select id,custompage from workflow_base where %s custompage<>'%s'",
+        String template = "select %s from workflow_base where %s (custompage is null or custompage<>'%s')";
+        String sql = String.format(template,
+                "id, custompage",
                 workflowIds == null ? "" : "id in (" + workflowIds + ") and",
                 dest);
         log(out, sql);
+        String countSql = String.format(template,
+                "count(*) cnt",
+                workflowIds == null ? "" : "id in (" + workflowIds + ") and",
+                dest);
+        rs.execute(countSql);
+        rs.next();
+        log(out, "data count: " + rs.getInt("cnt"));
 
         // confirm start program
         String verify = Util.null2String(request.getParameter("auth"));
