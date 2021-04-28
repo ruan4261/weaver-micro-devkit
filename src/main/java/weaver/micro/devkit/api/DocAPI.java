@@ -6,6 +6,7 @@ import weaver.docs.docs.VersionIdUpdate;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
 import weaver.micro.devkit.Assert;
+import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.io.LocalAPI;
 
 import java.io.File;
@@ -26,10 +27,20 @@ public final class DocAPI {
      *
      * @param requestId 请求id
      * @return 流程最新文档id
+     * @deprecated 返回值不正确
      */
+    @Deprecated
     public static String queryDocIdByRequestId(final int requestId) {
         String sql = "select max(id) as id from docdetail where fromworkflow =" + requestId;
         return CommonAPI.querySingleField(sql, "id");
+    }
+
+    /**
+     * 获取流程相关的最新文档
+     */
+    public static int getDocIdByRequestId(final int requestId) {
+        String sql = "select max(id) as id from docdetail where fromworkflow =" + requestId;
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "id"));
     }
 
     /**
@@ -37,10 +48,22 @@ public final class DocAPI {
      *
      * @param docId 文档id
      * @return 最新文件id
+     * @deprecated 返回值不正确
      */
     public static String queryImageFileIdLatest(final int docId) {
         String sql = "select max(imagefileid) as fid from docimagefile where docid=" + docId;
         return CommonAPI.querySingleField(sql, "fid");
+    }
+
+    /**
+     * 根据文档id获取最新附件id
+     *
+     * @param docId 文档id
+     * @return 最新附件id
+     */
+    public static int getImageFileIdByDocId(final int docId) {
+        String sql = "select max(imagefileid) as fid from docimagefile where docid=" + docId;
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "fid"));
     }
 
     /**
@@ -89,27 +112,33 @@ public final class DocAPI {
         if (fid == null || "".equals(fid))
             return "";
 
-        InputStream inputStream;
-        try {
-            inputStream = ImageFileManager.getInputStreamById(Integer.parseInt(fid));
-        } catch (NumberFormatException e) {
-            return "";
-        }
-
         // 如果filename参数为空，则使用真实文件名作为保存的文件名
         String name = Util.null2String(filename).equals("") ? Util.null2String(imageFileInfo.get("imagefilename")) : filename;
         String savePath;
         if (saveFolder.endsWith(File.separator)) savePath = saveFolder + name;
         else savePath = saveFolder + File.separator + name;
 
+        InputStream inputStream = null;
         try {
+            inputStream = ImageFileManager.getInputStreamById(Integer.parseInt(fid));
+
             if (charset == null || charset.equals(""))// 无字符集使用字节流
                 LocalAPI.saveByteStream(inputStream, savePath);
             else// 有字符集使用字符流
                 LocalAPI.saveCharStream(inputStream, savePath, charset);
+        } catch (NumberFormatException e) {
+            return "";
         } catch (IOException e) {
             return "";
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException ignored) {
+                }
+            }
         }
+
         return savePath;
     }
 
