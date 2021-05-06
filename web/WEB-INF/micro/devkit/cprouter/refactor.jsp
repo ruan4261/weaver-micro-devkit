@@ -30,7 +30,7 @@
     try {
         // custom page router mode refactoring
         int modeid = Util.getIntValue(request.getParameter("modeid"));
-        String workflowIds = Cast.o2String(request.getParameter("workflowIds"), "");// 只更新其中流程, 如果为*则更新全部
+        String workflowIds = Cast.o2String(request.getParameter("workflowIds"), "-1");// 只更新其中流程, 如果为*则更新全部
         String mode = "uf_cprouter";
         String dest = "/micro/devkit/cprouter/router.jsp";
 
