@@ -8,6 +8,7 @@
 <%@ page import="weaver.micro.devkit.handler.Loggable" %>
 <%@ page import="weaver.micro.devkit.handler.LogEventProcessor" %>
 <%@ page import="weaver.general.TimeUtil" %>
+<%@ page import="weaver.micro.devkit.Cast" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%!
     Loggable loggable = LogEventProcessor.getInstance("WeaverMicroDevkit[cprouter]: refactor");
@@ -29,7 +30,7 @@
     try {
         // custom page router mode refactoring
         int modeid = Util.getIntValue(request.getParameter("modeid"));
-        String workflowIds = request.getParameter("workflowIds");// 只更新其中流程, 如果为null则更新全部
+        String workflowIds = Cast.o2String(request.getParameter("workflowIds"), "");// 只更新其中流程, 如果为*则更新全部
         String mode = "uf_cprouter";
         String dest = "/micro/devkit/cprouter/router.jsp";
 
@@ -37,14 +38,15 @@
         RecordSet exe = new RecordSet();
 
         String template = "select %s from workflow_base where %s (custompage is null or custompage<>'%s')";
+        final String inWorkflow = workflowIds.equals("*") ? "" : "id in (" + workflowIds + ") and";
         String sql = String.format(template,
                 "id, custompage",
-                workflowIds == null ? "" : "id in (" + workflowIds + ") and",
+                inWorkflow,
                 dest);
         log(out, sql);
         String countSql = String.format(template,
                 "count(*) cnt",
-                workflowIds == null ? "" : "id in (" + workflowIds + ") and",
+                inWorkflow,
                 dest);
         rs.execute(countSql);
         rs.next();
