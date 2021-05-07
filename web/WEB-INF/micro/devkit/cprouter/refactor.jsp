@@ -12,14 +12,19 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%!
     Loggable loggable = LogEventProcessor.getInstance("WeaverMicroDevkit[cprouter]: refactor");
+    JspWriter out;
 
-    void log(JspWriter out, String mes) throws IOException {
+    void setOut(JspWriter out) {
+        this.out = out;
+    }
+
+    void log(String mes) throws IOException {
         out.print(mes);
         out.print("<br>");
         loggable.log(mes);
     }
 
-    void log(JspWriter out, Throwable t) throws IOException {
+    void log(Throwable t) throws IOException {
         String mes = StringUtils.toString(t);
         out.print(mes);
         out.print("<br>");
@@ -27,6 +32,7 @@
     }
 %>
 <%
+    setOut(out);
     try {
         // custom page router mode refactoring
         int modeid = Util.getIntValue(request.getParameter("modeid"));
@@ -43,33 +49,33 @@
                 "id, custompage",
                 inWorkflow,
                 dest);
-        log(out, sql);
+        log(sql);
         String countSql = String.format(template,
                 "count(*) cnt",
                 inWorkflow,
                 dest);
         rs.execute(countSql);
         rs.next();
-        log(out, "data count: " + rs.getInt("cnt"));
+        log("data count: " + rs.getInt("cnt"));
 
         // confirm start program
         String verify = Util.null2String(request.getParameter("auth"));
         if (verify.equals("1") && modeid != -1) {
-            log(out, "认证通过, 开始重构, 模块id: " + modeid + ".<br>");
+            log("认证通过, 开始重构, 模块id: " + modeid + ".<br>");
         } else {
-            log(out, "modeid: " + modeid);
-            log(out, "<h1>请通过auth参数确认执行重构.</h1>");
+            log("modeid: " + modeid);
+            log("<h1>请通过auth参数确认执行重构.</h1>");
             return;
         }
 
-        log(out, "<hr>");
+        log("<hr>");
 
         rs.execute(sql);
         while (rs.next()) {
             int id = rs.getInt("id");
             String custompage = rs.getString("custompage");
 
-            log(out, "Origin: workflowid=" + id + ",custompage=" + custompage + "<br>");
+            log("Origin: workflowid=" + id + ",custompage=" + custompage + "<br>");
             try {
                 if (!custompage.equals("")) {
                     // 原先存在custompage
@@ -86,21 +92,21 @@
 
                 // 更新workflow_base
                 String sqlUpdate = "update workflow_base set custompage='" + dest + "' where id=" + id;
-                log(out, sqlUpdate);
+                log(sqlUpdate);
                 exe.execute(sqlUpdate);
             } catch (Throwable t) {
-                log(out, "<hr>");
-                log(out, t);
-                log(out, "<h2 style=\"color: red\">Program has been stopped! Please roll back manually.</h2><br>");
+                log("<hr>");
+                log(t);
+                log("<h2 style=\"color: red\">Program has been stopped! Please roll back manually.</h2><br>");
                 return;
             }
 
-            log(out, "Success: Workflowid=" + id + "<br>");
+            log("Success: Workflowid=" + id + "<br>");
         }
 
-        log(out, "重构完成");
+        log("重构完成");
     } catch (Throwable t) {
-        log(out, "<hr>");
-        log(out, t);
+        log("<hr>");
+        log(t);
     }
 %>
