@@ -79,15 +79,25 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     private String logPrefix;
 
+    /**
+     * 临时加入, 用于解决并发问题, 为true时代表该实例可执行action
+     *
+     * @since 1.1.6
+     */
+    private boolean realExecutor = false;
+
+    {
+        this.instanceRunTimes = 0;
+        this.logPrefix = "ActionHandler(initial)";
+    }
+
     public ActionHandler(String actionInfo) {
         this.actionInfo = actionInfo;
-        this.instanceRunTimes = 0;
         this.logProcess = LogEventProcessor.getInstance(this.actionInfo);
     }
 
     public ActionHandler() {
         this.actionInfo = this.getClass().getName();
-        this.instanceRunTimes = 0;
         this.logProcess = LogEventProcessor.getInstance(this.actionInfo);
     }
 
@@ -380,7 +390,6 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
 
     public void actionStart() throws Throwable {
         this.logPrefix = "$request:" + this.getRequestId() + "$ -> ";
-        this.setFieldVerifyFlag(true);
         this.log(" action start" +
                 ", bill main id is " + this.getMainId() +
                 ", bill table name is " + this.getTableNameLower() +
@@ -479,13 +488,25 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
 
     @Override
     public final String execute(RequestInfo requestInfo) {
+        // 并发问题解决(临时), 只有realExecutor为true时代表当前实例安全, 可用于实际action处理
+        if (!this.realExecutor) {
+            log("ActionHandlerRouter#" + StringUtils.toStringNative(this)
+                    + " :: " + StringUtils.toStringNative(requestInfo));
+            try {
+                return executeInNewHandler(requestInfo);
+            } catch (Throwable t) {
+                log(t);
+                return this.fail("ActionHandler#executeInNewHandler exception: " + t.toString());
+            }
+        }
+
         this.request = requestInfo;
         try {
             this.actionStart();
             // 字段校验
             String mes = this.fieldVerify();
             if (!this.fieldVerifyFlag)
-                return this.fail(mes);
+                return this.failWithOnlyMessage(mes);
 
             // 正常流程
             return this.handle(requestInfo);
@@ -548,7 +569,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 如果{@link #fieldVerifyFlag}为true则通过校验，如果为false则此方法应该返回信息用于显示给用户
      */
     public String fieldVerify() {
-        // fieldVerifyFlag在actionStart()时被设置为默认true
+        // 该方法用于被覆盖
+        setFieldVerifyFlag(true);
         return "";
     }
 
@@ -579,6 +601,22 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     public void clearAllDetailTableData() {
         WorkflowAPI.clearAllDetailTableDataByRequestId(getRequestId());
         this.log("All detail tables have been cleaned.");
+    }
+
+    public void setRealExecutor() {
+        this.realExecutor = true;
+    }
+
+    /**
+     * @since 1.1.6
+     */
+    private String executeInNewHandler(RequestInfo requestInfo) throws IllegalAccessException, InstantiationException {
+        Class<? extends ActionHandler> clazz = this.getClass();
+        ActionHandler newHandler = clazz.newInstance();
+        newHandler.setRealExecutor();
+        log("RealExecutor#" + StringUtils.toStringNative(newHandler)
+                + " :: " + StringUtils.toStringNative(requestInfo));
+        return newHandler.execute(requestInfo);
     }
 
 }
