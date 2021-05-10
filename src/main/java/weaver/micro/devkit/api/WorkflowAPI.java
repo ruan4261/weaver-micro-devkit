@@ -700,4 +700,33 @@ public final class WorkflowAPI {
         return Util.getIntValue(new RequestService().createRequest(requestInfo));
     }
 
+    /**
+     * 找到所有停留在某个节点的流程
+     *
+     * @since 1.1.7
+     */
+    public static int[] findRequestOnNode(int nodeId) {
+        int[] requests = new int[32];
+        int idx = 0;
+        RecordSet rs = new RecordSet();
+        rs.execute("select requestid from workflow_nownode where nownodeid='" + nodeId + "'");
+        while (rs.next()) {
+            if (idx >= requests.length) {
+                if (requests.length == 0x7fffffff)
+                    throw new RuntimeException("int overflow");
+
+                int newLen = requests.length < 0x3fffffff ? requests.length << 1 : 0x7fffffff;
+                requests = ArrayUtil.arrayExtend(requests, newLen);
+            }
+
+            int requestId = rs.getInt("requestid");
+            requests[idx++] = requestId;
+        }
+
+        if (idx != requests.length)
+            requests = ArrayUtil.arrayExtend(requests, idx);
+
+        return requests;
+    }
+
 }
