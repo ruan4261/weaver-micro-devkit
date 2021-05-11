@@ -9,19 +9,35 @@ public abstract class CronJobHandler extends BaseCronJob implements Loggable {
 
     private final Loggable loggable = LogEventProcessor.getInstance();
 
+    /**
+     * 用于注入实例属性
+     */
+    public abstract void init();
+
     @Override
     public void execute() {
-        log("Start");
+        log("Start >>");
+        init();
+        log("Initialization completed");
         try {
             handle();
         } catch (Throwable t) {
-            log("End: Failed", t);
-            throw new RuntimeException(t);
+            log("CronJobHandler auto catch exception/error.", t);
+            ifException(t);
+        } finally {
+            log("End >>");
         }
-        log("End: Success");
     }
 
     public abstract void handle() throws Throwable;
+
+    /**
+     * 在此处重写handle中抛出异常的处理逻辑
+     * 默认抛出运行时异常
+     */
+    public void ifException(Throwable t) throws RuntimeException {
+        throw new RuntimeException(t);
+    }
 
     @Override
     public void log(String mes) {
