@@ -14,6 +14,9 @@
             return;
         }
 
+        int workflowId = WorkflowAPI.getWorkflowIdByRequestId(requestId);
+        String requestname = WorkflowAPI.queryWorkflowTitle(requestId);
+        String path = WorkflowAPI.getWorkflowPathName(workflowId);
         int mainId = WorkflowAPI.getMainId(requestId);
         String table = WorkflowAPI.queryBillTableByRequest(requestId);
         Map<String, String> mtData = CommonAPI.query(table, null, "requestid=" + requestId).get(0);
@@ -32,6 +35,15 @@
     </style>
 </head>
 <body>
+<h2>Base Info</h2>
+<div>
+    <h3>
+        Request Name: <%=requestname%>
+    </h3>
+    <h3>
+        Workflow Path: <%=path%>
+    </h3>
+</div>
 <h2>Main Table Data</h2>
 <table border="1px" cellpadding="10px" cellspacing="0">
     <thead>
