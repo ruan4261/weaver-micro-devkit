@@ -1,14 +1,19 @@
-<%@ page import="weaver.general.Util" %>
 <%@ page import="weaver.micro.devkit.api.WorkflowAPI" %>
 <%@ page import="weaver.micro.devkit.api.CommonAPI" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.Set" %>
 <%@ page import="weaver.micro.devkit.util.StringUtils" %>
+<%@ page import="weaver.micro.devkit.Cast" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
     try {
-        int requestId = Util.getIntValue(request.getParameter("requestid"));
+        int requestId = Cast.o2Integer(request.getParameter("requestid"));
+        if (requestId == -1) {
+            out.print("<h2>requestid: -1</h2>");
+            return;
+        }
+
         int mainId = WorkflowAPI.getMainId(requestId);
         String table = WorkflowAPI.queryBillTableByRequest(requestId);
         Map<String, String> mtData = CommonAPI.query(table, null, "requestid=" + requestId).get(0);
