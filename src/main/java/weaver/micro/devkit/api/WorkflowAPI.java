@@ -729,4 +729,29 @@ public final class WorkflowAPI {
         return requests;
     }
 
+    /**
+     * 获取所有人力资源在某节点待办数量
+     * <hr/>
+     * key: hrmId<br>
+     * value: todoWorkflow count on this node
+     *
+     * @since 1.1.7
+     */
+    public static Map<Integer, Integer> findTodoCountOnNode(int node) {
+        Map<Integer, Integer> m = new HashMap<Integer, Integer>();// key: hrm, value: to do workflow
+        int[] requests = findRequestOnNode(node);
+        for (int request : requests) {
+            int[] operators = WorkflowAPI.getCurrentNodeOperatorByRequestId(request);
+            for (int operator : operators) {
+                Integer originCount = m.get(operator);
+                if (originCount == null) {
+                    m.put(operator, 1);
+                } else {
+                    m.put(operator, originCount + 1);
+                }
+            }
+        }
+        return m;
+    }
+
 }
