@@ -7,7 +7,7 @@ import weaver.interfaces.schedule.BaseCronJob;
  */
 public abstract class CronJobHandler extends BaseCronJob implements Loggable {
 
-    private final Loggable loggable = LogEventProcessor.getInstance();
+    private final Loggable loggable = LogEventProcessor.getInstance(this.getClass());
 
     /**
      * 用于注入实例属性
