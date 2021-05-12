@@ -9,12 +9,12 @@
 <%
     try {
         int requestId = Cast.o2Integer(request.getParameter("requestid"));
-        if (requestId == -1) {
-            out.print("<h2>requestid: -1</h2>");
+        int workflowId = WorkflowAPI.getWorkflowIdByRequestId(requestId);
+        if (requestId == -1 || workflowId == -1) {
+            out.print("<h2>requestid: " + requestId + ", workflowid: " + workflowId + "</h2>");
             return;
         }
 
-        int workflowId = WorkflowAPI.getWorkflowIdByRequestId(requestId);
         String requestname = WorkflowAPI.queryWorkflowTitle(requestId);
         String path = WorkflowAPI.getWorkflowPathName(workflowId);
         int mainId = WorkflowAPI.getMainId(requestId);
