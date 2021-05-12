@@ -702,6 +702,8 @@ public final class WorkflowAPI {
 
     /**
      * 找到所有停留在某个节点的流程
+     * <hr/>
+     * 流程可能已经被删除, 请注意抑制相关异常
      *
      * @since 1.1.7
      */
