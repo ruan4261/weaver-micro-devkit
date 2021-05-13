@@ -257,4 +257,35 @@ public class StringUtils {
         return o.getClass().getName() + "@" + Integer.toHexString(o.hashCode());
     }
 
+    /**
+     * 集合类型的toString函数, 可自定义分隔符, 可对null进行过滤, 并不带边界符号<br>
+     * 如果collection为空则返回空字符串
+     *
+     * @param nullAppendable 如果为true, 则集合中的空指针会转换为"null"字符串; 否则其将被过滤
+     */
+    public static String toString(Collection<?> collection, String separator, boolean nullAppendable) {
+        Iterator<?> it = collection.iterator();
+        StringBuilder sb = new StringBuilder();
+        boolean appendSeparator = false;
+
+        while (it.hasNext()) {
+            if (appendSeparator) {
+                sb.append(separator);
+                appendSeparator = false;
+            }
+
+            Object ele = it.next();
+            if (ele == null) {
+                if (nullAppendable)
+                    sb.append("null");
+                else
+                    continue;
+            } else sb.append(ele.toString());
+
+            appendSeparator = true;
+        }
+
+        return sb.toString();
+    }
+
 }
