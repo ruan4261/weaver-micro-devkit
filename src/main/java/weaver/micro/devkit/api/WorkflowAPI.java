@@ -495,6 +495,11 @@ public final class WorkflowAPI {
         return CommonAPI.querySingleField(sql, "nodename");
     }
 
+    /**
+     * 获取流程当前的操作人<br>
+     * 不分操作类型(会签, 抄送等), 不分是否已操作<br>
+     * 返回数组已经去重
+     */
     public static int[] getCurrentNodeOperatorByRequestId(int requestId) {
         int nodeId = getNodeIdByRequestId(requestId);
         RecordSet rs = new RecordSet();
@@ -515,7 +520,8 @@ public final class WorkflowAPI {
             users[idx++] = rs.getInt("userid");
         }
 
-        return idx == users.length ? users : ArrayUtil.arrayExtend(users, idx);
+        users = idx == users.length ? users : ArrayUtil.arrayExtend(users, idx);
+        return (int[]) ArrayUtil.delRepeat(users);
     }
 
     /**
