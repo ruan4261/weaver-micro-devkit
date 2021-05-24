@@ -16,7 +16,7 @@ public final class BeanUtil {
     }
 
     /**
-     * 将所有实例字段作为键值<br>
+     * 将所有字段作为键值<br>
      * 值为实例当前的字段状态<br>
      * 如果子类有与父类同名字段, 子类值会覆盖父类的值
      *
@@ -44,16 +44,43 @@ public final class BeanUtil {
     }
 
     /**
-     * 将所有实例字段作为键值<br>
-     * 使用getter方法获取字段, 要求空参且访问修饰为public
+     * 这是一个诈骗方法, 请用另外一个...
      *
-     * todo 当前暂不可用, 会在接下来的版本更新
+     * @param filter 该参数bit对应修饰符的字段将被过滤
+     * @see #object2Map(Object, int)
+     * @see ReflectUtil#queryFields(Class, int, boolean)
+     */
+    @Deprecated
+    public static Map<String, Object> obj2Map(Object obj, int filter) {
+        return object2Map(obj, filter);
+    }
+
+    /**
+     * 将所有字段作为键值<br>
+     * 值为实例当前的字段状态<br>
+     * 哈希键为字段toString()字符串, 子类与父类同名属性最终都会保存下来
      *
      * @param filter 该参数bit对应修饰符的字段将被过滤
      * @see ReflectUtil#queryFields(Class, int, boolean)
+     * @since 1.1.9
      */
-    public static Map<String, Object> obj2Map(Object obj, int filter) {
-        return object2Map(obj, filter);
+    public static Map<String, Object> object2MapCompletely(Object obj, int filter) {
+        Class<?> clazz = Assert.notNull(obj, "obj").getClass();
+
+        Field[] fields = ReflectUtil.queryFields(clazz, filter, true);
+
+        Map<String, Object> map = new HashMap<String, Object>(fields.length + (fields.length >> 1));
+        for (int i = fields.length - 1; i >= 0; i--) {
+            Field field = fields[i];
+            try {
+                if (!field.isAccessible())
+                    field.setAccessible(true);
+
+                map.put(field.toString(), field.get(obj));
+            } catch (IllegalAccessException ignore) {
+            }
+        }
+        return map;
     }
 
     /**
