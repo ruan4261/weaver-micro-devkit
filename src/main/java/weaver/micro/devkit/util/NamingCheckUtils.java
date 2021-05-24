@@ -6,9 +6,9 @@ import weaver.micro.devkit.Assert;
  * @author ruan4261
  * @since 1.1.9
  */
-public class JavaCheckUtils {
+public class NamingCheckUtils {
 
-    private JavaCheckUtils() {
+    private NamingCheckUtils() {
     }
 
     /**
