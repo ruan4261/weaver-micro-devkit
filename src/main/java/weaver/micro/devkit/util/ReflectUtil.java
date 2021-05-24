@@ -27,7 +27,7 @@ public final class ReflectUtil {
             clazz = clazz.getSuperclass();
 
             int needSize;
-            if ((needSize = count + interfaces.length) > classes.length) {
+            if ((needSize = count + interfaces.length) >= classes.length) {
                 if (clazz == null)
                     classes = ArrayUtil.arrayExtend(classes, needSize);
                 else
@@ -41,9 +41,7 @@ public final class ReflectUtil {
         if (count == classes.length)
             return ArrayUtil.delRepeat(classes);
         else {
-            Class<?>[] res = new Class[count];
-            System.arraycopy(classes, 0, res, 0, count);
-            return ArrayUtil.delRepeat(res);
+            return ArrayUtil.delRepeat(ArrayUtil.arrayExtend(classes, count));
         }
     }
 
