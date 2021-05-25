@@ -65,9 +65,23 @@ public final class BeanUtil {
      * @since 1.1.9
      */
     public static Map<String, Object> object2MapCompletely(Object obj, int filter) {
+        return object2MapCompletely(obj, true, filter);
+    }
+
+    /**
+     * 将所有字段作为键值<br>
+     * 值为实例当前的字段状态<br>
+     * 哈希键为字段toString()字符串
+     *
+     * @param parent 为true时会获取超类字段
+     * @param filter 该参数bit对应修饰符的字段将被过滤
+     * @see ReflectUtil#queryFields(Class, int, boolean)
+     * @since 1.1.9
+     */
+    public static Map<String, Object> object2MapCompletely(Object obj, boolean parent, int filter) {
         Class<?> clazz = Assert.notNull(obj, "obj").getClass();
 
-        Field[] fields = ReflectUtil.queryFields(clazz, filter, true);
+        Field[] fields = ReflectUtil.queryFields(clazz, filter, parent);
 
         Map<String, Object> map = new HashMap<String, Object>(fields.length + (fields.length >> 1));
         for (int i = fields.length - 1; i >= 0; i--) {
