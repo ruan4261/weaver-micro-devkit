@@ -1,18 +1,22 @@
 package weaver.micro.devkit.xml;
 
 import weaver.micro.devkit.Assert;
+import weaver.micro.devkit.print.MinimumType;
 
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.*;
 
 /**
- * Not thread safe.
+ * 仅支持构造简单的XML文本, 不支持解析<br>
+ * 已知问题: 如果children集合中有对自己的引用, 会导致toString()时栈溢出
  *
- * 仅支持构造简单的XML文本, 不支持解析
+ * <hr/>
+ * Non-thread safe.
  *
  * @author ruan4261
  */
+@MinimumType
 public class XMLElement implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
     private static final transient String LINE_SEPARATOR = "\n";
