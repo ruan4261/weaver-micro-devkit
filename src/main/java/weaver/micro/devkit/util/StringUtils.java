@@ -2,9 +2,7 @@ package weaver.micro.devkit.util;
 
 import weaver.micro.devkit.Assert;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -119,8 +117,11 @@ public class StringUtils {
      * <br><br>
      * 输出格式无特别规范
      *
+     * @see #fullRecursionPrint0(Object)
      * @since 1.1.4
+     * @deprecated new print function see {@link VisualPrintUtils}
      */
+    @Deprecated
     public static String fullRecursionPrint(Object obj) {
         String str = fullRecursionPrint0(obj);
         repeatObjects.remove();
@@ -286,6 +287,61 @@ public class StringUtils {
         }
 
         return sb.toString();
+    }
+
+    public static String escapeString(String str) {
+        StringWriter writer = new StringWriter(str.length() << 1);
+        try {
+            escapeString(writer, str);
+            return writer.toString();
+        } catch (IOException ignored) {
+            throw new RuntimeException("arienai exception. @^@");
+        }
+    }
+
+    /**
+     * 还原出java代码中的格式
+     */
+    public static void escapeString(Writer out, String str) throws IOException {
+        Assert.notNull(out);
+        Assert.notNull(str);
+        int sz = str.length();
+        for (int i = 0; i < sz; ++i) {
+            char ch = str.charAt(i);
+            switch (ch) {
+                case '\b':
+                    out.write(92);
+                    out.write(98);
+                    break;
+                case '\t':
+                    out.write(92);
+                    out.write(116);
+                    break;
+                case '\n':
+                    out.write(92);
+                    out.write(110);
+                    break;
+                case '\f':
+                    out.write(92);
+                    out.write(102);
+                    break;
+                case '\r':
+                    out.write(92);
+                    out.write(114);
+                    break;
+                case '"':
+                    out.write(92);
+                    out.write(34);
+                    break;
+                case '\\':
+                    out.write(92);
+                    out.write(92);
+                    break;
+                default:
+                    out.write(ch);
+                    break;
+            }
+        }
     }
 
 }
