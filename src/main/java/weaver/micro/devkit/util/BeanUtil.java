@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.util.*;
 
 /**
+ * 这命名有点问题...使用前需看代码
+ *
  * @author ruan4261
  */
 public final class BeanUtil {
@@ -24,10 +26,14 @@ public final class BeanUtil {
      * @see ReflectUtil#queryFields(Class, int, boolean)
      */
     public static Map<String, Object> object2Map(Object object, int filter) {
+        return object2Map(object, true, filter);
+    }
+
+    public static Map<String, Object> object2Map(Object object, boolean parent, int filter) {
         Assert.notNull(object);
         Class<?> clazz = object.getClass();
 
-        Field[] fields = ReflectUtil.queryFields(clazz, filter, true);
+        Field[] fields = ReflectUtil.queryFields(clazz, filter, parent);
 
         Map<String, Object> map = new HashMap<String, Object>(fields.length + (fields.length >> 1));
         for (int i = fields.length - 1; i >= 0; i--) {
