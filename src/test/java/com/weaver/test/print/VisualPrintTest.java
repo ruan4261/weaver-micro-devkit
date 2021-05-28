@@ -16,12 +16,7 @@ public class VisualPrintTest {
             prev = prev.child;
         }
 
-        try {
-            VisualPrintUtils.print(root);
-        }catch (Throwable t){
-        }
-
-        System.out.println("continue");
+        VisualPrintUtils.print(root);
     }
 
 }
