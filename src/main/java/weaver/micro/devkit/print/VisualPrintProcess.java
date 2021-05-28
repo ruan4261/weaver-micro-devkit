@@ -91,11 +91,25 @@ public class VisualPrintProcess {
 
     private final Appendable out;
     private final Flushable flushCtrl;
-    String dynamicPrefix;// only TAB and prefix_scope
+    private Object ref;
+    private int currentDepth;
+    private String dynamicPrefix;// only TAB and prefix_scope
 
     /* Null and minimum type will not be added to the collections that for deduplication */
 
     private final Set<Object> dedupSet = new HashSet<Object>();
+
+    /**
+     * If true, any object will only be printed once at most,
+     * otherwise, any object will not be printed repeatedly
+     * within the subtree of its attributes.
+     *
+     * <hr/>
+     * Getter/Setter see:
+     * {@link #setGlobalDedup(boolean)},
+     * {@link #isGlobalDedup()}
+     */
+    private boolean globalDedup = true;
 
     public VisualPrintProcess(Writer out) {
         Assert.notNull(out);
@@ -113,25 +127,27 @@ public class VisualPrintProcess {
      * Entrance
      */
     public void print(Object o) throws IOException, IllegalAccessException {
+        this.ref = o;
+        this.currentDepth = 0;
         this.dynamicPrefix = "";
         this.printPrefix(true);
         try {
             this.print4Internal(o, true);
         } catch (StackOverflowError e) {
-            this.stackoverflow(e);
+            this.resolveStackoverflow(e);
         }
         this.end();
     }
 
     private void end() throws IOException {
-        this.flushCtrl.flush();
+        this.ref = null;
+        this.currentDepth = 0;
         this.dedupSet.clear();
+        this.flushCtrl.flush();
     }
 
-    private void stackoverflow(Throwable t) {
-        throw new IllegalArgumentException(
-                "The object depth is too deep to print visually, which causes a stack overflow!",
-                t);
+    private void resolveStackoverflow(Throwable t) {
+        throw new ObjectDepthOverflowException(this.currentDepth, t);
     }
 
     /**
@@ -143,6 +159,9 @@ public class VisualPrintProcess {
      * {@link ObjectType#Collection}
      */
     private void print4Internal(Object o, boolean isLastItem) throws IOException, IllegalAccessException {
+        // check current depth
+        VisualPrintUtils.checkObjectDepth(this.currentDepth, this.ref);
+
         ObjectType type = ObjectType.whichType(o);
 
         // check repetition
@@ -152,6 +171,7 @@ public class VisualPrintProcess {
             return;
         }
 
+        this.currentDepth++;
         switch (type) {
             case Minimum:
                 this.printMinimum(o);
@@ -172,9 +192,10 @@ public class VisualPrintProcess {
                 this.printCollection(((Collection<?>) o), isLastItem);
                 break;
         }
+        this.currentDepth--;
 
         // exit dedup collection
-        if (needCheckRepetition)
+        if (needCheckRepetition && !this.globalDedup)
             this.popRepeatedObject(o);
     }
 
@@ -195,10 +216,18 @@ public class VisualPrintProcess {
         // print its own class
         this.printNativeInfo(o);
 
-        // print its own attributes
+        // attributes
         Field[] fields = ReflectUtil.queryFields(self, 0, false);
+
+        if (fields.length == 0 && len == 1)
+            return;
+
+        this.currentDepth++;
         this.expandDynamicPrefix(isLastItem);
+        // print its own attributes
         this.printObjFields(fields, o, len == 1);
+
+        // print relevant class scope
         for (int i = 1; i < len; i++) {
             boolean eleIsLastItem = i + 1 == len;
             this.printLineFeed();
@@ -206,6 +235,7 @@ public class VisualPrintProcess {
             this.printObjWithSpecifiedScope(classes[i], o, eleIsLastItem);
         }
         this.reduceDynamicPrefix();
+        this.currentDepth--;
     }
 
     /**
@@ -220,11 +250,11 @@ public class VisualPrintProcess {
         // print fields
         Field[] fields = ReflectUtil.queryFields(clazz, 0, false);
         this.expandDynamicPrefix(isLastItem);
-        this.printObjFields(fields, o, isLastItem);
+        this.printObjFields(fields, o, true);
         this.reduceDynamicPrefix();
     }
 
-    private void printObjFields(Field[] fields, Object o, boolean isLastItem) throws IllegalAccessException, IOException {
+    private void printObjFields(Field[] fields, Object o, boolean tailClose) throws IllegalAccessException, IOException {
         for (int i = 0; i < fields.length; i++) {
             Field f = fields[i];
             if (!f.isAccessible())
@@ -232,7 +262,7 @@ public class VisualPrintProcess {
             Object v = f.get(o);
 
             // print
-            boolean isLastField = isLastItem && i == fields.length - 1;
+            boolean isLastField = tailClose && i == fields.length - 1;
             this.printLineFeed();
             this.printPrefix(isLastField);
             this.printFieldName(f);
@@ -352,7 +382,7 @@ public class VisualPrintProcess {
      * It should called after {@link #checkRepeatedObjectAndAdd(Object)} returns true.
      */
     private void printRepeatedObject(Object o) throws IOException {
-        this.out.append("(REPEAT)");
+        this.out.append("(REPEATED)");
         this.printNativeInfo(o);
     }
 
@@ -401,6 +431,14 @@ public class VisualPrintProcess {
 
     private void popRepeatedObject(Object o) {
         this.dedupSet.remove(o);
+    }
+
+    public boolean isGlobalDedup() {
+        return globalDedup;
+    }
+
+    public void setGlobalDedup(boolean globalDedup) {
+        this.globalDedup = globalDedup;
     }
 
     private static String escape(String str) {
