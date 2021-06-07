@@ -200,8 +200,8 @@ public final class WorkflowAPI {
     }
 
     public static int getBillIdByWorkflowId(int workflowId) {
-        String sql = "select b.id from workflow_base a,workflow_bill b where a.formid=b.id and a.id =" + workflowId;
-        return Cast.o2Integer(CommonAPI.querySingleField(sql, "id"));
+        String sql = "select formid from workflow_base id =" + workflowId;
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, "formid"));
     }
 
     /** @param workflowId 流程id */
@@ -230,8 +230,7 @@ public final class WorkflowAPI {
      */
     @Deprecated
     public static String queryTableName(final int workflowId) {
-        String sql = "select b.tablename from workflow_base a,workflow_bill b where a.formid=b.id and a.id=" + workflowId;
-        return CommonAPI.querySingleField(sql, "tablename");
+        return getBillTableNameByWorkflowId(workflowId);
     }
 
     /**
