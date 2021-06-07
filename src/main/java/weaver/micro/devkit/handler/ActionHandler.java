@@ -388,7 +388,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         return Action.SUCCESS;
     }
 
-    public void actionStart() throws Throwable {
+    public final void actionStart() throws Throwable {
         this.logPrefix = "$request:" + this.getRequestId() + "$ -> ";
         this.log(" action start" +
                 ", bill main id is " + this.getMainId() +
@@ -397,6 +397,12 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
                 ", creator is " + this.getCreatorId() +
                 ", current node is " + this.getCurrentNodeName() +
                 ", run times of this action instance is " + (++this.instanceRunTimes));
+    }
+
+    /**
+     * 自定义解耦
+     */
+    public void init() {
     }
 
     /** 每次执行execute结束时必然执行此方法 */
@@ -509,6 +515,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
                 return this.failWithOnlyMessage(mes);
 
             // 正常流程
+            this.init();
             return this.handle(requestInfo);
         } catch (Throwable e) {
             return this.ifException(e);
