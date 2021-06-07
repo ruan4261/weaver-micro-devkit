@@ -101,11 +101,11 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         this.logProcess = LogEventProcessor.getInstance(this.actionInfo).setUsedLevel(2);
     }
 
-    public RequestInfo requestInfo() {
+    RequestInfo requestInfo() {
         return this.request;
     }
 
-    public RequestManager requestManager() {
+    RequestManager requestManager() {
         return this.request.getRequestManager();
     }
 
@@ -117,7 +117,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      *
      * @return 流程主表对应的单行数据，字段名到流程数据的映射。
      */
-    public Map<String, String> getMainTableCache() {
+    Map<String, String> getMainTableCache() {
         if (this.mainTableCache != null)
             return this.mainTableCache;
         else this.mainTableCache = new HashMap<String, String>();
@@ -140,7 +140,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @param table 明细表序号，从1开始
      * @return 明细表下标！流程第(tableIdx + 1)个明细表的对应多行数据，字段名到流程数据的映射，数据值可能为NULL。
      */
-    public List<Map<String, String>> getDetailTableCache(int table) {
+    List<Map<String, String>> getDetailTableCache(int table) {
         if (this.detailTableListCache == null)
             this.detailTableListCache = new HashMap<Integer, List<Map<String, String>>>(8);
 
@@ -172,7 +172,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     /**
      * 通过数据库查询获取最新流程主表信息
      */
-    public Map<String, String> getMainTableNewest() {
+    Map<String, String> getMainTableNewest() {
         Map<String, String> res =
                 WorkflowAPI.queryRequestMainData(this.getBillTableName(), this.getRequestId());
         this.logLine("MAIN FORM DATA(Newest) : " + res.toString());
@@ -184,7 +184,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      *
      * @param table 明细表序号，从1开始
      */
-    public List<Map<String, String>> getDetailTableNewest(int table) {
+    List<Map<String, String>> getDetailTableNewest(int table) {
         List<Map<String, String>> res =
                 WorkflowAPI.queryRequestDetailData(this.getBillTableName(), this.getRequestId(), table);
         this.logLine("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res.toString());
@@ -195,7 +195,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @return 流程签字意见列表
      * @see WorkflowAPI#queryRemarkListNew(int, String[])
      */
-    public List<Map<String, String>> getRemarkList() {
+    List<Map<String, String>> getRemarkList() {
         List<Map<String, String>> res = WorkflowAPI.queryRemarkListNew(this.getRequestId(), null);
         this.logLine("Remark list : " + res.toString());
         return res;
@@ -206,7 +206,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @return 流程签字意见列表
      * @see WorkflowAPI#queryRemarkListNew(int, String[])
      */
-    public List<Map<String, String>> getRemarkList(String[] expandFields) {
+    List<Map<String, String>> getRemarkList(String[] expandFields) {
         List<Map<String, String>> res = WorkflowAPI.queryRemarkListNew(this.getRequestId(), expandFields);
         this.logLine("Remark list : " + res.toString());
         return res;
@@ -215,9 +215,20 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     /**
      * @return 流程相关最新文档
      * @see DocAPI#queryDocIdByRequestId(int)
+     * @deprecated 请使用#getDocIdLatest()
      */
-    public String getDocIdLatest() {
+    @Deprecated
+    String getDocIdLatest() {
         String docId = DocAPI.queryDocIdByRequestId(this.getRequestId());
+        this.log("Newest document id : " + docId);
+        return docId;
+    }
+
+    /**
+     * @see #getDocIdLatest() 字符串返回值版本
+     */
+    int getDocIdLatestNew() {
+        int docId = DocAPI.getDocIdByRequestId(this.getRequestId());
         this.log("Newest document id : " + docId);
         return docId;
     }
@@ -225,34 +236,34 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     /**
      * 获取当前流程在主表单中的id
      */
-    public int getMainId() {
+    int getMainId() {
         return WorkflowAPI.getMainId(this.getRequestId());
     }
 
-    public int getRequestId() {
+    int getRequestId() {
         return Cast.o2Integer(this.request.getRequestid());
     }
 
     /** 流程标题 */
-    public String getRequestName() {
+    String getRequestName() {
         return this.request.getRequestManager().getRequestname();
     }
 
     /**
      * 流程路径的id
      */
-    public int getWorkflowId() {
+    int getWorkflowId() {
         return Cast.o2Integer(this.request.getWorkflowid());
     }
 
     /**
      * 这个接口在流转时并不准确, 大概率获取到的是流程流转之后的节点
      */
-    public int getCurrentNodeId() {
+    int getCurrentNodeId() {
         return WorkflowAPI.getNodeIdByRequestId(this.getRequestId());
     }
 
-    public String getCurrentNodeName() {
+    String getCurrentNodeName() {
         int nodeId = this.getCurrentNodeId();
         return WorkflowAPI.getNodeNameByNodeId(nodeId);
     }
@@ -260,13 +271,13 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     /**
      * 流程路径名称
      */
-    public String getWorkflowPathName() {
+    String getWorkflowPathName() {
         String workflowPath = WorkflowAPI.getWorkflowPathName(this.getWorkflowId());
         this.log("workflow path: " + workflowPath);
         return workflowPath;
     }
 
-    public int getBillId() {
+    int getBillId() {
         return WorkflowAPI.getBillIdByWorkflowId(this.getWorkflowId());
     }
 
@@ -274,40 +285,40 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 所有流程打印的日志前缀为 $request:?$
      * 用于便捷查询
      */
-    private String getLogPrefix() {
+    String getLogPrefix() {
         return this.logPrefix;
     }
 
-    public final int getCreatorId() {
+    final int getCreatorId() {
         return WorkflowAPI.getCreatorIdByRequestId(this.getRequestId());
     }
 
     /**
      * 可能返回null
      */
-    public RecordSetTrans getRsTrans() {
+    RecordSetTrans getRsTrans() {
         return this.request.getRsTrans();
     }
 
     @Deprecated
-    public String getTableNameLower() {
+    String getTableNameLower() {
         return this.getBillTableName().toLowerCase();
     }
 
     @Deprecated
-    public String getTableNameUpper() {
+    String getTableNameUpper() {
         return this.getBillTableName().toUpperCase();
     }
 
     /** 明细order从1开始, 为0时返回主表名称, 不存在该明细表则会抛出运行时异常 */
-    public String getDetailTableName(int order) {
+    String getDetailTableName(int order) {
         String name = WorkflowAPI.getDetailTableNameByBillIdAndOrderId(getBillId(), order);
         if ("".equals(name))
             throw new RuntimeException("BillTable [" + getBillTableName() + "] doesn't have such detail table which order number is " + order + ".");
         return name;
     }
 
-    public String getBillTableName() {
+    String getBillTableName() {
         return WorkflowAPI.getBillTableNameByWorkflowId(this.getWorkflowId());
     }
 
@@ -350,7 +361,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @param msg 前端显示信息
      * @return FAILURE_AND_CONTINUE
      */
-    public final String fail(String msg) {
+    final String fail(String msg) {
         String mes = this.actionInfo + " :: " + msg;
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(mes);
@@ -359,7 +370,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         return Action.FAILURE_AND_CONTINUE;
     }
 
-    public final String fail(Throwable throwable) {
+    final String fail(Throwable throwable) {
         String mes = this.actionInfo + " :: " + throwable.toString();
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(mes);
@@ -373,7 +384,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      *
      * @param msg 前端显示信息
      */
-    public final String failWithOnlyMessage(String msg) {
+    final String failWithOnlyMessage(String msg) {
         this.request.getRequestManager().setMessageid("0");
         this.request.getRequestManager().setMessagecontent(msg);
         this.endResult = Action.FAILURE_AND_CONTINUE;
@@ -382,13 +393,13 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     /** 接口执行完毕 */
-    public final String success() {
+    final String success() {
         this.endResult = Action.SUCCESS;
         this.endMessage = "OK";
         return Action.SUCCESS;
     }
 
-    public final void actionStart() throws Throwable {
+    final void actionStart() throws Throwable {
         this.logPrefix = "$request:" + this.getRequestId() + "$ -> ";
         this.log(" action start" +
                 ", bill main id is " + this.getMainId() +
@@ -402,11 +413,11 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     /**
      * 自定义解耦
      */
-    public void init() {
+    void init() {
     }
 
     /** 每次执行execute结束时必然执行此方法 */
-    public final void end() {
+    final void end() {
         this.log(" end with result:" + this.endResult + ", message:" + this.endMessage);
         try {
             this.clearCache();
@@ -420,7 +431,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 可以通过复写该方法的方式取消缓存清理
      * 但请注意控制实例的作用域(E8,9默认使用单例)
      */
-    public void clearCache() throws Throwable {
+    void clearCache() throws Throwable {
         this.request = null;
         this.endResult = null;
         this.endMessage = null;
@@ -432,7 +443,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     /** 发生异常情况下在action结束时执行，该方法用于自定义重写 */
-    public String ifException(Throwable e) {
+    String ifException(Throwable e) {
         this.log("Auto catch exception by ActionHandler.", e);
         return this.fail(e);
     }
@@ -442,7 +453,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      *
      * @since 1.1.2
      */
-    public void ifExceptionAfterEnd(Throwable e) {
+    void ifExceptionAfterEnd(Throwable e) {
         this.log("Throw exception through #end()", e);
     }
 
@@ -462,7 +473,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @param maxlength 限制长度
      * @return 字符串信息
      */
-    public String fieldLengthLimit(int table, String field, int maxlength) {
+    String fieldLengthLimit(int table, String field, int maxlength) {
         if (table < 0)
             return "";
 
@@ -531,7 +542,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @deprecated 错拼
      */
     @Deprecated
-    public int getFiledId(int tableIdx, String name) {
+    int getFiledId(int tableIdx, String name) {
         return this.getFieldId(tableIdx, name);
     }
 
@@ -540,7 +551,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @param name     字段数据库名
      * @return 字段id
      */
-    public int getFieldId(int tableIdx, String name) {
+    int getFieldId(int tableIdx, String name) {
         return WorkflowAPI.getFieldIdByFieldName(this.getBillId(), tableIdx, name);
     }
 
@@ -551,7 +562,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @deprecated cannot get detail table values
      */
     @Deprecated
-    public String getDropdownBoxValue(int tableIdx, String name) {
+    String getDropdownBoxValue(int tableIdx, String name) {
         // tableIdx can only be zero
         int fieldId = this.getFieldId(tableIdx, name);
         int fieldValue = Cast.o2Integer(this.getMainTableCache().get(name));
@@ -566,7 +577,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @param value    字段下标值
      * @return 字段显示值
      */
-    public String getDropdownBoxShowValue(int tableIdx, String name, int value) {
+    String getDropdownBoxShowValue(int tableIdx, String name, int value) {
         int fieldId = this.getFieldId(tableIdx, name);
         return WorkflowAPI.getDropdownBoxValue(fieldId, value);
     }
@@ -575,20 +586,20 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 请覆盖本方法，通过{@link #setFieldVerifyFlag(boolean)}方法设置校验成功与否
      * 如果{@link #fieldVerifyFlag}为true则通过校验，如果为false则此方法应该返回信息用于显示给用户
      */
-    public String fieldVerify() {
+    String fieldVerify() {
         // 该方法用于被覆盖
-        setFieldVerifyFlag(true);
+        this.setFieldVerifyFlag(true);
         return "";
     }
 
-    public void setFieldVerifyFlag(boolean fieldVerifyFlag) {
+    void setFieldVerifyFlag(boolean fieldVerifyFlag) {
         this.fieldVerifyFlag = fieldVerifyFlag;
     }
 
     /**
      * 获取明细表数量
      */
-    public int getDetailTableCount() {
+    int getDetailTableCount() {
         int count = WorkflowAPI.getDetailTableCountByRequestId(getRequestId());
         this.log("detail table count: " + count);
         return count;
@@ -597,7 +608,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     /**
      * 清除指定明细表数据
      */
-    public void clearDetailTableData(int order) {
+    void clearDetailTableData(int order) {
         WorkflowAPI.clearDetailTableDataByRequestIdAndOrder(getRequestId(), order);
         this.log("The detail table " + order + " has been cleaned.");
     }
@@ -605,19 +616,19 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     /**
      * 清除所有明细表数据
      */
-    public void clearAllDetailTableData() {
+    void clearAllDetailTableData() {
         WorkflowAPI.clearAllDetailTableDataByRequestId(getRequestId());
         this.log("All detail tables have been cleaned.");
     }
 
-    public void setRealExecutor() {
+    void setRealExecutor() {
         this.realExecutor = true;
     }
 
     /**
      * @since 1.1.6
      */
-    private String executeInNewHandler(RequestInfo requestInfo) throws IllegalAccessException, InstantiationException {
+    String executeInNewHandler(RequestInfo requestInfo) throws IllegalAccessException, InstantiationException {
         Class<? extends ActionHandler> clazz = this.getClass();
         ActionHandler newHandler = clazz.newInstance();
         newHandler.setRealExecutor();

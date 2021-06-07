@@ -27,7 +27,7 @@ public final class DocAPI {
      *
      * @param requestId 请求id
      * @return 流程最新文档id
-     * @deprecated 返回值不正确
+     * @deprecated 请使用#getDocIdByRequestId(int)
      */
     @Deprecated
     public static String queryDocIdByRequestId(final int requestId) {
