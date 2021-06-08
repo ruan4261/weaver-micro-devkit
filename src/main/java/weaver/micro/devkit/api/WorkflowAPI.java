@@ -12,7 +12,17 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * 流程操作工具。
+ * 流程操作接口.
+ * <hr/>
+ * 注意: 因历史原因, 部分变量名可能会有多重含义, 例如:<br>
+ * 1) BillId: 在本类中, billId一般指流程业务表的id, 也就是formId,
+ * 在RequestManager类中, billId则代表当前流程在bill表中的id, 即本类中的mainId.
+ *
+ * <hr/>
+ * 也许有用的对照表:<br>
+ * 本类 | RequestManager<br>
+ * BillId | FormId<br>
+ * MainId | BillId<br>
  *
  * @author ruan4261
  */
@@ -316,7 +326,7 @@ public final class WorkflowAPI {
      * @return 主表信息映射
      */
     public static Map<String, String> queryRequestMainData(final String billTableName, final int requestId) {
-        Assert.notEmpty(billTableName);
+        Assert.notEmpty(billTableName, "billTableName");
         Map<String, String> result = new HashMap<String, String>();
         RecordSet rs = new RecordSet();
         String sql = "select * from " + billTableName + " where requestid = '" + requestId + "'";
@@ -344,7 +354,7 @@ public final class WorkflowAPI {
      * @return 多行明细映射信息
      */
     public static List<Map<String, String>> queryRequestDetailData(String billTableName, int requestId, int orderId) {
-        Assert.notEmpty(billTableName);
+        Assert.notEmpty(billTableName, "billTableName");
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
         RecordSet rs = new RecordSet();
 
@@ -552,40 +562,100 @@ public final class WorkflowAPI {
     }
 
     public static void clearDetailTableDataByRequestIdAndOrder(int requestId, int order) {
+        int mainId = getMainId(requestId);
         int billId = getBillIdByRequestId(requestId);
         String dt = getDetailTableNameByBillIdAndOrderId(billId, order);
-        int mainId = getMainId(requestId);
         new RecordSet().execute("delete from " + dt + " where mainid=" + mainId);
     }
 
     public static void clearAllDetailTableDataByRequestId(int requestId) {
         RecordSet rs = new RecordSet();
-        int dtCount = getDetailTableCountByRequestId(requestId);
+        int mainId = getMainId(requestId);// main table id
         int billId = getBillIdByRequestId(requestId);
-        int mainId = getMainId(requestId);
+        int[] orderSeq = getDetailTableOrderSequenceByFormId(billId);
 
-        for (int i = 1; i <= dtCount; i++) {
-            String dt = getDetailTableNameByBillIdAndOrderId(billId, i);
+        for (int orderId : orderSeq) {
+            String dt = getDetailTableNameByBillIdAndOrderId(billId, orderId);
             rs.execute("delete from " + dt + " where mainid=" + mainId);
         }
     }
 
     public static int getDetailTableCountByWorkflowId(int workflowId) {
         int billId = getBillIdByWorkflowId(workflowId);
-        return Cast.o2Integer(
-                CommonAPI.querySingleField(
-                        "select max(orderid) cnt from workflow_billdetailtable where billid=" + billId,
-                        "cnt"),
-                0);
+        return getDetailTableCountByFormId(billId);
     }
 
     public static int getDetailTableCountByRequestId(int requestId) {
         int billId = getBillIdByRequestId(requestId);
+        return getDetailTableCountByFormId(billId);
+    }
+
+    /**
+     * 返回值是最后一张明细表的orderId, 中间可能存在某个明细表不存在的情况
+     */
+    public static int getDetailTableCountByFormId(int formId) {
         return Cast.o2Integer(
                 CommonAPI.querySingleField(
-                        "select max(orderid) cnt from workflow_billdetailtable where billid=" + billId,
+                        "select max(orderid) cnt from workflow_billdetailtable where billid=" + formId,
                         "cnt"),
                 0);
+    }
+
+    public static int getDetailTableCountByWorkflowIdRealExist(int workflowId) {
+        int billId = getBillIdByWorkflowId(workflowId);
+        return getDetailTableCountByFormIdRealExist(billId);
+    }
+
+    public static int getDetailTableCountByRequestIdRealExist(int requestId) {
+        int billId = getBillIdByRequestId(requestId);
+        return getDetailTableCountByFormIdRealExist(billId);
+    }
+
+    /**
+     * 返回真实存在的明细表数量, 返回值可能小于某张明细表的orderId
+     */
+    public static int getDetailTableCountByFormIdRealExist(int formId) {
+        return Cast.o2Integer(
+                CommonAPI.querySingleField(
+                        "select count(orderid) cnt from workflow_billdetailtable where billid=" + formId,
+                        "cnt"),
+                0);
+    }
+
+    public static int[] getDetailTableOrderSequenceByWorkflowId(int workflowId) {
+        int billId = getBillIdByWorkflowId(workflowId);
+        return getDetailTableOrderSequenceByFormId(billId);
+    }
+
+    public static int[] getDetailTableOrderSequenceByRequestId(int requestId) {
+        int billId = getBillIdByRequestId(requestId);
+        return getDetailTableOrderSequenceByFormId(billId);
+    }
+
+    /**
+     * 获取真实存在的明细表的order序列
+     */
+    public static int[] getDetailTableOrderSequenceByFormId(int formId) {
+        int count = getDetailTableCountByFormIdRealExist(formId);
+        int[] orderSeq = new int[count];
+        int idx = 0;
+
+        RecordSet rs = new RecordSet();
+        rs.execute("select orderid from workflow_billdetailtable where billid=" + formId +
+                " order by orderid asc");
+        while (rs.next()) {
+            if (idx == orderSeq.length) {
+                // 并发问题: 其他程序新增明细表, 动态调整数组长度+1
+                orderSeq = ArrayUtil.arrayExtend(orderSeq, orderSeq.length + 1);
+            }
+            orderSeq[idx++] = rs.getInt("orderid");
+        }
+
+        if (idx != orderSeq.length) {
+            // 并发问题: 其他程序删除明细表, 动态调整数组长度
+            orderSeq = ArrayUtil.arrayExtend(orderSeq, idx);
+        }
+        return orderSeq;
     }
 
     public static String queryDetailTableNameByWorkflowIdAndOrderId(int workflowId, int orderId) {
