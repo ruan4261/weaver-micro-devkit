@@ -210,7 +210,7 @@ public final class WorkflowAPI {
     }
 
     public static int getBillIdByWorkflowId(int workflowId) {
-        String sql = "select formid from workflow_base id =" + workflowId;
+        String sql = "select formid from workflow_base where id =" + workflowId;
         return Cast.o2Integer(CommonAPI.querySingleField(sql, "formid"));
     }
 
