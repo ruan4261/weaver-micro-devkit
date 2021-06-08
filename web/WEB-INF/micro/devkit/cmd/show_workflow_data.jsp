@@ -6,6 +6,13 @@
 <%@ page import="weaver.micro.devkit.util.StringUtils" %>
 <%@ page import="weaver.micro.devkit.Cast" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Show Workflow Form Data</title>
+    <style>
+    </style>
+</head>
+<body>
 <%
     try {
         int requestId = Cast.o2Integer(request.getParameter("requestid"));
@@ -19,22 +26,7 @@
         String path = WorkflowAPI.getWorkflowPathName(workflowId);
         int mainId = WorkflowAPI.getMainId(requestId);
         String table = WorkflowAPI.queryBillTableByRequest(requestId);
-        Map<String, String> mtData = CommonAPI.query(table, null, "requestid=" + requestId).get(0);
-
-        int detailCount = WorkflowAPI.getDetailTableCountByRequestId(requestId);
-        List[] detailTables = new List[detailCount + 1];
-        for (int i = 1; i <= detailCount; i++) {
-            String dtTable = WorkflowAPI.getDetailTableNameByBillTableNameAndOrderId(table, i);
-            detailTables[i] = CommonAPI.query(dtTable, null, "mainid=" + mainId);
-        }
 %>
-<html>
-<head>
-    <title>Show Workflow Form Data</title>
-    <style>
-    </style>
-</head>
-<body>
 <h2>Base Info</h2>
 <div>
     <h3>
@@ -43,7 +35,16 @@
     <h3>
         Workflow Path: <%=path%>
     </h3>
+    <h3>
+        Main Id: <%=mainId%>
+    </h3>
+    <h3>
+        Bill Table: <%=table%>
+    </h3>
 </div>
+<%
+    Map<String, String> mtData = CommonAPI.query(table, null, "requestid=" + requestId).get(0);
+%>
 <h2>Main Table Data</h2>
 <table border="1px" cellpadding="10px" cellspacing="0">
     <thead>
@@ -72,8 +73,15 @@
 </table>
 <hr/>
 <%
-    for (int i = 1; i < detailTables.length; i++) {
-        List<Map<String, String>> dtData = detailTables[i];
+    int detailCount = WorkflowAPI.getDetailTableCountByRequestId(requestId);
+    for (int i = 1; i <= detailCount; i++) {
+        String dtTable = WorkflowAPI.getDetailTableNameByBillTableNameAndOrderId(table, i);
+        if (dtTable == null || dtTable.equals("")) {
+            out.print("<h2 style=\"color: red\">Detail Table " + i + " is not exist!(pass)</h2>");
+            continue;
+        }
+
+        List<Map<String, String>> dtData = CommonAPI.query(dtTable, null, "mainid=" + mainId);
 %>
 <h2>Detail Table Data(Order <%=i%>, Row Count <%=dtData.size()%>)</h2>
 <%
@@ -123,6 +131,7 @@
 </html>
 <%
     } catch (Throwable t) {
+        out.print("<hr/>");
         out.print(StringUtils.toString(t));
         return;
     }
