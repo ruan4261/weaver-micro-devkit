@@ -16,6 +16,20 @@ import java.util.Map;
 public final class CommonAPI {
 
     /**
+     * 返回首个字段<br>
+     * RecordSet结果集下标从1开始
+     *
+     * @since 1.1.11
+     */
+    public static String querySingleField(String sql) {
+        Assert.notEmpty(sql, "sql");
+        RecordSet rs = new RecordSet();
+        rs.execute(sql);
+        rs.next();
+        return rs.getString(1);
+    }
+
+    /**
      * 通过一条sql语句查询一个字段
      * 查询不到则返回空字符串
      */
