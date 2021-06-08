@@ -16,9 +16,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程对象RequestInfo处理器。
- *
- * <h1>特别注意：在Ecology系统中，Action为无状态模型，使用单例控制！请注意自行控制内部各实例属性的创建销毁！</h1>
+ * 流程流转集成基类.
+ * <hr/>
+ * 在Ecology系统中的流程流转集成功能中, Action为无状态(单例)模型.<br>
+ * 请注意控制内部各实例属性的创建销毁.<br>
+ * <br>
+ * 在1.1.6版本添加的并发控制中, 此类实例已被设置为默认一实例仅执行一次.
+ * 如需使用并发实例模型, 可以在构造函数中调用{@link #setRealExecutor()}.
  *
  * @author ruan4261
  */
