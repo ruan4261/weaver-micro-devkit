@@ -2,6 +2,7 @@ package weaver.micro.devkit.handler;
 
 import weaver.conn.RecordSetTrans;
 import weaver.interfaces.workflow.action.Action;
+import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
@@ -601,12 +602,44 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     /**
-     * 获取明细表数量
+     * 获取明细表数量, 返回值为最后一张明细表的orderId, 中间可能会有空缺明细表
      */
+    @Deprecated
     protected int getDetailTableCount() {
         int count = WorkflowAPI.getDetailTableCountByRequestId(getRequestId());
-        this.log("detail table count: " + count);
+        this.log("max order of detail table: " + count);
         return count;
+    }
+
+    /**
+     * 获取真实存在的明细表数量
+     */
+    protected int getDetailTableCountRealExist() {
+        int count = WorkflowAPI.getDetailTableCountByRequestIdRealExist(getRequestId());
+        this.log("detail table count(real exist): " + count);
+        return count;
+    }
+
+    /**
+     * 获取第order张明细表的orderId, orderId <= order
+     */
+    protected int getDetailTableOrderId(int order) {
+        Assert.notNegAndZero(order, "Detail table order cannot be " + order);
+
+        int[] orderSeq = getDetailTableOrderSequence();
+        int len = orderSeq.length;
+        if (order > len)
+            throw new IllegalArgumentException("Detail table is not exist which its order is " + order +
+                    ", detail table count is " + len);
+
+        return orderSeq[order - 1];
+    }
+
+    /**
+     * @see WorkflowAPI#getDetailTableOrderSequenceByRequestId(int)
+     */
+    protected int[] getDetailTableOrderSequence() {
+        return WorkflowAPI.getDetailTableOrderSequenceByRequestId(getRequestId());
     }
 
     /**
