@@ -624,7 +624,9 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 获取第order张明细表的orderId, orderId <= order
      */
     protected int getDetailTableOrderId(int order) {
-        Assert.notNegAndZero(order, "Detail table order cannot be " + order);
+        Assert.notNeg(order, "Detail table order cannot be negative, yours: " + order);
+        if (order == 0)
+            return 0;
 
         int[] orderSeq = getDetailTableOrderSequence();
         int len = orderSeq.length;
