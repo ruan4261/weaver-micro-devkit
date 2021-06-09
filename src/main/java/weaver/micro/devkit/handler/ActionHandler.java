@@ -8,6 +8,7 @@ import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
 import weaver.micro.devkit.util.StringUtils;
+import weaver.micro.devkit.util.VisualPrintUtils;
 import weaver.soa.workflow.request.*;
 import weaver.workflow.request.RequestManager;
 
@@ -332,7 +333,12 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     @Override
     public final void log(Object o) {
-        this.logLine(StringUtils.fullRecursionPrint(o));
+        try {
+            String tree = VisualPrintUtils.getPrintInfo(o);
+            this.logProcess.log(this.getLogPrefix() + '\n' + tree);
+        } catch (IllegalAccessException e) {
+            this.logProcess.log("Print Exception", e);
+        }
     }
 
     @Override
@@ -344,7 +350,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 打印实际内容时另起一行
      */
     public final void logLine(String msg) {
-        this.logProcess.log(this.getLogPrefix() + "\n" + msg);
+        this.logProcess.log(this.getLogPrefix() + '\n' + msg);
     }
 
     @Override
