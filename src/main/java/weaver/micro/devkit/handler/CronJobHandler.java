@@ -12,7 +12,8 @@ public abstract class CronJobHandler extends BaseCronJob implements Loggable {
     /**
      * 用于注入实例属性
      */
-    public abstract void init();
+    protected void init() {
+    }
 
     @Override
     public void execute() {
@@ -35,7 +36,7 @@ public abstract class CronJobHandler extends BaseCronJob implements Loggable {
      * 在此处重写handle中抛出异常的处理逻辑
      * 默认抛出运行时异常
      */
-    public void ifException(Throwable t) throws RuntimeException {
+    protected void ifException(Throwable t) throws RuntimeException {
         throw new RuntimeException(t);
     }
 
