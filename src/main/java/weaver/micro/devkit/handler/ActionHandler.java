@@ -518,12 +518,12 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     public final String execute(RequestInfo requestInfo) {
         // 并发问题解决(临时), 只有realExecutor为true时代表当前实例安全, 可用于实际action处理
         if (!this.realExecutor) {
-            log("ActionHandlerRouter#" + StringUtils.toStringNative(this)
+            log("ActionHandlerAgent#" + StringUtils.toStringNative(this)
                     + " :: " + StringUtils.toStringNative(requestInfo));
             try {
                 return executeInNewHandler(requestInfo);
             } catch (Throwable t) {
-                log(t);
+                log("ActionHandler#executeInNewHandler", t);
                 return this.fail("ActionHandler#executeInNewHandler exception: " + t.toString());
             }
         }
@@ -609,6 +609,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
 
     /**
      * 获取明细表数量, 返回值为最后一张明细表的orderId, 中间可能会有空缺明细表
+     *
+     * @deprecated 推荐使用获取order序列的方法
      */
     @Deprecated
     protected int getDetailTableCount() {
@@ -668,6 +670,13 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
 
     protected void setRealExecutor() {
         this.realExecutor = true;
+    }
+
+    /**
+     * @since 1.1.11
+     */
+    protected void setAgentExecutor() {
+        this.realExecutor = false;
     }
 
     /**
