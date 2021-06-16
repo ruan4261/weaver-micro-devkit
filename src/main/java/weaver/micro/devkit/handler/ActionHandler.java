@@ -4,14 +4,17 @@ import weaver.conn.RecordSetTrans;
 import weaver.interfaces.workflow.action.Action;
 import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
+import weaver.micro.devkit.annotation.Autowired;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
+import weaver.micro.devkit.util.ReflectUtil;
 import weaver.micro.devkit.util.StringUtils;
 import weaver.micro.devkit.util.VisualPrintUtils;
 import weaver.soa.workflow.request.*;
 import weaver.workflow.request.RequestManager;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -680,15 +683,55 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     /**
+     * 新建一个本类实例, 设置为realExecutor, 用其执行流程流转接口的实际逻辑
+     *
      * @since 1.1.6
      */
     protected String executeInNewHandler(RequestInfo requestInfo) throws IllegalAccessException, InstantiationException {
         Class<? extends ActionHandler> clazz = this.getClass();
-        ActionHandler newHandler = clazz.newInstance();
-        newHandler.setRealExecutor();
+        ActionHandler newHandler = clazz.newInstance();// 最外层类一定要有空参构造
+        fillFieldQuietly(newHandler);// 注入参数
+        newHandler.setRealExecutor();// 设置为realExecutor, 即可使用
+
         log("RealExecutor#" + StringUtils.toStringNative(newHandler)
                 + " :: " + StringUtils.toStringNative(requestInfo));
         return newHandler.execute(requestInfo);
+    }
+
+    /**
+     * 填充handler的实例属性, 仅填充最外层类中被{@link Autowired}标记的属性
+     * (一般这些属性由流程流转集成模块注入)
+     * <hr/>
+     * 1.1.6 ~ 1.1.10的bug: <br>
+     * 如果不在构造中将当前handler设置为realExecutor, 则无法获取外部注入参数.<br>
+     * 修复方案: 在1.1.11或之后的版本中使用@Autowired标注字段或类.
+     *
+     * @since 1.1.11
+     */
+    protected void fillFieldQuietly(ActionHandler handler) {
+        if (handler.getClass() != this.getClass())
+            throw new IllegalArgumentException("Inconsistent handler type.");
+
+        log("Fill field quietly start >>");
+        Class<? extends ActionHandler> clazz = this.getClass();
+        // 在类上进行标注会对该类所有声明的字段生效(除static和final)
+        boolean allFieldsAutowired = clazz.isAnnotationPresent(Autowired.class);
+        Field[] fields = ReflectUtil.queryFields(clazz, 8 + 16, false);// filter static and final
+        for (Field f : fields) {
+            String fieldName = f.getName();
+            if (allFieldsAutowired || f.isAnnotationPresent(Autowired.class)) {
+                // auto wire
+                try {
+                    f.setAccessible(true);
+                    Object v = f.get(this);
+                    f.set(handler, v);
+                    log("Field already be filled >> " + fieldName + " : " + v);
+                } catch (IllegalAccessException e) {
+                    log("Exception field >> " + fieldName, e);
+                }
+            }
+        }
+        log("Fill field quietly end >>");
     }
 
 }
