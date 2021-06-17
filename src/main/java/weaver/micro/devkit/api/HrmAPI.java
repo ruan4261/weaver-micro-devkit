@@ -3,6 +3,7 @@ package weaver.micro.devkit.api;
 import weaver.conn.RecordSet;
 import weaver.general.Util;
 import weaver.micro.devkit.Cast;
+import weaver.micro.devkit.util.ArrayUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -91,6 +92,31 @@ public final class HrmAPI {
 
     public static String getJobLevelByHrmId(int hrmId) {
         return CommonAPI.querySingleField("select joblevel from hrmresource where id=" + hrmId, "joblevel");
+    }
+
+    public static int[] getDepartTraceByHrmId(int hrmId) {
+        int depart = queryDepartIdByHrmId(hrmId);
+        return getDepartTrace(depart);
+    }
+
+    public static int[] getDepartTrace(int depart) {
+        int[] departTrace = new int[8];
+        int idx = 0;
+        RecordSet rs = new RecordSet();
+        while (depart > 0) {
+            if (idx == departTrace.length) {
+                departTrace = ArrayUtil.arrayExtend(departTrace, idx + (idx >> 1));
+            }
+            departTrace[idx++] = depart;
+
+            rs.execute("select supdepid from hrmdepartment where id = " + depart);
+            rs.next();
+            depart = rs.getInt("supdepid");
+        }
+
+        if (idx != departTrace.length)
+            departTrace = ArrayUtil.arrayExtend(departTrace, idx);
+        return departTrace;
     }
 
 }
