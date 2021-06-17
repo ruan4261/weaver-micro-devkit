@@ -81,9 +81,16 @@ public final class CommonAPI {
             }
         }
 
-        RecordSet rs = new RecordSet();
-        rs.execute("select " + fields + " from " + table + (builder == null ? "" : builder.toString()));
+        return query("select " + fields + " from " + table + (builder == null ? "" : builder.toString()));
+    }
 
+    public static List<Map<String, String>> query(String sql) {
+        RecordSet rs = new RecordSet();
+        rs.execute(sql);
+        return query(rs);
+    }
+
+    public static List<Map<String, String>> query(RecordSet rs) {
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
         while (rs.next()) {
             result.add(mapFromRecordRow(rs));
