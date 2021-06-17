@@ -411,8 +411,22 @@ public final class WorkflowAPI {
      * @return 表单字段id
      */
     public static int getFieldIdByFieldName(int billId, int orderId, String name) {
+        String sql = constructSql2GetFieldIdByFieldName(billId, orderId, name);
         RecordSet rs = new RecordSet();
+        rs.execute(sql);
+        if (!rs.next())
+            throw new RuntimeException("No such field, input : billId=" + billId
+                    + ", orderId=" + orderId + ", field(notExist)=" + name);
 
+        return rs.getInt("id");
+    }
+
+    public static int getFieldIdByFieldNameQuietly(int billId, int orderId, String name) {
+        String sql = constructSql2GetFieldIdByFieldName(billId, orderId, name);
+        return Cast.o2Integer(CommonAPI.querySingleField(sql));
+    }
+
+    static String constructSql2GetFieldIdByFieldName(int billId, int orderId, String name) {
         String sql = "select id from workflow_billfield where fieldname='" + name + "' and billid=" + billId;
         if (orderId == 0)
             sql += " and (detailtable is null or detailtable = '') ";
@@ -420,13 +434,7 @@ public final class WorkflowAPI {
             String detailTableName = getDetailTableNameByBillIdAndOrderId(billId, orderId);
             sql += " and detailtable='" + detailTableName + "'";
         }
-
-        rs.execute(sql);
-        if (!rs.next())
-            throw new RuntimeException("No such field, input : billId=" + billId
-                    + ", orderId=" + orderId + ", field(notExist)=" + name);
-
-        return rs.getInt("id");
+        return sql;
     }
 
     /**
@@ -436,14 +444,25 @@ public final class WorkflowAPI {
      * @param valueIdx 选择的value
      */
     public static String getDropdownBoxValue(int fieldId, int valueIdx) {
+        String sql = constructSql2GetDropdownBoxValue(fieldId, valueIdx);
         RecordSet rs = new RecordSet();
-        rs.execute("select selectvalue,selectname from workflow_selectitem where fieldid=" + fieldId
-                + " and selectvalue=" + valueIdx);
+        rs.execute(sql);
         if (!rs.next())
             throw new RuntimeException("No such select item, input : fieldId=" + fieldId
                     + ", selectvalue=" + valueIdx);
 
         return rs.getString("selectname");
+    }
+
+    public static String getDropdownBoxValueQuietly(int fieldId, int valueIdx) {
+        return CommonAPI.querySingleField(constructSql2GetDropdownBoxValue(fieldId, valueIdx));
+    }
+
+    static String constructSql2GetDropdownBoxValue(int fieldId, int valueIdx) {
+        return "select selectname" +
+                " from workflow_selectitem" +
+                " where fieldid=" + fieldId +
+                " and selectvalue=" + valueIdx;
     }
 
     public static String getBillTableNameByBillId(int billId) {
