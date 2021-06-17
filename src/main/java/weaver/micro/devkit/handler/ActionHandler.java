@@ -8,6 +8,7 @@ import weaver.micro.devkit.annotation.Autowired;
 import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
+import weaver.micro.devkit.util.ArrayUtil;
 import weaver.micro.devkit.util.ReflectUtil;
 import weaver.micro.devkit.util.StringUtils;
 import weaver.micro.devkit.util.VisualPrintUtils;
@@ -15,10 +16,7 @@ import weaver.soa.workflow.request.*;
 import weaver.workflow.request.RequestManager;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 流程流转集成基类.
@@ -699,8 +697,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     /**
-     * 填充handler的实例属性, 仅填充最外层类中被{@link Autowired}标记的属性
-     * (一般这些属性由流程流转集成模块注入)
+     * 填充handler的实例属性, 仅填充被标记的属性或被标记的类中的全部属性.
+     * 标记为{@link Autowired}, 一般这些属性由流程流转集成模块注入).
      * <hr/>
      * 1.1.6 ~ 1.1.10的bug: <br>
      * 如果不在构造中将当前handler设置为realExecutor, 则无法获取外部注入参数.<br>
@@ -714,20 +712,29 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
 
         log("Fill field quietly start >>");
         Class<? extends ActionHandler> clazz = this.getClass();
-        // 在类上进行标注会对该类所有声明的字段生效(除static和final)
-        boolean allFieldsAutowired = clazz.isAnnotationPresent(Autowired.class);
-        Field[] fields = ReflectUtil.queryFields(clazz, 8 + 16, false);// filter static and final
-        for (Field f : fields) {
-            String fieldName = f.getName();
-            if (allFieldsAutowired || f.isAnnotationPresent(Autowired.class)) {
-                // auto wire
-                try {
-                    f.setAccessible(true);
-                    Object v = f.get(this);
-                    f.set(handler, v);
-                    log("Field already be filled >> " + fieldName + " : " + v);
-                } catch (IllegalAccessException e) {
-                    log("Exception field >> " + fieldName, e);
+        Class<?>[] all = ReflectUtil.getAllSuper(clazz);
+        // 最后5个元素为Object, ActionHandler以及其3个接口
+        all = ArrayUtil.arrayExtend(all, all.length - 5);
+
+        for (Class<?> c : all) {
+            // filter static and final
+            Field[] fields = ReflectUtil.queryFields(c, 8 + 16, false);
+            if (fields.length == 0) continue;
+
+            // 在类上进行标注会对该类所有声明的字段生效(除static和final)
+            boolean allFieldsAutowired = c.isAnnotationPresent(Autowired.class);
+            for (Field f : fields) {
+                String fSign = f.toString();
+                if (allFieldsAutowired || f.isAnnotationPresent(Autowired.class)) {
+                    // auto wire
+                    try {
+                        f.setAccessible(true);
+                        Object v = f.get(this);
+                        f.set(handler, v);
+                        log("Field already be filled >> " + fSign + " : " + v);
+                    } catch (IllegalAccessException e) {
+                        log("Exception field >> " + fSign, e);
+                    }
                 }
             }
         }
