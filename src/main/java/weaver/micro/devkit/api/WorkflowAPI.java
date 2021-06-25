@@ -850,4 +850,33 @@ public final class WorkflowAPI {
         return m;
     }
 
+    /**
+     * 查询当前人员在指定节点的待办列表
+     * 待办指当前人员需对流程进行操作且暂未操作的情况下(即当前人员对流程流转有一定作用)
+     * 归档接收, 转发接收, 抄送接收等不算在内
+     *
+     * @return requestId数组
+     */
+    public static int[] findTodoRequestWithSpecialNodeAndUser(int uid, int node) {
+        RecordSet rs = new RecordSet();
+        rs.execute("select a.requestid\n" +
+                "from workflow_currentoperator a\n" +
+                "left outer join workflow_nownode b on a.requestid = b.requestid and a.nodeid = b.nownodeid\n" +
+                "where a.userid = " + uid + " and b.nownodeid = " + node + " and a.isremark = 0");
+        int[] ret = new int[10];
+        int idx = 0;
+        while (rs.next()) {
+            if (idx == ret.length) {
+                ret = ArrayUtil.arrayExtend(ret, idx + (idx >> 1));// floor(1.5 * length)
+            }
+
+            ret[idx++] = rs.getInt("requestid");
+        }
+
+        if (idx != ret.length) {
+            ret = ArrayUtil.arrayExtend(ret, idx);
+        }
+        return ret;
+    }
+
 }
