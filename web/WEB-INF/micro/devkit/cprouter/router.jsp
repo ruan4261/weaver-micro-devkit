@@ -11,6 +11,8 @@
     表名: uf_cprouter
     字段: (请全部使用小写) 以下字段必须全部存在, 可选表示数据可为空, 必填表示如果数据为空会引发异常
     workflowid      整形, 必填, 代表绑定的流程
+
+    明细表1字段: (1.1.12版本开始使用明细表)
     model           整形(可以优化为unsigned_tinyint), 必填, 当model为0时代表全匹配, 可不填写nodeid
     nodeid          长度可变字符串, 可选, 以半角逗号(',')分割的节点数组
     custompage      长度可变字符串, 必填, 绑定页面路径, 如果文件是jsp, 仅允许头部为contentType="text/html;charset=UTF-8" language="java"
@@ -40,16 +42,35 @@
     注意: 不会校验custompage重复
     jsp会通过<jsp:include/>标签加载, 不存在变量名重复及头部声明重复的问题
 
+    ## Enhance
+    部分字段可以使用更加语义化的类型, 如浏览按钮等, 在值不变的情况下改变显示文本, 以下推荐使用:
+    1. model, file_type, disable 等字段使用选择框
+    2. workflowid 字段使用数据展现集成(单选), 显示流程路径名称
+      > 数据展现集成SQL:
+      > select id, workflowname from workflow_base
+    3. nodeid 字段使用数据展现集成(多选), 显示节点名称
+      > 数据展现集成SQL:
+      > select b.id, b.NODENAME
+      > from workflow_flownode a
+      > left outer join workflow_nodebase b on a.nodeid = b.ID
+      > where a.WORKFLOWID = $workflowid$
+
     -- END --
 --%>
 <%
+    // version >= 1.1.12
     RecordSet rs = new RecordSet();
     int workflowid = Util.getIntValue(request.getParameter("workflowid"));
     int nodeid = Util.getIntValue(request.getParameter("nodeid"));
-    rs.execute("select model,nodeid,custompage,file_type from uf_cprouter where (disable<>1 or disable is null or disable='') and workflowid=" + workflowid + " order by load_order asc");// 这玩意可以用缓存...
+    rs.execute("select dt.model, dt.nodeid, dt.custompage, dt.file_type" +
+            "\nfrom uf_cprouter_dt1 dt" +
+            "\nleft outer join up_cprouter mt on mt.id = dt.mainid" +
+            "\nwhere mt.workflowid = " + workflowid +
+            "\nand (dt.disable<>1 or dt.disable is null or dt.disable='')" +
+            "\norder by dt.load_order asc");
 
     while (rs.next()) {
-        // 是否生效
+        // model + nodeid 判断是否生效
         int model = rs.getInt("model");
         String nodeGroup = rs.getString("nodeid");
 
