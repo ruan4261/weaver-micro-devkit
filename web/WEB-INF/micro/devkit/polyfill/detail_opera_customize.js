@@ -109,4 +109,9 @@
       bindEvent(lastIdx)
     })
   }
+
+  window.bindDetailFieldChangeEvent = function (detailIndex, fieldId, func) {
+    window.bindDetailFieldEvent(detailIndex, fieldId, undefined, func)
+  }
+
 })()
