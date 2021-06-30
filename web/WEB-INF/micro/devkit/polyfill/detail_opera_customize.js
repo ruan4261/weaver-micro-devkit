@@ -78,13 +78,20 @@
    *
    * @param detailIndex 明细表索引是对于当前流程而言的, 与模板无关(同一个明细表在不同节点模板内拥有相同的索引)
    * @param fieldId 单个字段的id
-   * @param func 可用参数列表[rowIdx, changedElement]
+   * @param event 指定触发的原事件, 其将被用于jQuery.bind的第一个参数,
+   *              如果该字段为空, 则默认使用bindPropertyChange进行绑定
+   * @param func 可用参数列表[rowIdx, changedElement, event], 真实回调方法会bind此func, 如无特例, this指向window
    */
-  window.bindDetailFieldChangeEvent = function (detailIndex, fieldId, func) {
+  window.bindDetailFieldEvent = function (detailIndex, fieldId, event, func) {
     var bindEvent = function (idx) {
       var jq = jQuery("#field" + fieldId + "_" + idx)
       var ele = jq[0]
-      jq.bindPropertyChange(func.bind(undefined, idx, ele))
+      var callback = func.bind(undefined, idx, ele)
+      if (event) {
+        jq.bind(event, callback)
+      } else {
+        jq.bindPropertyChange(callback)
+      }
     }
 
     // bind data row already existed
