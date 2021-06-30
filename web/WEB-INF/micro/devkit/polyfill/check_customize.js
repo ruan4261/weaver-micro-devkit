@@ -1,8 +1,6 @@
-// weaverEC jQuery
-jQuery(document).ready(function () {
+(function () {
   if (!Array.isArray(window._check_customize_))
     window._check_customize_ = []
-  window._check_customize_.push(window.checkCustomize)
   window._check_customize_.push(function () {
     // enter your custom verification program
   })
@@ -34,4 +32,4 @@ jQuery(document).ready(function () {
     Object.defineProperty(window, '_check_customize_', {writable: false})
   } catch (e) {
   }
-})
+})()
