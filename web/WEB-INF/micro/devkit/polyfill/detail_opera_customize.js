@@ -103,7 +103,7 @@
 
     // bind new data row
     window.registerDetailOpera(detailIndex, DetailOperaType.ADD, function () {
-      var seq = getCheckNodeIndexSeq()
+      var seq = getCheckNodeIndexSeq(detailIndex)
       var len = seq.length
       var lastIdx = seq[len - 1]// the new data added
       bindEvent(lastIdx)
