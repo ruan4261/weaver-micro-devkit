@@ -316,6 +316,14 @@ public final class WorkflowAPI {
     }
 
     /**
+     * @see #queryRequestMainData(String, int)
+     */
+    public static Map<String, String> queryRequestMainData(int requestId) {
+        String billTableName = queryBillTableByRequest(requestId);
+        return queryRequestMainData(billTableName, requestId);
+    }
+
+    /**
      * 查询某条请求的主表信息
      * 不知道数据库表单可以使用{@link #queryBillTableByRequest(int)}方法，
      * 推荐使用{@link #getBillTableNameByBillId(int)}或{@link #getBillTableNameByWorkflowId(int)}
@@ -342,6 +350,14 @@ public final class WorkflowAPI {
     public static Map<String, String> getRequestMainTableData(int billId, int requestId) {
         String billTableName = getBillTableNameByBillId(billId);
         return queryRequestMainData(billTableName, requestId);
+    }
+
+    /**
+     * @see #queryRequestDetailData(String, int, int)
+     */
+    public static List<Map<String, String>> queryRequestDetailData(int requestId, int orderId) {
+        String billTableName = queryBillTableByRequest(requestId);
+        return queryRequestDetailData(billTableName, requestId, orderId);
     }
 
     /**
