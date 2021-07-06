@@ -757,7 +757,8 @@ public final class WorkflowAPI {
                 String key = entry.getKey();
                 String value = entry.getValue();
 
-                if (key == null || key.equals("") || value == null)
+                if (key == null || key.equals("")
+                        || value == null || value.equals(""))
                     continue;
 
                 Property property = new Property();
@@ -791,7 +792,8 @@ public final class WorkflowAPI {
                             String key = entry.getKey();
                             String value = entry.getValue();
 
-                            if (key == null || key.equals("") || value == null)
+                            if (key == null || key.equals("")
+                                    || value == null || value.equals(""))
                                 continue;
 
                             Cell cell = new Cell();
