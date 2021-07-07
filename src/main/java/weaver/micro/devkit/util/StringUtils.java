@@ -344,4 +344,8 @@ public class StringUtils {
         }
     }
 
+    public static String dotToSlash(String str) {
+        return str.replace('.', '/');
+    }
+
 }
