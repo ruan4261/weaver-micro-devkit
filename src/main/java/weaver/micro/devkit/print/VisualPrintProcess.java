@@ -10,6 +10,8 @@ import java.io.PrintStream;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -126,7 +128,7 @@ public class VisualPrintProcess {
     /**
      * Entrance
      */
-    public void print(Object o) throws IOException, IllegalAccessException {
+    public void print(Object o) throws IOException {
         this.ref = o;
         this.currentDepth = 0;
         this.dynamicPrefix = "";
@@ -135,6 +137,12 @@ public class VisualPrintProcess {
             this.print4Internal(o, true);
         } catch (StackOverflowError e) {
             this.resolveStackoverflow(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
         }
         this.end();
     }
@@ -158,9 +166,10 @@ public class VisualPrintProcess {
      * {@link ObjectType#Map},
      * {@link ObjectType#Collection}
      */
-    private void print4Internal(Object o, boolean isLastItem) throws IOException, IllegalAccessException {
+    private void print4Internal(Object o, boolean isLastItem)
+            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         // check current depth
-        VisualPrintUtils.checkObjectDepth(this.currentDepth, this.ref);
+        VPUtils.checkObjectDepth(this.currentDepth, this.ref);
 
         ObjectType type = ObjectType.whichType(o);
 
@@ -201,12 +210,43 @@ public class VisualPrintProcess {
 
     private void printMinimum(Object o) throws IOException {
         this.printNativeInfo(o);
-        this.out.append(" -> \"");
+        this.out.append(" -> ");
         this.out.append(escape(o.toString()));
-        this.out.append('"');
     }
 
-    private void printObj(Object o, boolean isLastItem) throws IOException, IllegalAccessException {
+    private void printMinimum(Object o, Field f)
+            throws IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        MinimumType type = Assert.notNull(f.getAnnotation(MinimumType.class));
+        int paramsLen = type.parametersList().length;
+        int callIndex = type.callIndex();
+
+        // get serialization method
+        Method calledMethod = VPUtils.getMethod(type, o);
+        calledMethod.setAccessible(true);
+
+        // construct parameters list
+        Object returnedValue;
+        Object called;
+        Object[] params = new Object[paramsLen];
+        if (callIndex == 0) {
+            // called itself
+            called = o;
+        } else {
+            called = null;
+            params[callIndex - 1] = o;
+        }
+
+        // serialize
+        returnedValue = calledMethod.invoke(called, params);
+        String output = returnedValue == null ? "null" : returnedValue.toString();
+
+        this.printNativeInfo(o);
+        this.out.append(" -> ");
+        this.out.append(escape(output));
+    }
+
+    private void printObj(Object o, boolean isLastItem)
+            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         // [0] is itself, if it not be primitive type, [length - 1] is Object
         Class<?>[] classes = ReflectUtil.getAllSuper(o.getClass());
         Class<?> self = classes[0];
@@ -222,27 +262,27 @@ public class VisualPrintProcess {
         if (fields.length == 0 && len == 1)
             return;
 
-        this.currentDepth++;
         this.expandDynamicPrefix(isLastItem);
         // print its own attributes
         this.printObjFields(fields, o, len == 1);
 
         // print relevant class scope
+        this.currentDepth++;
         for (int i = 1; i < len; i++) {
             boolean eleIsLastItem = i + 1 == len;
             this.printLineFeed();
             this.printPrefix(eleIsLastItem);
             this.printObjWithSpecifiedScope(classes[i], o, eleIsLastItem);
         }
-        this.reduceDynamicPrefix();
         this.currentDepth--;
+        this.reduceDynamicPrefix();
     }
 
     /**
      * Only called by {@link #printObj(Object, boolean)}.
      */
     private void printObjWithSpecifiedScope(Class<?> clazz, Object o, boolean isLastItem)
-            throws IOException, IllegalAccessException {
+            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         // print class info
         this.out.append("(RELEVANT SCOPE) ");
         this.out.append(clazz.toString());
@@ -254,7 +294,8 @@ public class VisualPrintProcess {
         this.reduceDynamicPrefix();
     }
 
-    private void printObjFields(Field[] fields, Object o, boolean tailClose) throws IllegalAccessException, IOException {
+    private void printObjFields(Field[] fields, Object o, boolean tailClose)
+            throws IllegalAccessException, IOException, InvocationTargetException, NoSuchMethodException {
         for (int i = 0; i < fields.length; i++) {
             Field f = fields[i];
             if (!f.isAccessible())
@@ -266,11 +307,19 @@ public class VisualPrintProcess {
             this.printLineFeed();
             this.printPrefix(isLastField);
             this.printFieldName(f);
-            this.print4Internal(v, isLastField);
+
+            if (v != null && ObjectType.isMinimumType(f)) {
+                this.currentDepth++;
+                this.printMinimum(v, f);
+                this.currentDepth--;
+            } else {
+                this.print4Internal(v, isLastField);
+            }
         }
     }
 
-    private void printMap(Map<?, ?> m, boolean isLastItem) throws IOException, IllegalAccessException {
+    private void printMap(Map<?, ?> m, boolean isLastItem)
+            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         this.printNativeInfo(m);
         int size = m.size();
         this.printSize(size);
@@ -295,7 +344,8 @@ public class VisualPrintProcess {
         this.reduceDynamicPrefix();
     }
 
-    private void printMapEntry(Map.Entry<?, ?> entry, boolean isLastItem, int order) throws IOException, IllegalAccessException {
+    private void printMapEntry(Map.Entry<?, ?> entry, boolean isLastItem, int order)
+            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         this.out.append('(');
         this.out.append(String.valueOf(order));
         this.out.append(')');
@@ -314,7 +364,8 @@ public class VisualPrintProcess {
         this.reduceDynamicPrefix();
     }
 
-    private void printCollection(Collection<?> collection, boolean isLastItem) throws IOException, IllegalAccessException {
+    private void printCollection(Collection<?> collection, boolean isLastItem)
+            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         this.printNativeInfo(collection);
         int size = collection.size();
         this.printSize(size);
@@ -339,7 +390,8 @@ public class VisualPrintProcess {
         this.reduceDynamicPrefix();
     }
 
-    private void printArray(Object o, boolean isLastItem) throws IOException, IllegalAccessException {
+    private void printArray(Object o, boolean isLastItem)
+            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         this.printNativeInfo(o);
         int len = Array.getLength(o);
         this.printSize(len);
@@ -434,7 +486,7 @@ public class VisualPrintProcess {
     }
 
     public boolean isGlobalDedup() {
-        return globalDedup;
+        return this.globalDedup;
     }
 
     public void setGlobalDedup(boolean globalDedup) {
