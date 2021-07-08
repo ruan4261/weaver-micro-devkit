@@ -264,8 +264,7 @@ public class StringUtils {
      *
      * @param nullAppendable 如果为true, 则集合中的空指针会转换为"null"字符串; 否则其将被过滤
      */
-    public static String toString(Collection<?> collection, String separator, boolean nullAppendable) {
-        Iterator<?> it = collection.iterator();
+    public static String toString(Iterator<?> it, String separator, boolean nullAppendable) {
         StringBuilder sb = new StringBuilder();
         boolean appendSeparator = false;
 
@@ -289,13 +288,31 @@ public class StringUtils {
         return sb.toString();
     }
 
+    public static String toString(Iterator<?> it, String separator) {
+        return toString(it, separator, false);
+    }
+
+    public static String toString(Iterator<?> it) {
+        return toString(it, ", ");
+    }
+
+    /**
+     * @see #toString(Iterator, String, boolean)
+     * @deprecated 保持兼容性
+     */
+    @Deprecated
+    public static String toString(Collection<?> collection, String separator, boolean nullAppendable) {
+        Iterator<?> it = collection.iterator();
+        return toString(it, separator, nullAppendable);
+    }
+
     public static String escapeString(String str) {
         StringWriter writer = new StringWriter(str.length() << 1);
         try {
             escapeString(writer, str);
             return writer.toString();
-        } catch (IOException ignored) {
-            throw new RuntimeException("arienai exception. @^@");
+        } catch (IOException e) {
+            throw new Error(e);
         }
     }
 
