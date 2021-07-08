@@ -4,18 +4,22 @@ import java.lang.annotation.*;
 
 /**
  * The priority of Field takes precedence over the priority of Type.
+ * Minimum types will not participate in deduplication.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.TYPE, ElementType.FIELD})
 public @interface MinimumType {
 
-    Class<?> serializationClass() default Object.class;
+    /**
+     * If it is void, the class of the printed object will be used.
+     */
+    Class<?> serializationClass() default void.class;
 
     /**
      * Based on {@link #serializationClass()}, the returned value
      * will be call the method {@link Object#toString()},
-     * if it is null, output 'null'.
+     * if returned value is null, output 'null'.
      */
     String serializationMethod() default "toString";
 
