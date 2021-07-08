@@ -2,6 +2,8 @@ package weaver.micro.devkit.print;
 
 import weaver.micro.devkit.util.BeanUtil;
 
+import java.lang.reflect.Field;
+
 @MinimumType
 public enum ObjectType {
 
@@ -42,6 +44,13 @@ public enum ObjectType {
     /**
      * It may be convert to string.
      */
+    public static boolean isMinimumType(Field f) {
+        if (f == null)
+            return false;
+
+        return f.isAnnotationPresent(MinimumType.class);
+    }
+
     public static boolean isMinimumType(Object o) {
         if (o == null)
             return false;
