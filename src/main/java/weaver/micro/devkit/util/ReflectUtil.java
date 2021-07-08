@@ -1,5 +1,7 @@
 package weaver.micro.devkit.util;
 
+import weaver.micro.devkit.Assert;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -78,7 +80,10 @@ public final class ReflectUtil {
      *     <li>getXx</li>
      *     <li>isXx</li>
      * </ol>
+     *
+     * @deprecated 这方法好伞兵啊
      */
+    @Deprecated
     public static Object getPropertyWithGetter(Object object, String fieldName) throws NoSuchMethodException {
         Class<?> clazz = object.getClass();
 
@@ -145,4 +150,19 @@ public final class ReflectUtil {
         });
         return fields;
     }
+
+    public static Method getMethodQuietly(Class<?> clazz, String method, Class<?>... paramsList) {
+        Assert.notNull(clazz);
+        Assert.notEmpty(method);
+
+        Class<?>[] all = getAllSuper(clazz);
+        for (Class<?> c : all) {
+            try {
+                return c.getDeclaredMethod(method, paramsList);
+            } catch (NoSuchMethodException ignored) {
+            }
+        }
+        return null;
+    }
+
 }
