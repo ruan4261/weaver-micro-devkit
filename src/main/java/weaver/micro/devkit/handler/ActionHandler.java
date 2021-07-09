@@ -334,12 +334,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     @Override
     public final void log(Object o) {
-        try {
-            String tree = VisualPrintUtils.getPrintInfo(o);
-            this.logProcess.log(this.getLogPrefix() + '\n' + tree);
-        } catch (IllegalAccessException e) {
-            this.logProcess.log("Print Exception", e);
-        }
+        String tree = VisualPrintUtils.getPrintInfo(o);
+        this.logProcess.log(this.getLogPrefix() + '\n' + tree);
     }
 
     @Override

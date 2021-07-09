@@ -217,14 +217,14 @@ public class VisualPrintProcess {
     private void printMinimum(Object o, Field f)
             throws IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         MinimumType type = Assert.notNull(f.getAnnotation(MinimumType.class));
-        int paramsLen = type.parametersList().length;
-        int callIndex = type.callIndex();
 
         // get serialization method
         Method calledMethod = VPUtils.getMethod(type, o);
         calledMethod.setAccessible(true);
 
         // construct parameters list
+        int paramsLen = type.parametersList().length;
+        int callIndex = type.callIndex();
         Object returnedValue;
         Object called;
         Object[] params = new Object[paramsLen];
@@ -241,7 +241,7 @@ public class VisualPrintProcess {
         String output = returnedValue == null ? "null" : returnedValue.toString();
 
         this.printNativeInfo(o);
-        this.out.append(" -> ");
+        this.out.append(" @-> ");
         this.out.append(escape(output));
     }
 

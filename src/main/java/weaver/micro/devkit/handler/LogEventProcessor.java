@@ -89,8 +89,6 @@ public class LogEventProcessor implements Loggable {
         try {
             String mes = VisualPrintUtils.getPrintInfo(o);
             this.internalLog(mes, null);
-        } catch (IllegalAccessException e) {
-            this.internalLog("Visual print exception", e);
         } catch (ObjectDepthOverflowException e) {
             this.internalLog("Visual print exception", e);
         }
