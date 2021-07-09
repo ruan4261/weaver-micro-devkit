@@ -1,4 +1,4 @@
-(function () {
+(function ($) {
 
   /**
    * @type {{ALL: number, ADD: number, DEL: number}}
@@ -63,11 +63,11 @@
    * @param detailIndex 明细表索引是对于当前流程而言的, 与模板无关(同一个明细表在不同节点模板内拥有相同的索引)
    */
   window.getCheckNodeIndexSeq = function (detailIndex) {
-    var key = "check_node_" + detailIndex
-    var jqSeq = jQuery('[name="' + key + '"]')
+    var key = 'check_node_' + detailIndex
+    var eleSeq = document.getElementsByName(key)
     var idxSeq = []
-    for (var i = 0; i < jqSeq.length; i++) {
-      idxSeq[i] = jqSeq[i].value
+    for (var i = 0; i < eleSeq.length; i++) {
+      idxSeq[i] = eleSeq[i].value
     }
     return idxSeq
   }
@@ -84,12 +84,13 @@
    */
   window.bindDetailFieldEvent = function (detailIndex, fieldId, event, func) {
     var bindEvent = function (idx) {
-      var jq = jQuery("#field" + fieldId + "_" + idx)
+      var jq = $('#field' + fieldId + '_' + idx)
       var ele = jq[0]
       var callback = func.bind(undefined, idx, ele)
       if (event) {
         jq.bind(event, callback)
       } else {
+        // customized function by ecology
         jq.bindPropertyChange(callback)
       }
     }
@@ -114,4 +115,4 @@
     window.bindDetailFieldEvent(detailIndex, fieldId, undefined, func)
   }
 
-})()
+})(jQuery)
