@@ -15,6 +15,7 @@
     static final String mainTable = "uf_cprouter";
     static final String detailTable = "uf_cprouter_dt1";
     static final String dest = "/micro/devkit/cprouter/router.jsp";
+    static final String dest4mobile = "/micro/devkit/cprouter/router.jsp?isMobile=1";
 
     Loggable loggable = LogEventProcessor.getInstance("WeaverMicroDevkit[cprouter]: refactor");
     JspWriter out;
@@ -68,22 +69,28 @@
         String workflowIds = Cast.o2String(request.getParameter("workflowIds"), "-1");// 只更新其中流程, 如果为*则更新全部
 
         RecordSet rs = new RecordSet();
-        RecordSet exe = new RecordSet();
+        RecordSet exe = new RecordSet() {
+            @Override
+            public boolean execute(String s) {
+                boolean res = super.execute(s);
+                if (!res)
+                    throw new RuntimeException(this.getExceptionMsg());
 
-        String template = "select %s from workflow_base where %s (custompage is null or custompage<>'%s')";
-        String inWorkflow = workflowIds.equals("*") ? "" : "id in (" + workflowIds + ") and";
-        String sql = String.format(template,
-                "id, custompage",
-                inWorkflow,
-                dest);
+                return true;
+            }
+        };
+
+        String workflowCondition = workflowIds.equals("*") ? "" : "id in (" + workflowIds + ") and";
+        String template = "select %s from workflow_base where "
+                + workflowCondition
+                + " (custompage is null or custompage not like '" + dest + "%') or"
+                + " (custompage4emoble is null or custompage4emoble not like '" + dest + "%')";
+        String sql = String.format(template, "id, custompage, custompage4emoble");
         doLog(sql);
-        String countSql = String.format(template,
-                "count(*) cnt",
-                inWorkflow,
-                dest);
-        rs.execute(countSql);
-        rs.next();
-        doLog("data count: " + rs.getInt("cnt"));
+
+        // log count
+        String countSql = String.format(template, "count(*) cnt");
+        doLog("data count: " + CommonAPI.querySingleField(countSql));
 
         // confirm start program
         String verify = Util.null2String(request.getParameter("auth"));
@@ -101,21 +108,39 @@
         while (rs.next()) {
             int id = rs.getInt("id");
             String custompage = rs.getString("custompage");
+            String custompage4emoble = rs.getString("custompage4emoble");
+            String sameCheckbox = custompage.equals(custompage4emoble) ? "1" : null;
 
-            doLog("Origin: workflowid=" + id + ", custompage=" + custompage + "<br>");
+            doLog("Origin: workflowid=" + id + ", custompage=" + custompage + ", custompage4emoble=" + custompage4emoble + "<br>");
             try {
                 int mainId = getWorkflowMainId(id, modeid);
-                // 如果原先custompage不存在则新增数据
-                if (!custompage.equals("")) {
-                    exe.execute("insert into " + detailTable + "(mainid, model, load_order, custompage, disable, describe)" +
-                            "\nvalues(" + mainId + ", '0', '10', '" + custompage + "', '0'," +
-                            " 'Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]')");
+
+                // 录入 uf_cprouter_dt1 数据
+                // custompage
+                if (!custompage.startsWith(dest)) {
+                    if (!custompage.equals("")) {
+                        exe.execute("insert into " + detailTable + "(mainid, model, load_order, custompage, used4pc, used4mobile, disable, describe)" +
+                                "\nvalues(" + mainId + ", 0, 10, '" + custompage + "', 1, " + sameCheckbox + ", 0," +
+                                " 'Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]')");
+                    }
+
+                    String updateSql = "update workflow_base set custompage='" + dest + "' where id=" + id;
+                    doLog(updateSql);
+                    exe.execute(updateSql);
                 }
 
-                // 更新workflow_base
-                String sqlUpdate = "update workflow_base set custompage='" + dest + "' where id=" + id;
-                doLog(sqlUpdate);
-                exe.execute(sqlUpdate);
+                // custompage4emoble
+                if (!custompage4emoble.startsWith(dest)) {
+                    if (!custompage4emoble.equals("") && sameCheckbox == null) {
+                        exe.execute("insert into " + detailTable + "(mainid, model, load_order, custompage, used4pc, used4mobile, disable, describe)" +
+                                "\nvalues(" + mainId + ", 0, 10, '" + custompage4emoble + "', 0, 1, 0," +
+                                " 'Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]')");
+                    }
+
+                    String updateSql = "update workflow_base set custompage4emoble='" + dest4mobile + "' where id=" + id;
+                    doLog(updateSql);
+                    exe.execute(updateSql);
+                }
             } catch (Throwable t) {
                 doLog("<hr>");
                 doLog(t);

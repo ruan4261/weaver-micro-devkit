@@ -1,6 +1,7 @@
 <%@ page import="weaver.conn.RecordSet" %>
 <%@ page import="weaver.general.Util" %>
 <%@ page import="weaver.micro.devkit.util.StringUtils" %>
+<%@ page import="weaver.micro.devkit.Cast" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%--
     -- START --
@@ -18,7 +19,9 @@
     custompage      长度可变字符串, 必填, 绑定页面路径, 如果文件是jsp, 仅允许头部为contentType="text/html;charset=UTF-8" language="java"
     file_type       整形, 可选, 区分文件类型, 通过不同方式加载, 详情见下方说明
     load_order      整形, 可选, 数值小则优先加载, null值根据数据库规则(最小或最大)
-    disable         整形, 可选, 是否禁用, 为1代表禁用, 用于临时测试
+    used4pc         整形, 必填, 为1时生效
+    used4mobile     整形, 必填, 为1时生效
+    disable         整形, 可选, 是否禁用(优先级高于used4pc&used4mobile), 为1代表禁用, 用于临时测试
     describe        长度可变字符串, 可选, 用作前端查看时描述custompage作用, 该字段不会被代码读取或修改
     uuid            长度可变字符串, 请保证该字段存在, 但不要使用, 重构自动创建数据时会一次性地使用该字段
 
@@ -54,6 +57,7 @@
       > from workflow_flownode a
       > left outer join workflow_nodebase b on a.nodeid = b.ID
       > where a.WORKFLOWID = $workflowid$
+    4. used4pc 和 used4mobile 使用 checkbox 组件
 
     -- END --
 --%>
@@ -62,11 +66,13 @@
     RecordSet rs = new RecordSet();
     int workflowid = Util.getIntValue(request.getParameter("workflowid"));
     int nodeid = Util.getIntValue(request.getParameter("nodeid"));
-    rs.execute("select dt.model, dt.nodeid, dt.custompage, dt.file_type" +
+    boolean isMobile = !Cast.o2String(request.getParameter("isMobile")).equals("");
+    rs.execute("select dt.model, dt.nodeid, dt.custompage, dt.custompage4emoble, dt.file_type" +
             "\nfrom uf_cprouter_dt1 dt" +
             "\nleft outer join up_cprouter mt on mt.id = dt.mainid" +
             "\nwhere mt.workflowid = " + workflowid +
-            "\nand (dt.disable<>1 or dt.disable is null or dt.disable='')" +
+            "\nand dt." + (isMobile ? "used4mobile" : "used4pc") + " = 1" +
+            "\nand (dt.disable <> 1 or dt.disable is null or dt.disable='')" +
             "\norder by dt.load_order asc");
 
     while (rs.next()) {
@@ -77,7 +83,7 @@
         if (model == 0
                 || (model == 1 && StringUtils.isInclude(nodeGroup, nodeid))
                 || (model == 2 && !StringUtils.isInclude(nodeGroup, nodeid))) {
-            String path = rs.getString("custompage");
+            String path = isMobile ? rs.getString("custompage4emoble") : rs.getString("custompage");
             int fileType = rs.getInt("file_type");
             switch (fileType) {
                 case 1:
