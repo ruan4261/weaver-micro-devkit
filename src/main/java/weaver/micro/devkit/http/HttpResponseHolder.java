@@ -7,10 +7,12 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import weaver.micro.devkit.Assert;
+import weaver.micro.devkit.print.MinimumType;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,6 +43,7 @@ public class HttpResponseHolder {
     /**
      * Http协议版本信息
      */
+    @MinimumType
     private ProtocolVersion protocolVersion;
 
     /**
@@ -51,12 +54,18 @@ public class HttpResponseHolder {
     /**
      * 返回http报文实体部分
      */
+    @MinimumType(
+            serializationClass = Arrays.class,
+            parametersList = {byte[].class},
+            callIndex = 1
+    )
     private byte[] responseEntity;
 
     /**
      * httpClient封装返回对象的引用, 返回值解析时不会关闭连接
      * 需要通过该引用手动关闭连接
      */
+    @MinimumType
     private final CloseableHttpResponse closeableHttpResponse;
 
     public HttpResponseHolder(CloseableHttpResponse response) {
