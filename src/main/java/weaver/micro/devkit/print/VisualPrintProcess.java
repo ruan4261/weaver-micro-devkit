@@ -16,12 +16,12 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 /**
- * <h2>MinimumType case:</h2>
+ * <h2>Default MinimumType case:</h2>
  * 1) a primitive type<br>
  * 2) a wrapper class of primitive type<br>
  * 3) a CharSequence class<br>
  * 4) a Number class<br>
- * MinimumType format is its <code>toString()</code> function.
+ * MinimumType is formatted using is its <code>toString()</code> function by default.
  *
  * <br><br>
  * <h2>Display format: (Order by priority)</h2>
