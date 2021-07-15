@@ -292,6 +292,10 @@ public class StringUtils {
         return toString(it, separator, false);
     }
 
+    public static String toString(Iterator<?> it, boolean nullAppendable) {
+        return toString(it, ", ", nullAppendable);
+    }
+
     public static String toString(Iterator<?> it) {
         return toString(it, ", ");
     }

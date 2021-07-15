@@ -1,5 +1,8 @@
 package weaver.micro.devkit.util;
 
+import weaver.micro.devkit.Assert;
+
+import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -21,6 +24,14 @@ public class ArrayIterator<T> implements Iterator<T> {
 
     private ArrayIterator(T[] arr) {
         this.arr = arr;
+    }
+
+    public static ArrayIterator<Object> of(Object arr) {
+        if (!Assert.notNull(arr).getClass().isArray()) {
+            throw new IllegalArgumentException("Argument is not an array object");
+        }
+
+        return new ReflectiveArrayIterator(arr);
     }
 
     public static <T> ArrayIterator<T> of(T[] arr) {
@@ -301,6 +312,42 @@ public class ArrayIterator<T> implements Iterator<T> {
         @Override
         protected Boolean get() {
             return this.arr[this.idx];
+        }
+
+    }
+
+    private static class ReflectiveArrayIterator extends ArrayIterator<Object> {
+
+        final Object arr;
+        final Class<?> componentType;
+        final boolean isPrimitive;
+        final int length;
+
+        public ReflectiveArrayIterator(Object arr) {
+            super();
+            this.arr = arr;
+            this.componentType = arr.getClass().getComponentType();
+            this.isPrimitive = this.componentType.isPrimitive();
+            this.length = Array.getLength(this.arr);
+        }
+
+        @Override
+        protected int length() {
+            return this.length;
+        }
+
+        @Override
+        protected void set(Object val) {
+            if (val == null && this.isPrimitive) {
+                throw new IllegalArgumentException("The element of primitive type cannot be set to null");
+            }
+
+            Array.set(this.arr, this.idx, val);
+        }
+
+        @Override
+        protected Object get() {
+            return Array.get(this.arr, this.idx);
         }
 
     }
