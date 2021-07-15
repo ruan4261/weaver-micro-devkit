@@ -1,6 +1,7 @@
 package weaver.micro.devkit.print;
 
 import weaver.micro.devkit.Assert;
+import weaver.micro.devkit.util.ArrayIterator;
 import weaver.micro.devkit.util.ReflectUtil;
 import weaver.micro.devkit.util.StringUtils;
 
@@ -23,27 +24,33 @@ import java.util.*;
  * MinimumType format is its <code>toString()</code> function.
  *
  * <br><br>
- * <h2>Display format:</h2>
+ * <h2>Display format: (Order by priority)</h2>
  * <h3>Null</h3>
  * <pre>
  * └── {FieldName} : null
  * </pre>
  *
- * <h3>MinimumType</h3>
+ * <h3>@MinimumType</h3>
+ * <pre>
+ * └── {FieldName} : [NativeInfo] @-> {custom serialization function}
+ * </pre>
+ *
+ * <h3>MinimumType(PrimitiveType)</h3>
  * <pre>
  * └── {FieldName} : [NativeInfo] -> {this.toString()}
  * </pre>
  *
- * <h3>Object</h3>
+ * <h3>Array of primitive type</h3>
  * <pre>
- * └── {FieldName} : [NativeInfo]
- *     ├── its attribute A
- *     ├── its attribute B
- *     ├── and more
- *     ├── (RELEVANT SCOPE) Super Class A(may be interface)
- *     │   └── {attributes in instance scope of A}
- *     └── (RELEVANT SCOPE) Super Class B(may be interface)
- *         └── {attributes in instance scope of B}
+ * └── {FieldName} : [NativeInfo] >> {size} -> {Arrays.toString(this)}
+ * </pre>
+ *
+ * <h3>Collection And Array</h3>
+ * <pre>
+ * └── {FieldName} : [NativeInfo] >> {size}
+ *     ├── 1 : {print4Internal(ele))}
+ *     ├── 2 : {print4Internal(ele))}
+ *     └── order : {print4Internal(ele))}
  * </pre>
  *
  * <h3>Map</h3>
@@ -60,14 +67,17 @@ import java.util.*;
  *         └── Value : {print4Internal(value)}
  * </pre>
  *
- * <h3>Collection And Array</h3>
+ * <h3>Object</h3>
  * <pre>
- * └── {FieldName} : [NativeInfo] >> {size}
- *     ├── 1 : {print4Internal(ele))}
- *     ├── 2 : {print4Internal(ele))}
- *     └── order : {print4Internal(ele))}
+ * └── {FieldName} : [NativeInfo]
+ *     ├── its attribute A
+ *     ├── its attribute B
+ *     ├── and more
+ *     ├── (RELEVANT SCOPE) Super Class A(may be interface)
+ *     │   └── {attributes in instance scope of A}
+ *     └── (RELEVANT SCOPE) Super Class B(may be interface)
+ *         └── {attributes in instance scope of B}
  * </pre>
- *
  *
  * <h3>special: Repeated objects(may be Object, Map, Collection, Array)</h3>
  * <pre>
@@ -99,7 +109,7 @@ public class VisualPrintProcess {
 
     /* Null and minimum type will not be added to the collections that for deduplication */
 
-    private final Set<Object> dedupSet = new HashSet<Object>();
+    private final Set<Object> dejavu = new HashSet<Object>();
 
     /**
      * If true, any object will only be printed once at most,
@@ -150,7 +160,7 @@ public class VisualPrintProcess {
     private void end() throws IOException {
         this.ref = null;
         this.currentDepth = 0;
-        this.dedupSet.clear();
+        this.dejavu.clear();
         this.flushCtrl.flush();
     }
 
@@ -392,6 +402,12 @@ public class VisualPrintProcess {
 
     private void printArray(Object o, boolean isLastItem)
             throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        if (o.getClass().getComponentType().isPrimitive()) {
+            this.printArrayOfPrimitiveType(o);
+            return;
+        }
+
+        // is not primitive type array
         this.printNativeInfo(o);
         int len = Array.getLength(o);
         this.printSize(len);
@@ -409,6 +425,19 @@ public class VisualPrintProcess {
             this.print4Internal(ele, eleIsLastItem);
         }
         this.reduceDynamicPrefix();
+    }
+
+    private void printArrayOfPrimitiveType(Object o) throws IOException {
+        // it is impossible that primitive type element may be null
+        String arrayBody = StringUtils.toString(ArrayIterator.of(o));
+        this.printNativeInfo(o);
+        int len = Array.getLength(o);
+        this.printSize(len);
+
+        this.out.append(" -> ");
+        this.out.append('[');
+        this.out.append(arrayBody);
+        this.out.append(']');
     }
 
     private void printNULL() throws IOException {
@@ -474,15 +503,15 @@ public class VisualPrintProcess {
         if (o == null)
             return false;
 
-        if (this.dedupSet.contains(o))
+        if (this.dejavu.contains(o))
             return true;
 
-        this.dedupSet.add(o);
+        this.dejavu.add(o);
         return false;// next times returns true
     }
 
     private void popRepeatedObject(Object o) {
-        this.dedupSet.remove(o);
+        this.dejavu.remove(o);
     }
 
     public boolean isGlobalDedup() {

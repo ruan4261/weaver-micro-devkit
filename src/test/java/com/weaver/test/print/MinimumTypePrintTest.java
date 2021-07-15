@@ -14,14 +14,20 @@ public class MinimumTypePrintTest {
     )
     int[] arr = new int[]{3, 2356, 1252646, 12};
 
+    int[] arr2 = new int[]{3, 2356, 1252646, 12};
+
+    String[] arr3 = new String[]{"fword", "furry", "fun"};
+
     public static void main(String[] args) throws IllegalAccessException {
         VisualPrintUtils.print(new MinimumTypePrintTest());
+        System.out.println();
+        System.out.println();
         VisualPrintUtils.print(new MinimumTypePrintTest());
+        System.out.println();
+        System.out.println();
         VisualPrintUtils.print(new MinimumTypePrintTest());
-        VisualPrintUtils.print(new MinimumTypePrintTest());
-        VisualPrintUtils.print(new MinimumTypePrintTest());
-        VisualPrintUtils.print(new MinimumTypePrintTest());
-        VisualPrintUtils.print(new MinimumTypePrintTest());
+        System.out.println();
+        System.out.println();
     }
 
 }
