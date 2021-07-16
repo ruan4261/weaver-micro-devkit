@@ -115,4 +115,17 @@
     window.bindDetailFieldEvent(detailIndex, fieldId, undefined, func)
   }
 
+  /**
+   * 在目标明细表所有已存在的数据行上执行参数中的函数
+   *
+   * @param detailIndex 明细表索引
+   * @param func 可用参数列表[rowIdx]
+   */
+  window.triggerDetailEventOnEachRow = function (detailIndex, func) {
+    var idxSeq = getCheckNodeIndexSeq(detailIndex)
+    for (var i = 0; i < idxSeq.length; i++) {
+      func(idxSeq[i])
+    }
+  }
+
 })(jQuery)
