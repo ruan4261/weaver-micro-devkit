@@ -2,6 +2,7 @@ package weaver.micro.devkit.api;
 
 import weaver.conn.RecordSet;
 import weaver.micro.devkit.Assert;
+import weaver.micro.devkit.handler.StrictRecordSet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,13 +18,13 @@ public final class CommonAPI {
 
     /**
      * 返回首个字段<br>
-     * RecordSet结果集下标从1开始
+     * StrictRecordSet结果集下标从1开始
      *
      * @since 1.1.11
      */
     public static String querySingleField(String sql) {
         Assert.notEmpty(sql, "sql");
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         rs.next();
         return rs.getString(1);
@@ -36,19 +37,19 @@ public final class CommonAPI {
     public static String querySingleField(final String sql, final String field) {
         Assert.notEmpty(sql, "execute sql");
         Assert.notEmpty(sql, "field");
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         rs.next();
         return rs.getString(field);
     }
 
     /**
-     * 从RecordSet当前行读取一张键值映射表
+     * 从StrictRecordSet当前行读取一张键值映射表
      * <hr>
      * 所有键值将会使用小写!!
      */
-    public static Map<String, String> mapFromRecordRow(final RecordSet rs) {
-        Assert.notNull(rs, "RecordSet");
+    public static Map<String, String> mapFromRecordRow(RecordSet rs) {
+        Assert.notNull(rs, "StrictRecordSet");
         String[] cols = rs.getColumnName();
         Map<String, String> result = new HashMap<String, String>(cols.length + (cols.length >> 1));
         for (String key : cols) {
@@ -85,7 +86,7 @@ public final class CommonAPI {
     }
 
     public static List<Map<String, String>> query(String sql) {
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         return query(rs);
     }

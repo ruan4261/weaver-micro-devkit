@@ -1,12 +1,12 @@
 package weaver.micro.devkit.api;
 
-import weaver.conn.RecordSet;
 import weaver.docs.docs.DocImageManager;
 import weaver.docs.docs.VersionIdUpdate;
 import weaver.file.ImageFileManager;
 import weaver.general.Util;
 import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
+import weaver.micro.devkit.handler.StrictRecordSet;
 import weaver.micro.devkit.io.LocalAPI;
 
 import java.io.File;
@@ -80,7 +80,7 @@ public final class DocAPI {
         String fid = queryImageFileIdLatest(docId);
         if ("".equals(fid)) return new HashMap<String, String>();
 
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         String sql;
         sql = "select imagefilename,filerealpath,iszip,filesize from imagefile where imagefileid=" + fid;
         rs.execute(sql);
@@ -163,7 +163,7 @@ public final class DocAPI {
      * @param fileName    文件名称
      */
     public static void createDocImageFile(int docId, int imageFileId, String fileName) {
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         DocImageManager dm = new DocImageManager();
         VersionIdUpdate versionIdUpdate = new VersionIdUpdate();
         int versionid = versionIdUpdate.getVersionNewId();

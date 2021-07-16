@@ -1,8 +1,8 @@
 package weaver.micro.devkit.api;
 
-import weaver.conn.RecordSet;
 import weaver.general.Util;
 import weaver.micro.devkit.Cast;
+import weaver.micro.devkit.handler.StrictRecordSet;
 import weaver.micro.devkit.util.ArrayUtil;
 
 import java.util.HashMap;
@@ -39,7 +39,7 @@ public final class HrmAPI {
     public static Map<String, String> queryHrmInfo(final int hrmId) {
         Map<String, String> result = new HashMap<String, String>();
 
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         String sql = "select a.lastname,a.managerid,d.jobtitlename,b.departmentname,c.subcompanyname from HrmResource a left outer join hrmdepartment b on a.departmentid=b.id left outer join HrmSubCompany c on a.subcompanyid1=c.id left outer join HrmJobTitles d on a.jobtitle=d.id where a.id=" + hrmId;
         rs.execute(sql);
         if (!rs.next()) return result;
@@ -102,7 +102,7 @@ public final class HrmAPI {
     public static int[] getDepartTrace(int depart) {
         int[] departTrace = new int[8];
         int idx = 0;
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         while (depart > 0) {
             if (idx == departTrace.length) {
                 departTrace = ArrayUtil.arrayExtend(departTrace, idx + (idx >> 1));

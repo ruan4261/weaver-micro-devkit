@@ -1,10 +1,10 @@
 package weaver.micro.devkit.api;
 
-import weaver.conn.RecordSet;
 import weaver.formmode.setup.ModeRightInfo;
 import weaver.general.TimeUtil;
 import weaver.general.Util;
 import weaver.micro.devkit.Assert;
+import weaver.micro.devkit.handler.StrictRecordSet;
 
 import java.util.Map;
 import java.util.UUID;
@@ -28,7 +28,7 @@ public final class ModeAPI {
     public static int createModeData(final String modeMainTable, final int modeId, final int creatorId, final Map<String, Object> data) {
         Assert.notEmpty(modeMainTable, "modeMainTable");
         int id = -1;
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         String uuid = UUID.randomUUID().toString();
         if (rs.execute("insert into " + modeMainTable + "(uuid,modedatacreater,modedatacreatedate,modedatacreatetime,formmodeid) values('" + uuid + "'," + creatorId + ",'" + TimeUtil.getCurrentDateString() + "','" + TimeUtil.getOnlyCurrentTimeString() + "'," + modeId + ")")) {
             rs.execute("select id from " + modeMainTable + " where uuid='" + uuid + "'");

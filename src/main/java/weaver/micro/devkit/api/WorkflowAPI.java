@@ -1,10 +1,10 @@
 package weaver.micro.devkit.api;
 
-import weaver.conn.RecordSet;
 import weaver.general.Util;
 import weaver.interfaces.workflow.action.WorkflowToDoc;
 import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
+import weaver.micro.devkit.handler.StrictRecordSet;
 import weaver.micro.devkit.util.ArrayUtil;
 import weaver.soa.workflow.request.*;
 
@@ -91,7 +91,7 @@ public final class WorkflowAPI {
     public static List<Map<String, String>> queryRemarkList(final int requestId) {
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
 
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         String sql = "select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark,a.operatedate,a.operatetime" +
                 " from workflow_requestLog a" +
                 " left outer join workflow_nodebase b on a.nodeid=b.id" +
@@ -129,7 +129,7 @@ public final class WorkflowAPI {
         }
 
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute("select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark," +
                 "a.operatedate,a.operatetime" + enhance.toString() +
                 " from workflow_requestLog a" +
@@ -154,7 +154,7 @@ public final class WorkflowAPI {
         Map<String, String> result = new HashMap<String, String>();
 
         String sql = constructFieldMapperSql(billId, orderId);
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         while (rs.next()) {
             result.put(rs.getString("fieldname"), rs.getString("id"));
@@ -173,7 +173,7 @@ public final class WorkflowAPI {
         Map<String, Integer> result = new HashMap<String, Integer>();
 
         String sql = constructFieldMapperSql(billId, orderId);
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         while (rs.next()) {
             result.put(rs.getString("fieldname"), rs.getInt("id"));
@@ -252,8 +252,8 @@ public final class WorkflowAPI {
      * @return 是否成功
      */
     public static boolean workflowToDoc(final int requestId) {
-        RecordSet rs = new RecordSet();
-        RecordSet rs2 = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
+        StrictRecordSet rs2 = new StrictRecordSet();
         rs.execute("select workflowid,requestname,creater from workflow_requestbase where requestid =" + requestId);
         if (rs.next()) {
             String workflowid = rs.getString("workflowid");
@@ -336,7 +336,7 @@ public final class WorkflowAPI {
     public static Map<String, String> queryRequestMainData(final String billTableName, final int requestId) {
         Assert.notEmpty(billTableName, "billTableName");
         Map<String, String> result = new HashMap<String, String>();
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         String sql = "select * from " + billTableName + " where requestid = '" + requestId + "'";
         rs.execute(sql);
         if (!rs.next()) return result;
@@ -372,7 +372,7 @@ public final class WorkflowAPI {
     public static List<Map<String, String>> queryRequestDetailData(String billTableName, int requestId, int orderId) {
         Assert.notEmpty(billTableName, "billTableName");
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
 
         // 通过billTableName及requestId获取mainid，用于明细表关联
         String sql = "select id from " + billTableName + " where requestid = '" + requestId + "'";
@@ -428,7 +428,7 @@ public final class WorkflowAPI {
      */
     public static int getFieldIdByFieldName(int billId, int orderId, String name) {
         String sql = constructSql2GetFieldIdByFieldName(billId, orderId, name);
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         if (!rs.next())
             throw new RuntimeException("No such field, input : billId=" + billId
@@ -461,7 +461,7 @@ public final class WorkflowAPI {
      */
     public static String getDropdownBoxValue(int fieldId, int valueIdx) {
         String sql = constructSql2GetDropdownBoxValue(fieldId, valueIdx);
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         if (!rs.next())
             throw new RuntimeException("No such select item, input : fieldId=" + fieldId
@@ -546,7 +546,7 @@ public final class WorkflowAPI {
      */
     public static int[] getCurrentNodeOperatorByRequestId(int requestId) {
         int nodeId = getNodeIdByRequestId(requestId);
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute("select userid" +
                 " from workflow_currentoperator" +
                 " where groupdetailid in" +
@@ -600,11 +600,11 @@ public final class WorkflowAPI {
         int mainId = getMainId(requestId);
         int billId = getBillIdByRequestId(requestId);
         String dt = getDetailTableNameByBillIdAndOrderId(billId, order);
-        new RecordSet().execute("delete from " + dt + " where mainid=" + mainId);
+        new StrictRecordSet().execute("delete from " + dt + " where mainid=" + mainId);
     }
 
     public static void clearAllDetailTableDataByRequestId(int requestId) {
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         int mainId = getMainId(requestId);// main table id
         int billId = getBillIdByRequestId(requestId);
         int[] orderSeq = getDetailTableOrderSequenceByFormId(billId);
@@ -675,7 +675,7 @@ public final class WorkflowAPI {
         int[] orderSeq = new int[count];
         int idx = 0;
 
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute("select orderid from workflow_billdetailtable where billid=" + formId +
                 " order by orderid asc");
         while (rs.next()) {
@@ -822,7 +822,7 @@ public final class WorkflowAPI {
     public static int[] findRequestOnNode(int nodeId) {
         int[] requests = new int[32];
         int idx = 0;
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute("select requestid from workflow_nownode where nownodeid='" + nodeId + "'");
         while (rs.next()) {
             if (idx >= requests.length) {
@@ -876,7 +876,7 @@ public final class WorkflowAPI {
      * @return requestId数组
      */
     public static int[] findTodoRequestWithSpecialNodeAndUser(int uid, int node) {
-        RecordSet rs = new RecordSet();
+        StrictRecordSet rs = new StrictRecordSet();
         rs.execute("select a.requestid\n" +
                 "from workflow_currentoperator a\n" +
                 "left outer join workflow_nownode b on a.requestid = b.requestid and a.nodeid = b.nownodeid\n" +
