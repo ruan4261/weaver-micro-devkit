@@ -104,7 +104,7 @@ public class VisualPrintProcess {
     private final Appendable out;
     private final Flushable flushCtrl;
     private Object ref;
-    private int currentDepth;
+    private DepthMonitor depthMonitor;
     private String dynamicPrefix;// only TAB and prefix_scope
 
     /* Null and minimum type will not be added to the collections that for deduplication */
@@ -140,8 +140,8 @@ public class VisualPrintProcess {
      */
     public void print(Object o) throws IOException {
         this.ref = o;
-        this.currentDepth = 0;
         this.dynamicPrefix = "";
+        this.depthMonitor = new DepthMonitor(o);
         this.printPrefix(true);
         try {
             this.print4Internal(o, true);
@@ -153,19 +153,20 @@ public class VisualPrintProcess {
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
+        } finally {
+            this.end();
         }
-        this.end();
     }
 
     private void end() throws IOException {
         this.ref = null;
-        this.currentDepth = 0;
+        this.depthMonitor = null;
         this.dejavu.clear();
         this.flushCtrl.flush();
     }
 
-    private void resolveStackoverflow(Throwable t) {
-        throw new ObjectDepthOverflowException(this.currentDepth, t);
+    private void resolveStackoverflow(StackOverflowError t) {
+        this.depthMonitor.resolveStackOverflow(t);
     }
 
     /**
@@ -178,9 +179,6 @@ public class VisualPrintProcess {
      */
     private void print4Internal(Object o, boolean isLastItem)
             throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        // check current depth
-        VPUtils.checkObjectDepth(this.currentDepth, this.ref);
-
         ObjectType type = ObjectType.whichType(o);
 
         // check repetition
@@ -190,7 +188,7 @@ public class VisualPrintProcess {
             return;
         }
 
-        this.currentDepth++;
+        this.depthMonitor.increase();
         switch (type) {
             case Minimum:
                 this.printMinimum(o);
@@ -211,14 +209,21 @@ public class VisualPrintProcess {
                 this.printCollection(((Collection<?>) o), isLastItem);
                 break;
         }
-        this.currentDepth--;
+        this.depthMonitor.decrease();
 
         // exit dedup collection
         if (needCheckRepetition && !this.globalDedup)
             this.popRepeatedObject(o);
     }
 
-    private void printMinimum(Object o) throws IOException {
+    private void printMinimum(Object o)
+            throws IOException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        MinimumType type = o.getClass().getAnnotation(MinimumType.class);
+        if (type != null) {
+            this.printMinimum(o, type);
+            return;
+        }
+
         this.printNativeInfo(o);
         this.out.append(" -> ");
         this.out.append(escape(o.toString()));
@@ -227,7 +232,11 @@ public class VisualPrintProcess {
     private void printMinimum(Object o, Field f)
             throws IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         MinimumType type = Assert.notNull(f.getAnnotation(MinimumType.class));
+        this.printMinimum(o, type);
+    }
 
+    private void printMinimum(Object o, MinimumType type)
+            throws IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         // get serialization method
         Method calledMethod = VPUtils.getMethod(type, o);
         calledMethod.setAccessible(true);
@@ -277,14 +286,14 @@ public class VisualPrintProcess {
         this.printObjFields(fields, o, len == 1);
 
         // print relevant class scope
-        this.currentDepth++;
+        this.depthMonitor.increase();
         for (int i = 1; i < len; i++) {
             boolean eleIsLastItem = i + 1 == len;
             this.printLineFeed();
             this.printPrefix(eleIsLastItem);
             this.printObjWithSpecifiedScope(classes[i], o, eleIsLastItem);
         }
-        this.currentDepth--;
+        this.depthMonitor.decrease();
         this.reduceDynamicPrefix();
     }
 
@@ -319,9 +328,9 @@ public class VisualPrintProcess {
             this.printFieldName(f);
 
             if (v != null && ObjectType.isMinimumType(f)) {
-                this.currentDepth++;
+                this.depthMonitor.increase();
                 this.printMinimum(v, f);
-                this.currentDepth--;
+                this.depthMonitor.decrease();
             } else {
                 this.print4Internal(v, isLastField);
             }

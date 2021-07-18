@@ -9,18 +9,6 @@ import java.lang.reflect.Method;
 
 class VPUtils {
 
-    public static void checkObjectDepth(int depth, Object root) {
-        if (depth > ObjectDepthOverflowException.maxDepth) {
-            throw new ObjectDepthOverflowException(root);
-        }
-    }
-
-    public static void checkObjectDepth(int depth, String msg) {
-        if (depth > ObjectDepthOverflowException.maxDepth) {
-            throw new ObjectDepthOverflowException(msg);
-        }
-    }
-
     public static Method getMethod(MinimumType type, Object o) throws NoSuchMethodException {
         // prop
         Class<?> calledClass = type.serializationClass();
