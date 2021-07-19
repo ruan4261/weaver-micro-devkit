@@ -189,6 +189,16 @@ public final class Assert {
         return arr;
     }
 
+    public static void judge(boolean result) {
+        if (!result)
+            fail(null);
+    }
+
+    public static void judge(boolean result, String mes) {
+        if (!result)
+            fail(mes);
+    }
+
     /**
      * If an exception occurs internally, it will be thrown directly,
      * otherwise the return value will be judged.
