@@ -13,7 +13,7 @@ import java.security.AccessController;
  * length is 1024, try set {@code -XX:MaxJavaStackTraceDepth},
  * it is a positive integer.
  *
- * @since 1.1.10
+ * @since 1.1.14
  */
 class DepthMonitor {
 

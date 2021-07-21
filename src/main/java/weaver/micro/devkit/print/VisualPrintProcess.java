@@ -148,9 +148,7 @@ public class VisualPrintProcess {
         } catch (StackOverflowError e) {
             this.resolveStackoverflow(e);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new AssertionError(e);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         } finally {
@@ -178,7 +176,7 @@ public class VisualPrintProcess {
      * {@link ObjectType#Collection}
      */
     private void print4Internal(Object o, boolean isLastItem)
-            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            throws IOException, IllegalAccessException, InvocationTargetException {
         ObjectType type = ObjectType.whichType(o);
 
         // check repetition
@@ -217,7 +215,7 @@ public class VisualPrintProcess {
     }
 
     private void printMinimum(Object o)
-            throws IOException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+            throws IOException, IllegalAccessException, InvocationTargetException {
         MinimumType type = o.getClass().getAnnotation(MinimumType.class);
         if (type != null) {
             this.printMinimum(o, type);
@@ -230,15 +228,20 @@ public class VisualPrintProcess {
     }
 
     private void printMinimum(Object o, Field f)
-            throws IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+            throws IOException, InvocationTargetException, IllegalAccessException {
         MinimumType type = Assert.notNull(f.getAnnotation(MinimumType.class));
         this.printMinimum(o, type);
     }
 
     private void printMinimum(Object o, MinimumType type)
-            throws IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+            throws IOException, InvocationTargetException, IllegalAccessException {
         // get serialization method
-        Method calledMethod = VPUtils.getMethod(type, o);
+        Method calledMethod;
+        try {
+            calledMethod = VPUtils.getMethod(type, o);
+        } catch (NoSuchMethodException e) {
+            throw new NoSuchMethodError(e.getMessage());
+        }
         calledMethod.setAccessible(true);
 
         // construct parameters list
@@ -265,7 +268,7 @@ public class VisualPrintProcess {
     }
 
     private void printObj(Object o, boolean isLastItem)
-            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            throws IOException, IllegalAccessException, InvocationTargetException {
         // [0] is itself, if it not be primitive type, [length - 1] is Object
         Class<?>[] classes = ReflectUtil.getAllSuper(o.getClass());
         Class<?> self = classes[0];
@@ -301,7 +304,7 @@ public class VisualPrintProcess {
      * Only called by {@link #printObj(Object, boolean)}.
      */
     private void printObjWithSpecifiedScope(Class<?> clazz, Object o, boolean isLastItem)
-            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            throws IOException, IllegalAccessException, InvocationTargetException {
         // print class info
         this.out.append("(RELEVANT SCOPE) ");
         this.out.append(clazz.toString());
@@ -314,7 +317,7 @@ public class VisualPrintProcess {
     }
 
     private void printObjFields(Field[] fields, Object o, boolean tailClose)
-            throws IllegalAccessException, IOException, InvocationTargetException, NoSuchMethodException {
+            throws IllegalAccessException, IOException, InvocationTargetException {
         for (int i = 0; i < fields.length; i++) {
             Field f = fields[i];
             if (!f.isAccessible())
@@ -338,7 +341,7 @@ public class VisualPrintProcess {
     }
 
     private void printMap(Map<?, ?> m, boolean isLastItem)
-            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            throws IOException, IllegalAccessException, InvocationTargetException {
         this.printNativeInfo(m);
         int size = m.size();
         this.printSize(size);
@@ -364,7 +367,7 @@ public class VisualPrintProcess {
     }
 
     private void printMapEntry(Map.Entry<?, ?> entry, boolean isLastItem, int order)
-            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            throws IOException, IllegalAccessException, InvocationTargetException {
         this.out.append('(');
         this.out.append(String.valueOf(order));
         this.out.append(')');
@@ -384,7 +387,7 @@ public class VisualPrintProcess {
     }
 
     private void printCollection(Collection<?> collection, boolean isLastItem)
-            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            throws IOException, IllegalAccessException, InvocationTargetException {
         this.printNativeInfo(collection);
         int size = collection.size();
         this.printSize(size);
@@ -410,7 +413,7 @@ public class VisualPrintProcess {
     }
 
     private void printArray(Object o, boolean isLastItem)
-            throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+            throws IOException, IllegalAccessException, InvocationTargetException {
         if (o.getClass().getComponentType().isPrimitive()) {
             this.printArrayOfPrimitiveType(o);
             return;
