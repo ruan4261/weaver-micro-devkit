@@ -2,12 +2,15 @@ package weaver.micro.devkit.print;
 
 import weaver.micro.devkit.util.BeanUtil;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 @MinimumType
 public enum ObjectType {
 
     Minimum(false),
+    MinimumWithAnnotation(false),
+    MinimumWithModel(false),
     Obj(true),
     Array(true),
     Map(true),
@@ -24,9 +27,23 @@ public enum ObjectType {
         return this.needCheckRepetition;
     }
 
-    public static ObjectType whichType(Object o) {
+    public static ObjectType whichType(Object o, Field f) {
+        return whichType(o, f, null);
+    }
+
+    public static ObjectType whichType(Object o, MinimumTypeModel modal) {
+        return whichType(o, null, modal);
+    }
+
+    public static ObjectType whichType(Object o, Field f, MinimumTypeModel modal) {
         if (o == null)
             return NULL;
+        if (isMinimumTypeWithAnnotation(f))
+            return MinimumWithAnnotation;
+        if (isMinimumTypeWithAnnotation(o.getClass()))
+            return MinimumWithAnnotation;
+        if (isMinimumTypeWithModel(o, modal))
+            return MinimumWithModel;
         if (isMinimumType(o))
             return Minimum;
 
@@ -41,27 +58,42 @@ public enum ObjectType {
         return Obj;
     }
 
-    /**
-     * It may be convert to string.
-     */
-    public static boolean isMinimumType(Field f) {
-        if (f == null)
-            return false;
-
-        return f.isAnnotationPresent(MinimumType.class);
+    public static ObjectType whichType(Object o) {
+        return whichType(o, null, null);
     }
 
     public static boolean isMinimumType(Object o) {
         if (o == null)
             return false;
 
-        Class<?> clazz = o.getClass();
-        if (BeanUtil.isPrimitive(clazz) ||
-                o instanceof Number ||
-                o instanceof CharSequence)
-            return true;
+        return isMinimumType(o.getClass());
+    }
 
-        return clazz.isAnnotationPresent(MinimumType.class);
+    public static boolean isMinimumType(Class<?> type) {
+        return type != null
+                && (BeanUtil.isPrimitive(type)
+                || Number.class.isAssignableFrom(type)
+                || CharSequence.class.isAssignableFrom(type)
+                || Class.class.isAssignableFrom(type)
+                || Enum.class.isAssignableFrom(type)
+                || Annotation.class.isAssignableFrom(type));
+    }
+
+    public static boolean isMinimumTypeWithModel(Object o, MinimumTypeModel modal) {
+        return o != null
+                && modal != null
+                && modal.isMinimumType(o.getClass());
+    }
+
+    public static boolean isMinimumTypeWithAnnotation(Field f) {
+        if (f == null)
+            return false;
+
+        return f.isAnnotationPresent(MinimumType.class);
+    }
+
+    public static boolean isMinimumTypeWithAnnotation(Class<?> type) {
+        return type.isAnnotationPresent(MinimumType.class);
     }
 
     public static boolean isNeedCheckRepetition(Object o) {

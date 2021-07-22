@@ -1,6 +1,7 @@
 package weaver.micro.devkit.print;
 
 import weaver.micro.devkit.Assert;
+import weaver.micro.devkit.annotation.NotNull;
 import weaver.micro.devkit.util.ArrayIterator;
 import weaver.micro.devkit.util.ReflectUtil;
 import weaver.micro.devkit.util.StringUtils;
@@ -17,10 +18,13 @@ import java.util.*;
 
 /**
  * <h2>Default MinimumType case:</h2>
- * 1) a primitive type<br>
- * 2) a wrapper class of primitive type<br>
- * 3) a CharSequence class<br>
- * 4) a Number class<br>
+ * 1) A primitive type<br>
+ * 2) A wrapper class of primitive type<br>
+ * 3) CharSequence type<br>
+ * 4) Number type<br>
+ * 5) An object which type is Class<br>
+ * 6) An enum<br>
+ * 7) An annotation<br>
  * MinimumType is formatted using is its <code>toString()</code> function by default.
  *
  * <br><br>
@@ -30,19 +34,19 @@ import java.util.*;
  * └── {FieldName} : null
  * </pre>
  *
- * <h3>@MinimumType</h3>
+ * <h3>MinimumType With Annotation</h3>
  * <pre>
  * └── {FieldName} : [NativeInfo] @-> {custom serialization function}
  * </pre>
  *
- * <h3>MinimumType(PrimitiveType)</h3>
+ * <h3>MinimumType With Modal</h3>
  * <pre>
- * └── {FieldName} : [NativeInfo] -> {this.toString()}
+ * └── {FieldName} : [NativeInfo] @-> {custom serialization function}
  * </pre>
  *
- * <h3>Array of primitive type</h3>
+ * <h3>MinimumType(Default)</h3>
  * <pre>
- * └── {FieldName} : [NativeInfo] >> {size} -> {Arrays.toString(this)}
+ * └── {FieldName} : [NativeInfo] -> {this.toString()}
  * </pre>
  *
  * <h3>Collection And Array</h3>
@@ -79,7 +83,7 @@ import java.util.*;
  *         └── {attributes in instance scope of B}
  * </pre>
  *
- * <h3>special: Repeated objects(may be Object, Map, Collection, Array)</h3>
+ * <h3>special: Repeated objects(may be Object, Map, Collection, Array, etc.)</h3>
  * <pre>
  * └── {FieldName} : (REPEATED)[NativeInfo]
  * </pre>
@@ -103,7 +107,6 @@ public class VisualPrintProcess {
 
     private final Appendable out;
     private final Flushable flushCtrl;
-    private Object ref;
     private DepthMonitor depthMonitor;
     private String dynamicPrefix;// only TAB and prefix_scope
 
@@ -136,15 +139,31 @@ public class VisualPrintProcess {
     }
 
     /**
+     * Preset set of minimum type.
+     */
+    private MinimumTypeModel minimumTypeModel;
+
+    public MinimumTypeModel getMinimumTypeModel() {
+        return this.minimumTypeModel;
+    }
+
+    public void setMinimumTypeModel(MinimumTypeModel minimumTypeModel) {
+        this.minimumTypeModel = minimumTypeModel;
+    }
+
+    public void removeMinimumTypeModel() {
+        this.minimumTypeModel = null;
+    }
+
+    /**
      * Entrance
      */
     public void print(Object o) throws IOException {
-        this.ref = o;
         this.dynamicPrefix = "";
         this.depthMonitor = new DepthMonitor(o);
         this.printPrefix(true);
         try {
-            this.print4Internal(o, true);
+            this.print4Internal(o, true, null);
         } catch (StackOverflowError e) {
             this.resolveStackoverflow(e);
         } catch (IllegalAccessException e) {
@@ -157,7 +176,6 @@ public class VisualPrintProcess {
     }
 
     private void end() throws IOException {
-        this.ref = null;
         this.depthMonitor = null;
         this.dejavu.clear();
         this.flushCtrl.flush();
@@ -174,10 +192,14 @@ public class VisualPrintProcess {
      * {@link ObjectType#Array},
      * {@link ObjectType#Map},
      * {@link ObjectType#Collection}
+     *
+     * @param o          printed object
+     * @param isLastItem used to construct prefix string
+     * @param field      has value if the object is a field in another object
      */
-    private void print4Internal(Object o, boolean isLastItem)
+    private void print4Internal(Object o, boolean isLastItem, Field field)
             throws IOException, IllegalAccessException, InvocationTargetException {
-        ObjectType type = ObjectType.whichType(o);
+        ObjectType type = ObjectType.whichType(o, field, this.minimumTypeModel);
 
         // check repetition
         boolean needCheckRepetition = type.isNeedCheckRepetition();
@@ -188,11 +210,18 @@ public class VisualPrintProcess {
 
         this.depthMonitor.increase();
         switch (type) {
-            case Minimum:
-                this.printMinimum(o);
-                break;
             case NULL:
                 this.printNULL();
+                break;
+            case MinimumWithAnnotation:
+                // the annotation instance must be from class of the object
+                this.printMinimumWithAnnotation(o, field);
+                break;
+            case MinimumWithModel:
+                this.printMinimumWithModal(o, this.minimumTypeModel);
+                break;
+            case Minimum:
+                this.printMinimum(o);
                 break;
             case Obj:
                 this.printObj(o, isLastItem);
@@ -215,25 +244,26 @@ public class VisualPrintProcess {
     }
 
     private void printMinimum(Object o)
-            throws IOException, IllegalAccessException, InvocationTargetException {
-        MinimumType type = o.getClass().getAnnotation(MinimumType.class);
-        if (type != null) {
-            this.printMinimum(o, type);
-            return;
-        }
-
+            throws IOException {
         this.printNativeInfo(o);
         this.out.append(" -> ");
         this.out.append(escape(o.toString()));
     }
 
-    private void printMinimum(Object o, Field f)
+    private void printMinimumWithAnnotation(Object o, Field f)
             throws IOException, InvocationTargetException, IllegalAccessException {
-        MinimumType type = Assert.notNull(f.getAnnotation(MinimumType.class));
-        this.printMinimum(o, type);
+        MinimumType type = null;
+        if (f != null) {
+            type = f.getAnnotation(MinimumType.class);
+        }
+        if (type == null) {
+            type = o.getClass().getAnnotation(MinimumType.class);
+        }
+
+        this.printMinimumWithAnnotation(o, type);
     }
 
-    private void printMinimum(Object o, MinimumType type)
+    private void printMinimumWithAnnotation(Object o, @NotNull MinimumType type)
             throws IOException, InvocationTargetException, IllegalAccessException {
         // get serialization method
         Method calledMethod;
@@ -265,6 +295,12 @@ public class VisualPrintProcess {
         this.printNativeInfo(o);
         this.out.append(" @-> ");
         this.out.append(escape(output));
+    }
+
+    private void printMinimumWithModal(Object o, MinimumTypeModel model)
+            throws IllegalAccessException, IOException, InvocationTargetException {
+        MinimumType type = Assert.notNull(model.get(o.getClass()));
+        this.printMinimumWithAnnotation(o, type);
     }
 
     private void printObj(Object o, boolean isLastItem)
@@ -319,24 +355,17 @@ public class VisualPrintProcess {
     private void printObjFields(Field[] fields, Object o, boolean tailClose)
             throws IllegalAccessException, IOException, InvocationTargetException {
         for (int i = 0; i < fields.length; i++) {
-            Field f = fields[i];
-            if (!f.isAccessible())
-                f.setAccessible(true);
-            Object v = f.get(o);
+            Field field = fields[i];
+            if (!field.isAccessible())
+                field.setAccessible(true);
+            Object v = field.get(o);
 
             // print
             boolean isLastField = tailClose && i == fields.length - 1;
             this.printLineFeed();
             this.printPrefix(isLastField);
-            this.printFieldName(f);
-
-            if (v != null && ObjectType.isMinimumType(f)) {
-                this.depthMonitor.increase();
-                this.printMinimum(v, f);
-                this.depthMonitor.decrease();
-            } else {
-                this.print4Internal(v, isLastField);
-            }
+            this.printFieldName(field);
+            this.print4Internal(v, isLastField, field);
         }
     }
 
@@ -378,11 +407,11 @@ public class VisualPrintProcess {
         this.printLineFeed();
         this.printPrefix(false);
         this.out.append("Key : ");
-        this.print4Internal(key, false);
+        this.print4Internal(key, false, null);
         this.printLineFeed();
         this.printPrefix(true);
         this.out.append("Value : ");
-        this.print4Internal(value, true);
+        this.print4Internal(value, true, null);
         this.reduceDynamicPrefix();
     }
 
@@ -406,7 +435,7 @@ public class VisualPrintProcess {
             this.printLineFeed();
             this.printPrefix(eleIsLast);
             this.printCollectionOrder(order++);
-            this.print4Internal(ele, eleIsLast);
+            this.print4Internal(ele, eleIsLast, null);
         } while (!eleIsLast);
 
         this.reduceDynamicPrefix();
@@ -414,12 +443,6 @@ public class VisualPrintProcess {
 
     private void printArray(Object o, boolean isLastItem)
             throws IOException, IllegalAccessException, InvocationTargetException {
-        if (o.getClass().getComponentType().isPrimitive()) {
-            this.printArrayOfPrimitiveType(o);
-            return;
-        }
-
-        // is not primitive type array
         this.printNativeInfo(o);
         int len = Array.getLength(o);
         this.printSize(len);
@@ -434,11 +457,12 @@ public class VisualPrintProcess {
             this.printLineFeed();
             this.printPrefix(eleIsLastItem);
             this.printCollectionOrder(i + 1);
-            this.print4Internal(ele, eleIsLastItem);
+            this.print4Internal(ele, eleIsLastItem, null);
         }
         this.reduceDynamicPrefix();
     }
 
+    @Deprecated
     private void printArrayOfPrimitiveType(Object o) throws IOException {
         // it is impossible that primitive type element may be null
         String arrayBody = StringUtils.toString(ArrayIterator.of(o));
