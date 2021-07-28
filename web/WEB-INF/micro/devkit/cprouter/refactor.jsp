@@ -83,8 +83,8 @@
         String workflowCondition = workflowIds.equals("*") ? "" : "id in (" + workflowIds + ") and";
         String template = "select %s from workflow_base where "
                 + workflowCondition
-                + " (custompage is null or custompage not like '" + dest + "%%') or"
-                + " (custompage4emoble is null or custompage4emoble not like '" + dest + "%%')";
+                + " ((custompage is null or custompage not like '" + dest + "%%') or"
+                + " (custompage4emoble is null or custompage4emoble not like '" + dest + "%%'))";
         String sql = String.format(template, "id, custompage, custompage4emoble");
         doLog(sql);
 
