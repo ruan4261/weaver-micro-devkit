@@ -67,9 +67,9 @@
     int workflowid = Util.getIntValue(request.getParameter("workflowid"));
     int nodeid = Util.getIntValue(request.getParameter("nodeid"));
     boolean isMobile = !Cast.o2String(request.getParameter("isMobile")).equals("");
-    rs.execute("select dt.model, dt.nodeid, dt.custompage, dt.custompage4emoble, dt.file_type" +
+    rs.execute("select dt.model, dt.nodeid, dt.custompage, dt.file_type" +
             "\nfrom uf_cprouter_dt1 dt" +
-            "\nleft outer join up_cprouter mt on mt.id = dt.mainid" +
+            "\nleft outer join uf_cprouter mt on mt.id = dt.mainid" +
             "\nwhere mt.workflowid = " + workflowid +
             "\nand dt." + (isMobile ? "used4mobile" : "used4pc") + " = 1" +
             "\nand (dt.disable <> 1 or dt.disable is null or dt.disable='')" +
@@ -83,7 +83,7 @@
         if (model == 0
                 || (model == 1 && StringUtils.isInclude(nodeGroup, nodeid))
                 || (model == 2 && !StringUtils.isInclude(nodeGroup, nodeid))) {
-            String path = isMobile ? rs.getString("custompage4emoble") : rs.getString("custompage");
+            String path = rs.getString("custompage");
             int fileType = rs.getInt("file_type");
             switch (fileType) {
                 case 1:
