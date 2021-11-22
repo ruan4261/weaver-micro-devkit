@@ -3,7 +3,6 @@ package weaver.micro.devkit.api;
 import weaver.conn.RecordSet;
 import weaver.general.Util;
 import weaver.interfaces.workflow.action.WorkflowToDoc;
-import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.handler.StrictRecordSet;
 import weaver.micro.devkit.util.ArrayUtils;
@@ -69,9 +68,8 @@ public final class WorkflowAPI {
      * @param requestId 流程实例id
      * @return 流程实例标题
      */
-    public static String queryWorkflowTitle(final int requestId) {
-        String sql = "select requestname from workflow_requestbase where requestid = " + requestId;
-        return CommonAPI.querySingleField(sql, "requestname");
+    public static String queryWorkflowTitle(int requestId) {
+        return CommonAPI.querySingleField("select requestname from workflow_requestbase where requestid = ?", requestId);
     }
 
     /**
@@ -89,10 +87,10 @@ public final class WorkflowAPI {
      * @deprecated 意义不明
      */
     @Deprecated
-    public static List<Map<String, String>> queryRemarkList(final int requestId) {
+    public static List<Map<String, String>> queryRemarkList(int requestId) {
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
 
-        StrictRecordSet rs = new StrictRecordSet();
+        RecordSet rs = new StrictRecordSet();
         String sql = "select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark,a.operatedate,a.operatetime" +
                 " from workflow_requestLog a" +
                 " left outer join workflow_nodebase b on a.nodeid=b.id" +
@@ -130,9 +128,9 @@ public final class WorkflowAPI {
         }
 
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
-        StrictRecordSet rs = new StrictRecordSet();
+        RecordSet rs = new StrictRecordSet();
         rs.execute("select a.nodeid,b.nodename,a.logid,a.operator,a.logtype,a.remark," +
-                "a.operatedate,a.operatetime" + enhance.toString() +
+                "a.operatedate,a.operatetime" + enhance +
                 " from workflow_requestLog a" +
                 " left outer join workflow_nodebase b on a.nodeid=b.id" +
                 " where a.requestid=" + requestId + " order by a.logid desc");
@@ -155,7 +153,7 @@ public final class WorkflowAPI {
         Map<String, String> result = new HashMap<String, String>();
 
         String sql = constructFieldMapperSql(billId, orderId);
-        StrictRecordSet rs = new StrictRecordSet();
+        RecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         while (rs.next()) {
             result.put(rs.getString("fieldname"), rs.getString("id"));
@@ -174,7 +172,7 @@ public final class WorkflowAPI {
         Map<String, Integer> result = new HashMap<String, Integer>();
 
         String sql = constructFieldMapperSql(billId, orderId);
-        StrictRecordSet rs = new StrictRecordSet();
+        RecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         while (rs.next()) {
             result.put(rs.getString("fieldname"), rs.getInt("id"));
@@ -211,8 +209,8 @@ public final class WorkflowAPI {
     }
 
     public static int getBillIdByWorkflowId(int workflowId) {
-        String sql = "select formid from workflow_base where id =" + workflowId;
-        return Cast.o2Integer(CommonAPI.querySingleField(sql, "formid"));
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select formid from workflow_base where id = ?", workflowId));
     }
 
     /** @param workflowId 流程id */
@@ -228,8 +226,10 @@ public final class WorkflowAPI {
      * @return 数据库表单名称
      */
     public static String getBillTableNameByWorkflowId(int workflowId) {
-        String sql = "select b.tablename from workflow_base a,workflow_bill b where a.formid=b.id and a.id=" + workflowId;
-        return CommonAPI.querySingleField(sql, "tablename");
+        return CommonAPI.querySingleField(
+                "select b.tablename from workflow_base a, workflow_bill b where a.formid = b.id and a.id = ?",
+                workflowId
+        );
     }
 
     /**
@@ -240,7 +240,7 @@ public final class WorkflowAPI {
      * @deprecated 修改方法名称使其更加语义化，见{@link #getBillTableName(int)}
      */
     @Deprecated
-    public static String queryTableName(final int workflowId) {
+    public static String queryTableName(int workflowId) {
         return getBillTableNameByWorkflowId(workflowId);
     }
 
@@ -252,39 +252,17 @@ public final class WorkflowAPI {
      * @param requestId 请求id
      * @return 是否成功
      */
-    public static boolean workflowToDoc(final int requestId) {
-        StrictRecordSet rs = new StrictRecordSet();
-        StrictRecordSet rs2 = new StrictRecordSet();
-        rs.execute("select workflowid,requestname,creater from workflow_requestbase where requestid =" + requestId);
+    public static boolean workflowToDoc(int requestId) {
+        RecordSet rs = new StrictRecordSet();
+        rs.executeQuery("select workflowid, requestname, creater from workflow_requestbase" +
+                " where requestid = ?", requestId);
         if (rs.next()) {
             String workflowid = rs.getString("workflowid");
             String requestname = rs.getString("requestname");
             String creater = rs.getString("creater");
-            rs2.execute("select status from hrmresource where id=" + Util.getIntValue(creater));
-            if (!rs2.next() || 5 == rs2.getInt("status"))
-                return false;
 
-            return new WorkflowToDoc().Start(Util.null2String(requestId), creater, requestname, workflowid);
+            return new WorkflowToDoc().Start(Cast.o2String(requestId), creater, requestname, workflowid);
         } else return false;
-    }
-
-    /**
-     * 保存流程页面（请提前配置流程存为文档，并至少提前一个节点触发使其生成文档）
-     * 服务器保存的文件名为{requestid}.html
-     *
-     * @param requestId 请求id
-     * @param path      保存路径
-     * @return 保存的全路径
-     */
-    public static String saveWorkflowHtml(final int requestId, final String path) {
-        Assert.notEmpty(path, "path");
-
-        String sql = "select max(id) id from DocDetail where fromworkflow = " + requestId;
-        int docid = Util.getIntValue(CommonAPI.querySingleField(sql, "id"));
-        if (docid == -1)
-            return EMPTY;
-
-        return DocAPI.saveDocLocally(Cast.o2Integer(docid), path, requestId + ".html", null);
     }
 
     /**
@@ -293,130 +271,61 @@ public final class WorkflowAPI {
      * @param requestId 流程请求id
      */
     public static String queryBillTableByRequest(int requestId) {
-        String sql = "select bill.tablename as tablename"
-                + " from workflow_bill bill"
-                + " left outer join workflow_base base on bill.id=base.formid"
-                + " left outer join workflow_requestbase req on base.id=req.workflowid"
-                + " where req.requestid=" + requestId;
-        return CommonAPI.querySingleField(sql, "tablename");
+        return CommonAPI.querySingleField(
+                "select bill.tablename"
+                        + " from workflow_bill bill"
+                        + " left outer join workflow_base base on bill.id=base.formid"
+                        + " left outer join workflow_requestbase req on base.id=req.workflowid"
+                        + " where req.requestid = ?",
+                requestId
+        );
     }
 
     public static int getBillIdByRequestId(int requestId) {
-        String sql = "select base.formid as formid"
-                + " from workflow_base base"
-                + " left outer join workflow_requestbase req on base.id=req.workflowid"
-                + " where req.requestid=" + requestId;
-        return Cast.o2Integer(CommonAPI.querySingleField(sql, "formid"));
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select base.formid"
+                        + " from workflow_base base"
+                        + " left outer join workflow_requestbase req on base.id=req.workflowid"
+                        + " where req.requestid = ?",
+                requestId
+        ));
     }
 
     public static int getWorkflowIdByRequestId(int requestId) {
-        String sql = "select req.workflowid as workflowid"
-                + " from workflow_requestbase req"
-                + " where req.requestid=" + requestId;
-        return Cast.o2Integer(CommonAPI.querySingleField(sql, "workflowid"));
-    }
-
-    /**
-     * @see #queryRequestMainData(String, int)
-     */
-    public static Map<String, String> queryRequestMainData(int requestId) {
-        String billTableName = queryBillTableByRequest(requestId);
-        return queryRequestMainData(billTableName, requestId);
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select req.workflowid"
+                        + " from workflow_requestbase req"
+                        + " where req.requestid = ?",
+                requestId
+        ));
     }
 
     /**
      * 查询某条请求的主表信息
-     * 不知道数据库表单可以使用{@link #queryBillTableByRequest(int)}方法，
-     * 推荐使用{@link #getBillTableNameByBillId(int)}或{@link #getBillTableNameByWorkflowId(int)}
      *
-     * @param billTableName 数据库表单，必须为formtable_main_{num}格式
-     *                      选择明细表请使用{@link #queryRequestDetailData(String, int, int)}方法
-     * @param requestId     流程的请求id
-     * @return 主表信息映射
+     * @param requestId 流程的请求id
      */
-    public static Map<String, String> queryRequestMainData(final String billTableName, final int requestId) {
-        Assert.notEmpty(billTableName, "billTableName");
-        Map<String, String> result = new HashMap<String, String>();
-        StrictRecordSet rs = new StrictRecordSet();
-        String sql = "select * from " + billTableName + " where requestid = '" + requestId + "'";
-        rs.execute(sql);
-        if (!rs.next()) return result;
-        return CommonAPI.mapFromRecordRow(rs);
+    public static Map<String, String> queryRequestMainData(int requestId) {
+        String billTableName = queryBillTableByRequest(requestId);
+        return CommonAPI.queryOneRow("select * from " + billTableName + " where requestid = ?", requestId);
     }
 
     /**
-     * @param billId    主表billId
-     * @param requestId 请求标识
-     */
-    public static Map<String, String> getRequestMainTableData(int billId, int requestId) {
-        String billTableName = getBillTableNameByBillId(billId);
-        return queryRequestMainData(billTableName, requestId);
-    }
-
-    /**
-     * @see #queryRequestDetailData(String, int, int)
+     * 查询某条请求的某张明细表信息
      */
     public static List<Map<String, String>> queryRequestDetailData(int requestId, int orderId) {
-        String billTableName = queryBillTableByRequest(requestId);
-        return queryRequestDetailData(billTableName, requestId, orderId);
-    }
-
-    /**
-     * 查询某条请求的明细表信息
-     * 不知道数据库表单可以使用{@link #queryBillTableByRequest(int)}方法
-     *
-     * @param billTableName 数据库表单，必须为formtable_main_{num}格式，无需写dt参数
-     * @param requestId     流程的请求id
-     * @param orderId       明细表序号
-     * @return 多行明细映射信息
-     */
-    public static List<Map<String, String>> queryRequestDetailData(String billTableName, int requestId, int orderId) {
-        Assert.notEmpty(billTableName, "billTableName");
-        List<Map<String, String>> result = new ArrayList<Map<String, String>>();
-        StrictRecordSet rs = new StrictRecordSet();
-
-        // 通过billTableName及requestId获取mainid，用于明细表关联
-        String sql = "select id from " + billTableName + " where requestid = '" + requestId + "'";
-        rs.execute(sql);
-        if (!rs.next()) return result;
-        int mainid = rs.getInt("id");
-
-        // 获取明细表名
-        String detailTableName = getDetailTableNameByBillTableNameAndOrderId(billTableName, orderId);
-
-        // 查询明细表
-        sql = "select * from " + detailTableName + " where mainid= '" + mainid + "'";
-        rs.execute(sql);
-        while (rs.next()) {
-            result.add(CommonAPI.mapFromRecordRow(rs));
-        }
-        return result;
-    }
-
-    /**
-     * @param billId    主表billId
-     * @param requestId 请求标识
-     * @param orderId   表序号，0未主表，其余为明细表序号
-     */
-    public static List<Map<String, String>> getRequestDetailData(int billId, int requestId, int orderId) {
-        String billTableName = getBillTableNameByBillId(billId);
-        return queryRequestDetailData(billTableName, requestId, orderId);
+        int workflowId = getWorkflowIdByRequestId(requestId);
+        int mainId = getMainId(requestId);
+        String detailTableName = queryDetailTableNameByWorkflowIdAndOrderId(workflowId, orderId);
+        return CommonAPI.query("select * from " + detailTableName + " where mainid = ?", mainId);
     }
 
     /**
      * 根据logid获取节点名称
      */
     public static String getNodeNameByLogId(int logId) {
-        int nodeid = Util.getIntValue(
-                CommonAPI.querySingleField(
-                        "select nodeid from workflow_requestlog where logid=" + logId,
-                        "nodeid"));
-        if (nodeid == -1)
-            return EMPTY;
-
-        return CommonAPI.querySingleField(
-                "select nodename from workflow_nodebase where id=" + nodeid,
-                "nodename");
+        return CommonAPI.querySingleField("select nb.nodename from workflow_nodebase nb, workflow requestlog rl" +
+                " where nb.id = rl.nodeid and rl.logid = ?", logId);
     }
 
     /**
@@ -428,9 +337,9 @@ public final class WorkflowAPI {
      * @return 表单字段id
      */
     public static int getFieldIdByFieldName(int billId, int orderId, String name) {
-        String sql = constructSql2GetFieldIdByFieldName(billId, orderId, name);
-        StrictRecordSet rs = new StrictRecordSet();
-        rs.execute(sql);
+        String sql = constructSql2GetFieldIdByFieldName(billId, orderId);
+        RecordSet rs = new StrictRecordSet();
+        rs.executeQuery(sql, name);
         if (!rs.next())
             throw new RuntimeException("No such field, input : billId=" + billId
                     + ", orderId=" + orderId + ", field(notExist)=" + name);
@@ -439,17 +348,17 @@ public final class WorkflowAPI {
     }
 
     public static int getFieldIdByFieldNameQuietly(int billId, int orderId, String name) {
-        String sql = constructSql2GetFieldIdByFieldName(billId, orderId, name);
-        return Cast.o2Integer(CommonAPI.querySingleField(sql));
+        String sql = constructSql2GetFieldIdByFieldName(billId, orderId);
+        return Cast.o2Integer(CommonAPI.querySingleField(sql, name));
     }
 
-    static String constructSql2GetFieldIdByFieldName(int billId, int orderId, String name) {
-        String sql = "select id from workflow_billfield where fieldname='" + name + "' and billid=" + billId;
+    static String constructSql2GetFieldIdByFieldName(int billId, int orderId) {
+        String sql = "select id from workflow_billfield where fieldname = ? and billid = " + billId;
         if (orderId == 0)
             sql += " and (detailtable is null or detailtable = '') ";
         else {
             String detailTableName = getDetailTableNameByBillIdAndOrderId(billId, orderId);
-            sql += " and detailtable='" + detailTableName + "'";
+            sql += " and detailtable = '" + detailTableName + "'";
         }
         return sql;
     }
@@ -462,7 +371,7 @@ public final class WorkflowAPI {
      */
     public static String getDropdownBoxValue(int fieldId, int valueIdx) {
         String sql = constructSql2GetDropdownBoxValue(fieldId, valueIdx);
-        StrictRecordSet rs = new StrictRecordSet();
+        RecordSet rs = new StrictRecordSet();
         rs.execute(sql);
         if (!rs.next())
             throw new RuntimeException("No such select item, input : fieldId=" + fieldId
@@ -478,18 +387,17 @@ public final class WorkflowAPI {
     static String constructSql2GetDropdownBoxValue(int fieldId, int valueIdx) {
         return "select selectname" +
                 " from workflow_selectitem" +
-                " where fieldid=" + fieldId +
-                " and selectvalue=" + valueIdx;
+                " where fieldid = " + fieldId +
+                " and selectvalue = " + valueIdx;
     }
 
     public static String getBillTableNameByBillId(int billId) {
-        String sql = "select tablename from workflow_bill where id=" + billId;
-        return CommonAPI.querySingleField(sql, "tablename");
+        return CommonAPI.querySingleField("select tablename from workflow_bill where id = ?", billId);
     }
 
     public static int getBillIdByBillTableName(String billTableName) {
-        String sql = "select id from workflow_bill where tablename='" + billTableName + "'";
-        return Cast.o2Integer(CommonAPI.querySingleField(sql, "id"));
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select id from workflow_bill where tablename = ?", billTableName));
     }
 
     /**
@@ -500,10 +408,8 @@ public final class WorkflowAPI {
         if (orderId == 0)
             return getBillTableNameByBillId(billId);
 
-        return CommonAPI.querySingleField(
-                "select tablename from workflow_billdetailtable where billid=" + billId
-                        + " and orderid=" + orderId,
-                "tablename");
+        return CommonAPI.querySingleField("select tablename from workflow_billdetailtable" +
+                " where billid = " + billId + " and orderid = " + orderId);
     }
 
     public static String getDetailTableNameByBillTableNameAndOrderId(String billTableName, int orderId) {
@@ -520,24 +426,22 @@ public final class WorkflowAPI {
      * @param workflowId 流程id, 表workflow_base中的id
      */
     public static String getWorkflowPathName(int workflowId) {
-        String sql = "select workflowname from workflow_base where id=" + workflowId;
-        return CommonAPI.querySingleField(sql, "workflowname");
+        return CommonAPI.querySingleField("select workflowname from workflow_base where id = ?", workflowId);
     }
 
     /**
      * 获取某一流程当前节点id
      */
     public static int getNodeIdByRequestId(int requestId) {
-        String sql = "select nownodeid from workflow_nownode where requestid=" + requestId;
-        return Cast.o2Integer(CommonAPI.querySingleField(sql, "nownodeid"));
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select nownodeid from workflow_nownode where requestid = ?", requestId));
     }
 
     /**
      * 通过节点id获取节点名称
      */
     public static String getNodeNameByNodeId(int nodeId) {
-        String sql = "select nodename from workflow_nodebase where id=" + nodeId;
-        return CommonAPI.querySingleField(sql, "nodename");
+        return CommonAPI.querySingleField("select nodename from workflow_nodebase where id = ?", nodeId);
     }
 
     /**
@@ -547,7 +451,7 @@ public final class WorkflowAPI {
      */
     public static int[] getCurrentNodeOperatorByRequestId(int requestId) {
         int nodeId = getNodeIdByRequestId(requestId);
-        StrictRecordSet rs = new StrictRecordSet();
+        RecordSet rs = new StrictRecordSet();
         rs.execute("select userid" +
                 " from workflow_currentoperator" +
                 " where groupdetailid in" +
@@ -562,7 +466,7 @@ public final class WorkflowAPI {
             if (idx == users.length)
                 users = ArrayUtils.arrayExtend(users, idx + 4);
 
-            users[idx++] = rs.getInt("userid");
+            users[idx++] = rs.getInt(1);
         }
 
         users = idx == users.length ? users : ArrayUtils.arrayExtend(users, idx);
@@ -584,8 +488,7 @@ public final class WorkflowAPI {
      */
     public static int getCreatorIdByRequestId(int requestId) {
         return Cast.o2Integer(CommonAPI.querySingleField(
-                "select creater from workflow_requestbase where requestid=" + requestId,
-                "creater"));
+                "select creater from workflow_requestbase where requestid = ?", requestId));
     }
 
     /**
@@ -593,26 +496,27 @@ public final class WorkflowAPI {
      */
     public static int getMainId(int requestId) {
         return Cast.o2Integer(CommonAPI.querySingleField(
-                "select id from " + queryBillTableByRequest(requestId) + " where requestid=" + requestId,
-                "id"));
+                "select id from " + queryBillTableByRequest(requestId) + " where requestid = ?",
+                requestId
+        ));
     }
 
     public static void clearDetailTableDataByRequestIdAndOrder(int requestId, int order) {
         int mainId = getMainId(requestId);
         int billId = getBillIdByRequestId(requestId);
         String dt = getDetailTableNameByBillIdAndOrderId(billId, order);
-        new StrictRecordSet().execute("delete from " + dt + " where mainid=" + mainId);
+        new StrictRecordSet().executeUpdate("delete from " + dt + " where mainid = ?", mainId);
     }
 
     public static void clearAllDetailTableDataByRequestId(int requestId) {
-        StrictRecordSet rs = new StrictRecordSet();
-        int mainId = getMainId(requestId);// main table id
+        int mainId = getMainId(requestId);
         int billId = getBillIdByRequestId(requestId);
         int[] orderSeq = getDetailTableOrderSequenceByFormId(billId);
 
+        RecordSet rs = new StrictRecordSet();
         for (int orderId : orderSeq) {
             String dt = getDetailTableNameByBillIdAndOrderId(billId, orderId);
-            rs.execute("delete from " + dt + " where mainid=" + mainId);
+            rs.executeUpdate("delete from " + dt + " where mainid = ?", mainId);
         }
     }
 
@@ -630,11 +534,9 @@ public final class WorkflowAPI {
      * 返回值是最后一张明细表的orderId, 中间可能存在某个明细表不存在的情况
      */
     public static int getDetailTableCountByFormId(int formId) {
-        return Cast.o2Integer(
-                CommonAPI.querySingleField(
-                        "select max(orderid) cnt from workflow_billdetailtable where billid=" + formId,
-                        "cnt"),
-                0);
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select max(orderid) from workflow_billdetailtable where billid = ?", formId
+        ), 0);
     }
 
     public static int getDetailTableCountByWorkflowIdRealExist(int workflowId) {
@@ -651,11 +553,9 @@ public final class WorkflowAPI {
      * 返回真实存在的明细表数量, 返回值可能小于某张明细表的orderId
      */
     public static int getDetailTableCountByFormIdRealExist(int formId) {
-        return Cast.o2Integer(
-                CommonAPI.querySingleField(
-                        "select count(orderid) cnt from workflow_billdetailtable where billid=" + formId,
-                        "cnt"),
-                0);
+        return Cast.o2Integer(CommonAPI.querySingleField(
+                "select count(orderid) from workflow_billdetailtable where billid = ?", formId
+        ), 0);
     }
 
     public static int[] getDetailTableOrderSequenceByWorkflowId(int workflowId) {
@@ -676,20 +576,19 @@ public final class WorkflowAPI {
         int[] orderSeq = new int[count];
         int idx = 0;
 
-        StrictRecordSet rs = new StrictRecordSet();
-        rs.execute("select orderid from workflow_billdetailtable where billid=" + formId +
+        RecordSet rs = new StrictRecordSet();
+        rs.execute("select orderid from workflow_billdetailtable where billid = " + formId +
                 " order by orderid asc");
         while (rs.next()) {
             if (idx == orderSeq.length) {
                 // 并发问题: 其他程序新增明细表, 动态调整数组长度+1
                 orderSeq = ArrayUtils.arrayExtend(orderSeq, orderSeq.length + 1);
             }
-            orderSeq[idx++] = rs.getInt("orderid");
+            orderSeq[idx++] = rs.getInt(1);
         }
 
         if (idx != orderSeq.length) {
-            // 并发问题: 其他程序删除明细表, 动态调整数组长度
-            orderSeq = ArrayUtils.arrayExtend(orderSeq, idx);
+            throw new ConcurrentModificationException("Detail table count has been modified.");
         }
         return orderSeq;
     }
@@ -700,8 +599,9 @@ public final class WorkflowAPI {
 
         return CommonAPI.querySingleField(
                 "select a.tablename from workflow_billdetailtable a left outer join workflow_base b"
-                        + " on a.billid=b.formid where b.id=" + workflowId + " and a.orderid=" + orderId,
-                "tablename");
+                        + " on a.billid = b.formid where b.id = ? and a.orderid = ?",
+                workflowId, orderId
+        );
     }
 
     /**
@@ -824,7 +724,7 @@ public final class WorkflowAPI {
         int[] requests = new int[32];
         int idx = 0;
         StrictRecordSet rs = new StrictRecordSet();
-        rs.execute("select requestid from workflow_nownode where nownodeid='" + nodeId + "'");
+        rs.executeQuery("select requestid from workflow_nownode where nownodeid = ?", nodeId);
         while (rs.next()) {
             if (idx >= requests.length) {
                 if (requests.length == 0x7fffffff)
@@ -834,7 +734,7 @@ public final class WorkflowAPI {
                 requests = ArrayUtils.arrayExtend(requests, newLen);
             }
 
-            int requestId = rs.getInt("requestid");
+            int requestId = rs.getInt(1);
             requests[idx++] = requestId;
         }
 
@@ -878,10 +778,11 @@ public final class WorkflowAPI {
      */
     public static int[] findTodoRequestWithSpecialNodeAndUser(int uid, int node) {
         StrictRecordSet rs = new StrictRecordSet();
-        rs.execute("select a.requestid\n" +
-                "from workflow_currentoperator a\n" +
-                "left outer join workflow_nownode b on a.requestid = b.requestid and a.nodeid = b.nownodeid\n" +
-                "where a.userid = " + uid + " and b.nownodeid = " + node + " and a.isremark = 0");
+        rs.executeQuery("select a.requestid" +
+                        " from workflow_currentoperator a" +
+                        " left outer join workflow_nownode b on a.requestid = b.requestid and a.nodeid = b.nownodeid" +
+                        " where a.userid = ? and b.nownodeid = ? and a.isremark = 0",
+                uid, node);
         int[] ret = new int[10];
         int idx = 0;
         while (rs.next()) {
@@ -889,7 +790,7 @@ public final class WorkflowAPI {
                 ret = ArrayUtils.arrayExtend(ret, idx + (idx >> 1));// floor(1.5 * length)
             }
 
-            ret[idx++] = rs.getInt("requestid");
+            ret[idx++] = rs.getInt(1);
         }
 
         if (idx != ret.length) {
@@ -907,8 +808,7 @@ public final class WorkflowAPI {
         int idx = 0;
         // 统计已操作者(从requestlog中)
         RecordSet rs = new RecordSet();
-        String sql = "select operator from workflow_requestLog where requestid=" + requestId;
-        rs.execute(sql);
+        rs.executeQuery("select operator from workflow_requestLog where requestid = ?", requestId);
         while (rs.next()) {
             if (idx == res.length)
                 res = ArrayUtils.arrayExtend(res, idx + 8);

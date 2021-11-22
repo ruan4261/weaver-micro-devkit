@@ -21,7 +21,6 @@ import java.util.Map;
  *   - link
  *   - uuid
  * </pre>
- * 请注意此处的keyword有被注入的风险
  */
 public final class IncrementController {
 
@@ -119,8 +118,7 @@ public final class IncrementController {
 
     private int getMainId() {
         int mainId = Cast.o2Integer(CommonAPI.querySingleField(
-                "select id from " + this.mainTable + "\n" +
-                        "where " + this.keyField + " = '" + this.keyword + "'"
+                "select id from " + this.mainTable + " where " + this.keyField + " = ?", this.keyword
         ));
         return mainId != -1 ? mainId : this.setKeywordFirstTime();
     }
@@ -184,8 +182,7 @@ public final class IncrementController {
         }
 
         public IncrementController build(String keyword) {
-            if (this.modeId == 0) Assert.fail("Failed to build IncrementController");
-            Assert.notEmpty(keyword, "Failed to build IncrementController");
+            Assert.notEmpty(keyword, "Failed to build IncrementController: keyword is empty");
 
             return new IncrementController(
                     this.modeId,

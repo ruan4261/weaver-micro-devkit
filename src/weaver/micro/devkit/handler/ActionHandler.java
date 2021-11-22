@@ -5,7 +5,6 @@ import weaver.interfaces.workflow.action.Action;
 import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.annotation.Autowired;
-import weaver.micro.devkit.api.CommonAPI;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
 import weaver.micro.devkit.util.ArrayUtils;
@@ -73,11 +72,6 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 明细表缓存，原型
      */
     private DetailTable[] detailTablesCache;
-
-    /**
-     * 字段校验成功标识
-     */
-    private boolean fieldVerifyFlag;
 
     /**
      * log process
@@ -175,7 +169,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
             data.add(map);
         }
 
-        this.logLine("DETAIL(dt_" + table + ") FORM DATA(Cache) : " + data.toString());
+        this.logLine("DETAIL(dt_" + table + ") FORM DATA(Cache) : " + data);
         return data;
     }
 
@@ -183,9 +177,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * 通过数据库查询获取最新流程主表信息
      */
     protected Map<String, String> getMainTableNewest() {
-        Map<String, String> res =
-                WorkflowAPI.queryRequestMainData(this.getBillTableName(), this.getRequestId());
-        this.logLine("MAIN FORM DATA(Newest) : " + res.toString());
+        Map<String, String> res = WorkflowAPI.queryRequestMainData(this.getRequestId());
+        this.logLine("MAIN FORM DATA(Newest) : " + res);
         return res;
     }
 
@@ -195,9 +188,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @param table 明细表序号，从1开始
      */
     protected List<Map<String, String>> getDetailTableNewest(int table) {
-        List<Map<String, String>> res =
-                WorkflowAPI.queryRequestDetailData(this.getBillTableName(), this.getRequestId(), table);
-        this.logLine("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res.toString());
+        List<Map<String, String>> res = WorkflowAPI.queryRequestDetailData(this.getRequestId(), table);
+        this.logLine("DETAIL(dt_" + table + ") FORM DATA(Newest) : " + res);
         return res;
     }
 
@@ -207,7 +199,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     protected List<Map<String, String>> getRemarkList() {
         List<Map<String, String>> res = WorkflowAPI.queryRemarkListNew(this.getRequestId(), null);
-        this.logLine("Remark list : " + res.toString());
+        this.logLine("Remark list : " + res);
         return res;
     }
 
@@ -218,7 +210,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      */
     protected List<Map<String, String>> getRemarkList(String[] expandFields) {
         List<Map<String, String>> res = WorkflowAPI.queryRemarkListNew(this.getRequestId(), expandFields);
-        this.logLine("Remark list : " + res.toString());
+        this.logLine("Remark list : " + res);
         return res;
     }
 
@@ -468,52 +460,6 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         this.log("Throw exception through #end()", e);
     }
 
-    /**
-     * 校验字段长度<br>
-     * 正常情况下返回常量池中的EMPTY空字符串<br>
-     * 如字段超长则会返回字段显示名(从1.0.4版本开始不自动添加引号)
-     * case:
-     * <ul>
-     * <li>1.如无法获取该字段，返回空字符串</li>
-     * <li>2.字段在长度限制内，返回空字符串</li>
-     * <li>3.字段超长，不通过校验，返回信息</li>
-     * </ul>
-     *
-     * @param table     为0时选择主表字段，非0时为明细表序号
-     * @param field     字段数据库名
-     * @param maxlength 限制长度
-     * @return 字符串信息
-     */
-    protected String fieldLengthLimit(int table, String field, int maxlength) {
-        if (table < 0)
-            return "";
-
-        boolean overLimit = false;
-        if (table == 0) {
-            // 主表
-            Map<String, String> mainTable = this.getMainTableCache();
-            String v = mainTable.get(field);
-            if (v.length() > maxlength)
-                overLimit = true;
-        } else {
-            // 明细表
-            List<Map<String, String>> detailTable = this.getDetailTableCache(table);
-            for (Map<String, String> map : detailTable) {
-                String v = map.get(field);
-                if (v.length() > maxlength) {
-                    overLimit = true;
-                    break;
-                }
-            }
-        }
-
-        if (!overLimit)
-            return "";
-        // 通过数据库字段名获取显示字段名
-        String sql = "select indexdesc from htmllabelindex a left outer join workflow_billfield b on a.id=b.fieldlabel where b.fieldname='" + field + "' and b.billid='" + getBillId() + "'";
-        return CommonAPI.querySingleField(sql, "indexdesc");
-    }
-
     @Override
     public final String execute(RequestInfo requestInfo) {
         // 并发问题解决(临时), 只有realExecutor为true时代表当前实例安全, 可用于实际action处理
@@ -524,17 +470,13 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
                 return executeInNewHandler(requestInfo);
             } catch (Throwable t) {
                 log("ActionHandler#executeInNewHandler", t);
-                return this.fail("ActionHandler#executeInNewHandler exception: " + t.toString());
+                return this.fail("ActionHandler#executeInNewHandler exception: " + t);
             }
         }
 
         this.request = requestInfo;
         try {
             this.actionStart();
-            // 字段校验
-            String mes = this.fieldVerify();
-            if (!this.fieldVerifyFlag)
-                return this.failWithOnlyMessage(mes);
 
             // 正常流程
             this.init();
@@ -591,20 +533,6 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     protected String getDropdownBoxShowValue(int tableIdx, String name, int value) {
         int fieldId = this.getFieldId(tableIdx, name);
         return WorkflowAPI.getDropdownBoxValue(fieldId, value);
-    }
-
-    /**
-     * 请覆盖本方法，通过{@link #setFieldVerifyFlag(boolean)}方法设置校验成功与否
-     * 如果{@link #fieldVerifyFlag}为true则通过校验，如果为false则此方法应该返回信息用于显示给用户
-     */
-    protected String fieldVerify() {
-        // 该方法用于被覆盖
-        this.setFieldVerifyFlag(true);
-        return "";
-    }
-
-    protected void setFieldVerifyFlag(boolean fieldVerifyFlag) {
-        this.fieldVerifyFlag = fieldVerifyFlag;
     }
 
     /**

@@ -30,10 +30,10 @@ public final class CommonAPI {
     /**
      * @since 2.0.1
      */
-    public static String querySingleField(String sql, Object... params) {
+    public static String querySingleField(String sql, Object... args) {
         Assert.notEmpty(sql, "sql");
         RecordSet rs = new StrictRecordSet();
-        rs.executeQuery(sql, params);
+        rs.executeQuery(sql, args);
         if (rs.next())
             return rs.getString(1);
 
@@ -43,9 +43,9 @@ public final class CommonAPI {
     /**
      * @since 2.0.1
      */
-    public static String querySingleFieldMustExist(String sql, Object... params) {
+    public static String querySingleFieldMustExist(String sql, Object... args) {
         RecordSet rs = new StrictRecordSet();
-        rs.executeQuery(sql, params);
+        rs.executeQuery(sql, args);
         if (rs.next())
             return rs.getString(1);
 
@@ -102,6 +102,15 @@ public final class CommonAPI {
         return query(rs);
     }
 
+    /**
+     * @since 2.0.1
+     */
+    public static List<Map<String, String>> query(String sql, Object... args) {
+        RecordSet rs = new StrictRecordSet();
+        rs.executeQuery(sql, args);
+        return query(rs);
+    }
+
     public static List<Map<String, String>> query(RecordSet rs) {
         List<Map<String, String>> result = new ArrayList<Map<String, String>>();
         while (rs.next()) {
@@ -109,6 +118,26 @@ public final class CommonAPI {
         }
 
         return result;
+    }
+
+    /**
+     * @since 2.0.1
+     */
+    public static Map<String, String> queryOneRow(String sql) {
+        RecordSet rs = new StrictRecordSet();
+        rs.execute(sql);
+        rs.next();
+        return mapFromRecordRow(rs);
+    }
+
+    /**
+     * @since 2.0.1
+     */
+    public static Map<String, String> queryOneRow(String sql, Object... args) {
+        RecordSet rs = new StrictRecordSet();
+        rs.executeQuery(sql, args);
+        rs.next();
+        return mapFromRecordRow(rs);
     }
 
 }

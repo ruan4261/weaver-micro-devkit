@@ -40,7 +40,7 @@ public class StrictRecordSet extends RecordSet {
 
     boolean $(boolean result) {
         if (!result)
-            throw new DatabaseRuntimeException();
+            throw new DatabaseRuntimeException("SQL execution exception.");
 
         return true;
     }
