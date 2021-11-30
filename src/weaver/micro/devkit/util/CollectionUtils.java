@@ -8,12 +8,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @since 2.0.1
+ */
 public class CollectionUtils {
 
     public static <K, V> void transferField(Map<K, V> m, K ori, K dest) {
         V val = m.get(ori);
         m.remove(ori);
         m.put(dest, val);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, String> mapValueObj2String(Map<String, Object> m) {
+        for (Map.Entry<String, Object> entry : m.entrySet()) {
+            Object val = entry.getValue();
+            if (val != null) {
+                if (!(val instanceof String)) {
+                    m.put(entry.getKey(), val.toString());
+                }
+            }
+        }
+        return ((Map<String, String>) (Object) m);
     }
 
     public static void insert(String table, Map<String, String> m) {

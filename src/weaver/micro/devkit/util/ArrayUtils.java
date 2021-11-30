@@ -123,8 +123,11 @@ public final class ArrayUtils {
         return arr;
     }
 
+    /**
+     * 输入数组数量必须大于0
+     */
     public static <T> T[] concat(T[]... arrays) {
-        Class<?> arrayType = Assert.notEmpty(arrays, "Illegal input, its length is zero.")[0].getClass();
+        Class<?> arrayType = Assert.notEmpty(arrays, "Illegal input")[0].getClass();
         Class<?> type = arrayType.getComponentType();
         // calculate length
         int length = 0;
@@ -139,6 +142,175 @@ public final class ArrayUtils {
         for (T[] arr : arrays) {
             System.arraycopy(arr, 0, ret, idx, arr.length);
             idx += arr.length;
+        }
+        return ret;
+    }
+
+    public static int[] concat(int[]... arrays) {
+        int len = 0;
+        for (int[] arr : Assert.notNull(arrays)) {
+            len += Assert.notNull(arr).length;
+        }
+
+        int[] ret = new int[len];
+        int idx = 0;
+        for (int[] arr : arrays) {
+            System.arraycopy(arr, 0, ret, idx, arr.length);
+            idx += arr.length;
+        }
+        return ret;
+    }
+
+    public static double[] concat(double[]... arrays) {
+        if (arrays == null)
+            return new double[0];
+
+        int len = 0;
+        for (double[] arr : Assert.notNull(arrays)) {
+            len += Assert.notNull(arr).length;
+        }
+
+        double[] ret = new double[len];
+        int idx = 0;
+        for (double[] arr : arrays) {
+            System.arraycopy(arr, 0, ret, idx, arr.length);
+            idx += arr.length;
+        }
+        return ret;
+    }
+
+    public static char[] concat(char[]... arrays) {
+        if (arrays == null)
+            return new char[0];
+
+        int len = 0;
+        for (char[] arr : Assert.notNull(arrays)) {
+            len += Assert.notNull(arr).length;
+        }
+
+        char[] ret = new char[len];
+        int idx = 0;
+        for (char[] arr : arrays) {
+            System.arraycopy(arr, 0, ret, idx, arr.length);
+            idx += arr.length;
+        }
+        return ret;
+    }
+
+    public static boolean[] concat(boolean[]... arrays) {
+        if (arrays == null)
+            return new boolean[0];
+
+        int len = 0;
+        for (boolean[] arr : Assert.notNull(arrays)) {
+            len += Assert.notNull(arr).length;
+        }
+
+        boolean[] ret = new boolean[len];
+        int idx = 0;
+        for (boolean[] arr : arrays) {
+            System.arraycopy(arr, 0, ret, idx, arr.length);
+            idx += arr.length;
+        }
+        return ret;
+    }
+
+    public static float[] concat(float[]... arrays) {
+        if (arrays == null)
+            return new float[0];
+
+        int len = 0;
+        for (float[] arr : Assert.notNull(arrays)) {
+            len += Assert.notNull(arr).length;
+        }
+
+        float[] ret = new float[len];
+        int idx = 0;
+        for (float[] arr : arrays) {
+            System.arraycopy(arr, 0, ret, idx, arr.length);
+            idx += arr.length;
+        }
+        return ret;
+    }
+
+    public static byte[] concat(byte[]... arrays) {
+        if (arrays == null)
+            return new byte[0];
+
+        int len = 0;
+        for (byte[] arr : Assert.notNull(arrays)) {
+            len += Assert.notNull(arr).length;
+        }
+
+        byte[] ret = new byte[len];
+        int idx = 0;
+        for (byte[] arr : arrays) {
+            System.arraycopy(arr, 0, ret, idx, arr.length);
+            idx += arr.length;
+        }
+        return ret;
+    }
+
+
+    public static short[] concat(short[]... arrays) {
+        if (arrays == null)
+            return new short[0];
+
+        int len = 0;
+        for (short[] arr : Assert.notNull(arrays)) {
+            len += Assert.notNull(arr).length;
+        }
+
+        short[] ret = new short[len];
+        int idx = 0;
+        for (short[] arr : arrays) {
+            System.arraycopy(arr, 0, ret, idx, arr.length);
+            idx += arr.length;
+        }
+        return ret;
+    }
+
+    public static long[] concat(long[]... arrays) {
+        if (arrays == null)
+            return new long[0];
+
+        int len = 0;
+        for (long[] arr : Assert.notNull(arrays)) {
+            len += Assert.notNull(arr).length;
+        }
+
+        long[] ret = new long[len];
+        int idx = 0;
+        for (long[] arr : arrays) {
+            System.arraycopy(arr, 0, ret, idx, arr.length);
+            idx += arr.length;
+        }
+        return ret;
+    }
+
+    /**
+     * 仅能返回 ComponentType 为 Object 的数组
+     */
+    public static Object concat(Object... arrays) {
+        int len = 0;
+        for (Object arr : Assert.notNull(arrays)) {
+            Assert.judge(
+                    Assert.notNull(
+                            arr,
+                            "Component is null pointer"
+                    ).getClass().isArray(),
+                    "Component is not of an array type"
+            );
+            len += Array.getLength(arr);
+        }
+
+        Object ret = new Object[len];
+
+        int idx = 0;
+        for (Object arr : arrays) {
+            int l = Array.getLength(arr);
+            System.arraycopy(arr, 0, ret, idx, l);
+            idx += l;
         }
         return ret;
     }

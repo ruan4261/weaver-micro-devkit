@@ -17,14 +17,11 @@ import java.util.Map;
 public final class CommonAPI {
 
     /**
+     * @see #querySingleField(String, Object...)
      * @since 1.1.11
      */
     public static String querySingleField(String sql) {
-        Assert.notEmpty(sql, "sql");
-        StrictRecordSet rs = new StrictRecordSet();
-        rs.execute(sql);
-        rs.next();
-        return rs.getString(1);
+        return querySingleField(sql, new Object[0]);
     }
 
     /**
@@ -50,6 +47,22 @@ public final class CommonAPI {
             return rs.getString(1);
 
         throw new IllegalArgumentException("Result set is empty!");
+    }
+
+    /**
+     * @since 2.0.1
+     */
+    public static String[] querySingleFieldSet(String sql, Object... args) {
+        RecordSet rs = new StrictRecordSet();
+        rs.executeQuery(sql, args);
+
+        String[] ret = new String[rs.getCounts()];
+        int i = 0;
+        while (rs.next()) {
+            ret[i++] = rs.getString(1);
+        }
+
+        return ret;
     }
 
     /**
@@ -118,16 +131,6 @@ public final class CommonAPI {
         }
 
         return result;
-    }
-
-    /**
-     * @since 2.0.1
-     */
-    public static Map<String, String> queryOneRow(String sql) {
-        RecordSet rs = new StrictRecordSet();
-        rs.execute(sql);
-        rs.next();
-        return mapFromRecordRow(rs);
     }
 
     /**

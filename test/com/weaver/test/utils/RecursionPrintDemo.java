@@ -1,7 +1,6 @@
 package com.weaver.test.utils;
 
 import weaver.micro.devkit.handler.ActionHandler;
-import weaver.micro.devkit.http.CommonHttpAPI;
 import weaver.micro.devkit.util.StringUtils;
 import weaver.soa.workflow.request.RequestInfo;
 
@@ -27,7 +26,6 @@ public class RecursionPrintDemo {
         }
         System.out.println(StringUtils.fullRecursionPrint(new a("test class 1")));
         System.out.println();
-        System.out.println(StringUtils.fullRecursionPrint(new CommonHttpAPI()));
     }
 
 }
