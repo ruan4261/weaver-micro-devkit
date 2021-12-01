@@ -363,7 +363,37 @@ public class StringUtils {
     }
 
     public static String dotToSlash(String str) {
-        return str.replace('.', '/');
+        return Assert.notNull(str).replace('.', '/');
+    }
+
+    /**
+     * @since 2.0.1
+     */
+    public static String padLeft(String ori, int totalWidth, char paddingChar) {
+        int oriLen = Assert.notNull(ori).length();
+        int padLen = totalWidth - oriLen;
+        if (padLen <= 0)
+            return ori;
+
+        return toString(paddingChar, padLen) + ori;
+    }
+
+    /**
+     * @since 2.0.1
+     */
+    public static String padRight(String ori, int totalWidth, char paddingChar) {
+        int oriLen = Assert.notNull(ori).length();
+        int padLen = totalWidth - oriLen;
+        if (padLen <= 0)
+            return ori;
+
+        return ori + toString(paddingChar, padLen);
+    }
+
+    public static String toString(char ch, int len) {
+        char[] chars = new char[len];
+        Arrays.fill(chars, ch);
+        return String.valueOf(chars);
     }
 
 }
