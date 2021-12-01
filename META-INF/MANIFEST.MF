@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
 Created-By: ruan4261
 Bundle-Name: weaver-micro-devkit
-Library-Description: No lib.
-Bundle-Description: package:weaver.micro.devkit, only internal use.
+Library-Description: No third-party dependence anywhere.
+Bundle-Description: For internal use only.

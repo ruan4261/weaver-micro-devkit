@@ -13,12 +13,12 @@ import java.util.Set;
  *
  * @author ruan4261
  */
+@SuppressWarnings("all")
 public final class ArrayUtils {
 
     private ArrayUtils() {
     }
 
-    @SuppressWarnings("all")
     public static Object concat(Object a1, Object a2) {
         Assert.notNull(a1);
         Assert.notNull(a2);
@@ -40,7 +40,6 @@ public final class ArrayUtils {
         return dest;
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> T[] concat(T[] a1, T[] a2) {
         Assert.notNull(a1);
         Assert.notNull(a2);
@@ -136,7 +135,6 @@ public final class ArrayUtils {
             length += Assert.notNull(arr, "The array to be concat is null.").length;
         }
 
-        @SuppressWarnings("unchecked")
         T[] ret = (T[]) Array.newInstance(type, length);
         int idx = 0;
         for (T[] arr : arrays) {
@@ -318,7 +316,6 @@ public final class ArrayUtils {
     /**
      * 删除数组内重复元素
      */
-    @SuppressWarnings("unchecked")
     public static <T> T[] delRepeat(T[] a) {
         Assert.notNull(a);
         Set<T> set = new LinkedHashSet<T>(a.length);
@@ -354,7 +351,6 @@ public final class ArrayUtils {
      *
      * @return 请使用新的数组
      */
-    @SuppressWarnings("unchecked")
     public static <T> T[] arrayExtend(T[] a, int newLength) {
         Assert.notNull(a);
         Assert.notNeg(newLength);
@@ -439,7 +435,6 @@ public final class ArrayUtils {
         return dest;
     }
 
-    @SuppressWarnings("all")
     public static Object arrayExtend(Object a, int newLength) {
         Assert.notNull(a);
         Assert.notNeg(newLength);
