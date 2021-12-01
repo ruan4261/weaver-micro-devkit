@@ -6,6 +6,7 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.util.*;
 
+@SuppressWarnings("all")
 public class StringUtils {
 
     /**
@@ -269,19 +270,15 @@ public class StringUtils {
         boolean appendSeparator = false;
 
         while (it.hasNext()) {
-            if (appendSeparator) {
-                sb.append(separator);
-                appendSeparator = false;
-            }
-
             Object ele = it.next();
-            if (ele == null) {
-                if (nullAppendable)
-                    sb.append("null");
-                else
-                    continue;
-            } else sb.append(ele.toString());
+            if (ele == null && !nullAppendable)
+                continue;
 
+            if (appendSeparator)
+                sb.append(separator);
+
+            // null will be automatically converted to 'null'
+            sb.append(ele);
             appendSeparator = true;
         }
 
