@@ -328,25 +328,25 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * full recursion
      */
     @Override
-    public final void log(Object o) {
+    public void log(Object o) {
         String tree = VisualPrintUtils.getPrintInfo(o);
         this.logProcess.log(this.getLogPrefix() + '\n' + tree);
     }
 
     @Override
-    public final void log(String msg) {
+    public void log(String msg) {
         this.logProcess.log(this.getLogPrefix() + msg);
     }
 
     /**
      * 打印实际内容时另起一行
      */
-    public final void logLine(String msg) {
+    public void logLine(String msg) {
         this.logProcess.log(this.getLogPrefix() + '\n' + msg);
     }
 
     @Override
-    public final void log(Throwable cause) {
+    public void log(Throwable cause) {
         this.logProcess.log(this.getLogPrefix(), cause);
     }
 
@@ -354,7 +354,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      * @since 1.0.5
      */
     @Override
-    public final void log(String msg, Throwable cause) {
+    public void log(String msg, Throwable cause) {
         this.logProcess.log(this.getLogPrefix() + msg, cause);
     }
 
@@ -446,9 +446,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
     }
 
     /** 发生异常情况下在action结束时执行，该方法用于自定义重写 */
-    protected String ifException(Throwable e) {
-        this.log("Auto catch exception by ActionHandler.", e);
-        return this.fail(e);
+    protected String ifException(Throwable t) {
+        return this.fail(t);
     }
 
     /**
@@ -456,8 +455,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
      *
      * @since 1.1.2
      */
-    protected void ifExceptionAfterEnd(Throwable e) {
-        this.log("Throw exception through #end()", e);
+    protected void ifExceptionAfterEnd(Throwable t) {
+        this.log("Throw exception through #end()", t);
     }
 
     @Override
@@ -481,8 +480,9 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
             // 正常流程
             this.init();
             return this.handle(requestInfo);
-        } catch (Throwable e) {
-            return this.ifException(e);
+        } catch (Throwable t) {
+            this.log("Auto catch exception by ActionHandler.", t);
+            return this.ifException(t);
         } finally {
             this.end();
         }
