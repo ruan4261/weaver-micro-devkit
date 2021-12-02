@@ -99,4 +99,47 @@ public final class Cast {
         }
         return defaultVal;
     }
+
+    /**
+     * 默认返回 0
+     */
+    public static double o2double(Object val) {
+        return o2double(val, 0d);
+    }
+
+    public static double o2double(Object val, double defaultVal) {
+        if (val == null) return defaultVal;
+        try {
+            if (val instanceof Number) {
+                return ((Number) val).doubleValue();
+            } else if (val instanceof CharSequence) {
+                return Double.parseDouble(val.toString());
+            }
+        } catch (NumberFormatException ignore) {
+            return defaultVal;
+        }
+        return defaultVal;
+    }
+
+    /**
+     * 默认返回0
+     */
+    public static float o2float(Object val) {
+        return o2float(val, 0f);
+    }
+
+    public static float o2float(Object val, float defaultVal) {
+        if (val == null) return defaultVal;
+        try {
+            if (val instanceof Number) {
+                return ((Number) val).floatValue();
+            } else if (val instanceof CharSequence) {
+                return Float.parseFloat(val.toString());
+            }
+        } catch (NumberFormatException ignore) {
+            return defaultVal;
+        }
+        return defaultVal;
+    }
+
 }

@@ -19,11 +19,9 @@ public final class Assert {
      * @param mes exception message, be used by npe
      * @throws NullPointerException if the target is a null pointer
      */
-    public static <T> T notNull(T arg, String mes) {
+    public static void notNull(Object arg, String mes) {
         if (arg == null)
             npe(mes);
-
-        return arg;
     }
 
     /**
@@ -32,8 +30,8 @@ public final class Assert {
      *
      * @throws NullPointerException if the target is a null pointer
      */
-    public static <T> T notNull(T arg) {
-        return notNull(arg, null);
+    public static void notNull(Object arg) {
+        notNull(arg, null);
     }
 
     /**
@@ -43,8 +41,8 @@ public final class Assert {
      * @throws NullPointerException     if the target is a null pointer
      * @throws IllegalArgumentException if the content of target is empty
      */
-    public static <T> T notEmpty(T arg) {
-        return notEmpty(arg, null);
+    public static void notEmpty(Object arg) {
+        notEmpty(arg, null);
     }
 
     /**
@@ -63,8 +61,8 @@ public final class Assert {
      * @throws NullPointerException     if the target is a null pointer
      * @throws IllegalArgumentException if the content of target is empty
      */
-    public static <T> T notEmpty(T arg, String mes) {
-        consume(notNull(arg, mes));
+    public static void notEmpty(Object arg, String mes) {
+        notNull(arg, mes);
         if (arg instanceof CharSequence) {
             if (((CharSequence) arg).length() == 0)
                 fail(mes);
@@ -79,8 +77,10 @@ public final class Assert {
             if (len == 0)
                 fail(mes);
         }
+    }
 
-        return arg;
+    public static void checkOffset(int offset, Object arg) {
+        checkOffset(offset, arg, "The wrong offset is " + offset);
     }
 
     /**
@@ -94,28 +94,30 @@ public final class Assert {
      * </ol>
      * Other types will not do verify.
      *
+     * @param offset the target
+     * @param arg    the limit of offset
      * @throws NullPointerException     if the target is a null pointer,
      *                                  and the exception message will be 'null'
      * @throws IllegalArgumentException if the offset is not in the size of
      *                                  the content of the target
      */
-    public static <T> T legalOffset(T arg, int offset) {
-        consume(notNull(arg));
-        int len = -1;
-        if (arg instanceof CharSequence) {
-            len = ((CharSequence) arg).length();
+    public static void checkOffset(int offset, Object arg, String msg) {
+        notNull(arg, msg);
+        int limit = -1;
+        if (arg instanceof Number) {// it may be a length
+            limit = ((Number) arg).intValue();
+        } else if (arg instanceof CharSequence) {
+            limit = ((CharSequence) arg).length();
         } else if (arg instanceof Map) {
-            len = ((Map<?, ?>) arg).size();
+            limit = ((Map<?, ?>) arg).size();
         } else if (arg instanceof Collection) {
-            len = ((Collection<?>) arg).size();
+            limit = ((Collection<?>) arg).size();
         } else if (arg.getClass().isArray()) {
-            len = Array.getLength(arg);
+            limit = Array.getLength(arg);
         }
 
-        if (len != -1 && (offset < 0 || offset >= len))
-            fail("The length of sequence is " + len + ", but offset is " + offset);
-
-        return arg;
+        if (limit != -1 && (offset < 0 || offset >= limit))
+            fail(msg);
     }
 
     /**
@@ -125,9 +127,8 @@ public final class Assert {
      * @throws NullPointerException     if the target is a null pointer
      * @throws IllegalArgumentException if the target is not a positive number
      */
-    public static Number notNegAndZero(Number num) {
+    public static void notNegAndZero(Number num) {
         notNegAndZero(num, null);
-        return num;
     }
 
     /**
@@ -137,12 +138,10 @@ public final class Assert {
      * @throws NullPointerException     if the target is a null pointer
      * @throws IllegalArgumentException if the target is not a positive number
      */
-    public static Number notNegAndZero(Number num, String mes) {
-        consume(notNull(num, mes));
+    public static void notNegAndZero(Number num, String mes) {
+        notNull(num, mes);
         if (num.intValue() <= 0)
             fail(mes);
-
-        return num;
     }
 
     /**
@@ -152,10 +151,8 @@ public final class Assert {
      * @throws NullPointerException     if the target is a null pointer
      * @throws IllegalArgumentException if the target is a negative number
      */
-    public static Number notNeg(Number num) {
+    public static void notNeg(Number num) {
         notNeg(num, null);
-
-        return num;
     }
 
     /**
@@ -165,28 +162,20 @@ public final class Assert {
      * @throws NullPointerException     if the target is a null pointer
      * @throws IllegalArgumentException if the target is a negative number
      */
-    public static Number notNeg(Number num, String mes) {
-        consume(notNull(num, mes));
+    public static void notNeg(Number num, String mes) {
+        notNull(num, mes);
         if (num.intValue() < 0)
             fail(mes);
-
-        return num;
     }
 
-    public static Object checkArray(Object arr) {
-        notNull(arr);
-        if (!arr.getClass().isArray())
-            fail(null);
-
-        return arr;
+    public static void checkArray(Object arr) {
+        checkArray(arr, "Input is not an instance of array type");
     }
 
-    public static Object checkArray(Object arr, String mes) {
-        notNull(arr, mes);
+    public static void checkArray(Object arr, String msg) {
+        notNull(arr, msg);
         if (!arr.getClass().isArray())
-            fail(mes);
-
-        return arr;
+            fail(msg);
     }
 
     public static void judge(boolean result) {
@@ -270,10 +259,6 @@ public final class Assert {
      */
     public static RuntimeException rune(String mes) throws RuntimeException {
         throw new RuntimeException(mes);
-    }
-
-    public static void consume(Object... ignored) {
-        // do nothing
     }
 
 }

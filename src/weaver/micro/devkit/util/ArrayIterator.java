@@ -27,9 +27,7 @@ public class ArrayIterator<T> implements Iterator<T> {
     }
 
     public static ArrayIterator<Object> of(Object arr) {
-        if (!Assert.notNull(arr).getClass().isArray()) {
-            throw new IllegalArgumentException("Argument is not an array object");
-        }
+        Assert.checkArray(arr, "Argument is not an array object");
 
         return new ReflectiveArrayIterator(arr);
     }

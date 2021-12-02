@@ -126,13 +126,15 @@ public final class ArrayUtils {
      * 输入数组数量必须大于0
      */
     public static <T> T[] concat(T[]... arrays) {
-        Class<?> arrayType = Assert.notEmpty(arrays, "Illegal input")[0].getClass();
+        Assert.notEmpty(arrays, "Illegal input");
+        Class<?> arrayType = arrays[0].getClass();
         Class<?> type = arrayType.getComponentType();
         // calculate length
         int length = 0;
         for (T[] arr : arrays) {
+            Assert.notNull(arr, "The array to be concat is null");
             Assert.judge(arrayType == arr.getClass(), "Incorrect array type.");
-            length += Assert.notNull(arr, "The array to be concat is null.").length;
+            length += arr.length;
         }
 
         T[] ret = (T[]) Array.newInstance(type, length);
@@ -145,9 +147,11 @@ public final class ArrayUtils {
     }
 
     public static int[] concat(int[]... arrays) {
+        Assert.notNull(arrays);
         int len = 0;
-        for (int[] arr : Assert.notNull(arrays)) {
-            len += Assert.notNull(arr).length;
+        for (int[] arr : arrays) {
+            Assert.notNull(arr);
+            len += arr.length;
         }
 
         int[] ret = new int[len];
@@ -160,12 +164,12 @@ public final class ArrayUtils {
     }
 
     public static double[] concat(double[]... arrays) {
-        if (arrays == null)
-            return new double[0];
+        Assert.notNull(arrays);
 
         int len = 0;
-        for (double[] arr : Assert.notNull(arrays)) {
-            len += Assert.notNull(arr).length;
+        for (double[] arr : arrays) {
+            Assert.notNull(arr);
+            len += arr.length;
         }
 
         double[] ret = new double[len];
@@ -178,12 +182,12 @@ public final class ArrayUtils {
     }
 
     public static char[] concat(char[]... arrays) {
-        if (arrays == null)
-            return new char[0];
+        Assert.notNull(arrays);
 
         int len = 0;
-        for (char[] arr : Assert.notNull(arrays)) {
-            len += Assert.notNull(arr).length;
+        for (char[] arr : arrays) {
+            Assert.notNull(arr);
+            len += arr.length;
         }
 
         char[] ret = new char[len];
@@ -196,12 +200,12 @@ public final class ArrayUtils {
     }
 
     public static boolean[] concat(boolean[]... arrays) {
-        if (arrays == null)
-            return new boolean[0];
+        Assert.notNull(arrays);
 
         int len = 0;
-        for (boolean[] arr : Assert.notNull(arrays)) {
-            len += Assert.notNull(arr).length;
+        for (boolean[] arr : arrays) {
+            Assert.notNull(arr);
+            len += arr.length;
         }
 
         boolean[] ret = new boolean[len];
@@ -214,12 +218,12 @@ public final class ArrayUtils {
     }
 
     public static float[] concat(float[]... arrays) {
-        if (arrays == null)
-            return new float[0];
+        Assert.notNull(arrays);
 
         int len = 0;
-        for (float[] arr : Assert.notNull(arrays)) {
-            len += Assert.notNull(arr).length;
+        for (float[] arr : arrays) {
+            Assert.notNull(arr);
+            len += arr.length;
         }
 
         float[] ret = new float[len];
@@ -232,12 +236,12 @@ public final class ArrayUtils {
     }
 
     public static byte[] concat(byte[]... arrays) {
-        if (arrays == null)
-            return new byte[0];
+        Assert.notNull(arrays);
 
         int len = 0;
-        for (byte[] arr : Assert.notNull(arrays)) {
-            len += Assert.notNull(arr).length;
+        for (byte[] arr : arrays) {
+            Assert.notNull(arr);
+            len += arr.length;
         }
 
         byte[] ret = new byte[len];
@@ -251,12 +255,12 @@ public final class ArrayUtils {
 
 
     public static short[] concat(short[]... arrays) {
-        if (arrays == null)
-            return new short[0];
+        Assert.notNull(arrays);
 
         int len = 0;
-        for (short[] arr : Assert.notNull(arrays)) {
-            len += Assert.notNull(arr).length;
+        for (short[] arr : arrays) {
+            Assert.notNull(arr);
+            len += arr.length;
         }
 
         short[] ret = new short[len];
@@ -269,12 +273,12 @@ public final class ArrayUtils {
     }
 
     public static long[] concat(long[]... arrays) {
-        if (arrays == null)
-            return new long[0];
+        Assert.notNull(arrays);
 
         int len = 0;
-        for (long[] arr : Assert.notNull(arrays)) {
-            len += Assert.notNull(arr).length;
+        for (long[] arr : arrays) {
+            Assert.notNull(arr);
+            len += arr.length;
         }
 
         long[] ret = new long[len];
@@ -290,15 +294,10 @@ public final class ArrayUtils {
      * 仅能返回 ComponentType 为 Object 的数组
      */
     public static Object concat(Object... arrays) {
+        Assert.notNull(arrays);
         int len = 0;
-        for (Object arr : Assert.notNull(arrays)) {
-            Assert.judge(
-                    Assert.notNull(
-                            arr,
-                            "Component is null pointer"
-                    ).getClass().isArray(),
-                    "Component is not of an array type"
-            );
+        for (Object arr : arrays) {
+            Assert.checkArray(arr, "Component is not an instance of array type");
             len += Array.getLength(arr);
         }
 

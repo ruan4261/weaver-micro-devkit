@@ -13,21 +13,18 @@ class VPUtils {
         // prop
         Class<?> calledClass = type.serializationClass();
         calledClass = calledClass == void.class ? o.getClass() : calledClass;
-        String calledMethod = Assert.notEmpty(type.serializationMethod());
+        String calledMethod = type.serializationMethod();
         Class<?>[] paramsList = type.parametersList();
         int paramsLen = paramsList.length;
-        int callIndex = Assert.notNeg(type.callIndex()).intValue();
-        if (callIndex > paramsLen)
-            throw new IllegalArgumentException(
-                    "MinimumType prop[callIndex] cannot greater than the length of prop[parametersList]."
-            );
+        int callIndex = type.callIndex();
+        Assert.checkOffset(callIndex, paramsLen + 1,
+                "MinimumType prop[callIndex] cannot greater than the length of prop[parametersList].");
 
         Method m = ReflectUtils.getMethodQuietly(calledClass, calledMethod, paramsList);
-        if (m == null)
-            throw new NoSuchMethodException(calledClass.toString()
-                    + '#' + calledMethod
-                    + '(' + StringUtils.toString(ArrayIterator.of(paramsList)) + ')'
-            );
+        if (m == null) throw new NoSuchMethodException(calledClass.toString()
+                + '#' + calledMethod
+                + '(' + StringUtils.toString(ArrayIterator.of(paramsList)) + ')'
+        );
 
         return m;
     }

@@ -42,7 +42,8 @@ public class AnnotationUtils {
     /* Internal used API */
 
     static Map<String, Object> checkReturnMemberValues(Class<? extends Annotation> type, Map<String, Object> memberValues) {
-        Assert.judge(Assert.notNull(type.isAnnotation()), "Incorrect annotation type");
+        Assert.notNull(type, "Annotation type is null");
+        Assert.judge(type.isAnnotation(), "Incorrect annotation type");
         Method[] members = type.getDeclaredMethods();
         if (members.length == 0) {
             return java.util.Collections.emptyMap();

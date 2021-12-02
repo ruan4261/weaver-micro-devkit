@@ -265,6 +265,7 @@ public class VisualPrintProcess {
 
     private void printMinimumWithAnnotation(Object o, @NotNull MinimumType type)
             throws IOException, InvocationTargetException, IllegalAccessException {
+        Assert.notNull(type);
         // get serialization method
         Method calledMethod;
         try {
@@ -299,7 +300,8 @@ public class VisualPrintProcess {
 
     private void printMinimumWithModal(Object o, MinimumTypeModel model)
             throws IllegalAccessException, IOException, InvocationTargetException {
-        MinimumType type = Assert.notNull(model.get(o.getClass()));
+        Assert.notNull(model);
+        MinimumType type = model.get(o.getClass());
         this.printMinimumWithAnnotation(o, type);
     }
 

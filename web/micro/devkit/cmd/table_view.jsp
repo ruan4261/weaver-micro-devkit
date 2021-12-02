@@ -1,17 +1,20 @@
 <%@ page import="weaver.conn.RecordSet" %>
 <%@ page import="weaver.micro.devkit.Assert" %>
 <%@ page import="weaver.micro.devkit.handler.StrictRecordSet" %>
+<%@ page import="weaver.micro.devkit.util.StringUtils" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%--
 查看某张表全部的数据(注意别直接打崩了数据库)
 --%>
 <%
-    String table = Assert.notEmpty(request.getParameter("table"));
+    try {
+        String table = request.getParameter("table");
+        Assert.notEmpty(table);
 
-    RecordSet rs = new StrictRecordSet();
-    rs.executeQuery("select * from " + table);
+        RecordSet rs = new StrictRecordSet();
+        rs.executeQuery("select * from " + table);
 
-    String[] cols = rs.getColumnName();
+        String[] cols = rs.getColumnName();
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,3 +58,10 @@
 </table>
 </body>
 </html>
+<%
+    } catch (Throwable t) {
+        out.print("<pre>");
+        out.print(StringUtils.toString(t));
+        out.print("</pre>");
+    }
+%>

@@ -184,14 +184,16 @@ public class StringUtils {
     }
 
     public static String dotToSlash(String str) {
-        return Assert.notNull(str).replace('.', '/');
+        Assert.notNull(str);
+        return str.replace('.', '/');
     }
 
     /**
      * @since 2.0.1
      */
     public static String padLeft(String ori, int totalWidth, char paddingChar) {
-        int oriLen = Assert.notNull(ori).length();
+        Assert.notNull(ori);
+        int oriLen = ori.length();
         int padLen = totalWidth - oriLen;
         if (padLen <= 0)
             return ori;
@@ -203,7 +205,8 @@ public class StringUtils {
      * @since 2.0.1
      */
     public static String padRight(String ori, int totalWidth, char paddingChar) {
-        int oriLen = Assert.notNull(ori).length();
+        Assert.notNull(ori);
+        int oriLen = ori.length();
         int padLen = totalWidth - oriLen;
         if (padLen <= 0)
             return ori;

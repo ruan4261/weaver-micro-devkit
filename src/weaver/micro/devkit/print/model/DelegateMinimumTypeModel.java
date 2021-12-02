@@ -69,8 +69,9 @@ public class DelegateMinimumTypeModel implements MinimumTypeModel {
         private final MinimumTypeModel actual;
 
         public SortableMinimumTypeModel(int order, MinimumTypeModel actual) {
+            Assert.notNull(actual);
             this.order = order;
-            this.actual = Assert.notNull(actual);
+            this.actual = actual;
         }
 
         public int getOrder() {

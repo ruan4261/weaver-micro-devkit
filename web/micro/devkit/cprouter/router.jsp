@@ -1,5 +1,4 @@
 <%@ page import="weaver.conn.RecordSet" %>
-<%@ page import="weaver.general.Util" %>
 <%@ page import="weaver.micro.devkit.util.StringUtils" %>
 <%@ page import="weaver.micro.devkit.Cast" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -64,8 +63,8 @@
 <%
     // version >= 1.1.12
     RecordSet rs = new RecordSet();
-    int workflowid = Util.getIntValue(request.getParameter("workflowid"));
-    int nodeid = Util.getIntValue(request.getParameter("nodeid"));
+    int workflowid = Cast.o2Integer(request.getParameter("workflowid"));
+    int nodeid = Cast.o2Integer(request.getParameter("nodeid"));
     boolean isMobile = !Cast.o2String(request.getParameter("isMobile")).equals("");
     rs.execute("select dt.model, dt.nodeid, dt.custompage, dt.file_type" +
             "\nfrom uf_cprouter_dt1 dt" +

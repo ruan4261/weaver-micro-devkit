@@ -1,5 +1,4 @@
 <%@ page import="weaver.conn.RecordSet" %>
-<%@ page import="weaver.general.Util" %>
 <%@ page import="weaver.micro.devkit.api.ModeAPI" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
@@ -10,6 +9,7 @@
 <%@ page import="weaver.general.TimeUtil" %>
 <%@ page import="weaver.micro.devkit.Cast" %>
 <%@ page import="weaver.micro.devkit.api.CommonAPI" %>
+<%@ page import="weaver.micro.devkit.handler.StrictRecordSet" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%!
     static final String mainTable = "uf_cprouter";
@@ -24,10 +24,16 @@
         this.out = out;
     }
 
-    void doLog(String mes) throws IOException {
-        this.out.print(mes);
-        this.out.print("<br>");
-        this.loggable.log(mes);
+    void doLogLine() throws IOException {
+        this.out.print("<hr/>");
+    }
+
+    void doLog(String... msgs) throws IOException {
+        for (String msg : msgs) {
+            this.out.print(msg);
+            this.out.print("<br/>");
+            this.loggable.log(msg);
+        }
     }
 
     void doLog(Throwable t) throws IOException {
@@ -65,20 +71,12 @@
     setOut(out);
     try {
         // custom page router mode refactoring
-        int modeid = Util.getIntValue(request.getParameter("modeid"));
+        int modeid = Cast.o2Integer(request.getParameter("modeid"));
         String workflowIds = Cast.o2String(request.getParameter("workflowIds"), "-1");// 只更新其中流程, 如果为*则更新全部
+        String auth = Cast.o2String(request.getParameter("auth"));
 
-        RecordSet rs = new RecordSet();
-        RecordSet exe = new RecordSet() {
-            @Override
-            public boolean execute(String s) {
-                boolean res = super.execute(s);
-                if (!res)
-                    throw new RuntimeException(this.getExceptionMsg());
-
-                return true;
-            }
-        };
+        RecordSet rs = new StrictRecordSet();
+        RecordSet exe = new StrictRecordSet();
 
         String workflowCondition = workflowIds.equals("*") ? "" : "id in (" + workflowIds + ") and";
         String template = "select %s from workflow_base where "
@@ -93,8 +91,7 @@
         doLog("data count: " + CommonAPI.querySingleField(countSql));
 
         // confirm start program
-        String verify = Util.null2String(request.getParameter("auth"));
-        if (verify.equals("1") && modeid != -1) {
+        if (auth.equals("1") && modeid != -1) {
             doLog("认证通过, 开始重构, 模块id: " + modeid + ".<br>");
         } else {
             doLog("modeid: " + modeid);
@@ -119,30 +116,34 @@
                 // custompage
                 if (!custompage.startsWith(dest)) {
                     if (!custompage.equals("")) {
-                        exe.execute("insert into " + detailTable + "(mainid, model, load_order, custompage, used4pc, used4mobile, disable, describe)" +
-                                "\nvalues(" + mainId + ", 0, 10, '" + custompage + "', 1, " + sameCheckbox + ", 0," +
-                                " 'Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]')");
+                        exe.executeUpdate("insert into " + detailTable +
+                                        "(mainid, model, load_order, custompage, used4pc, used4mobile, disable, describe)" +
+                                        " values(?, 0, 10, ?, 1, ?, 0, ?)",
+                                mainId, custompage, sameCheckbox,
+                                "Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]");
                     }
 
-                    String updateSql = "update workflow_base set custompage='" + dest + "' where id=" + id;
-                    doLog(updateSql);
-                    exe.execute(updateSql);
+                    String updateSql = "update workflow_base set custompage = ? where id = " + id;
+                    doLog(updateSql, dest);
+                    exe.executeUpdate(updateSql, dest);
                 }
 
                 // custompage4emoble
                 if (!custompage4emoble.startsWith(dest)) {
                     if (!custompage4emoble.equals("") && sameCheckbox == null) {
-                        exe.execute("insert into " + detailTable + "(mainid, model, load_order, custompage, used4pc, used4mobile, disable, describe)" +
-                                "\nvalues(" + mainId + ", 0, 10, '" + custompage4emoble + "', 0, 1, 0," +
-                                " 'Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]')");
+                        exe.executeUpdate("insert into " + detailTable +
+                                        "(mainid, model, load_order, custompage, used4pc, used4mobile, disable, describe)" +
+                                        " values(?, 0, 10, ?, 0, 1, 0, ?)",
+                                mainId, custompage4emoble,
+                                "Automatic created by refactoring program.[" + TimeUtil.getCurrentTimeString() + "]'");
                     }
 
-                    String updateSql = "update workflow_base set custompage4emoble='" + dest4mobile + "' where id=" + id;
-                    doLog(updateSql);
-                    exe.execute(updateSql);
+                    String updateSql = "update workflow_base set custompage4emoble = ? where id = " + id;
+                    doLog(updateSql, dest4mobile);
+                    exe.executeUpdate(updateSql, dest4mobile);
                 }
             } catch (Throwable t) {
-                doLog("<hr>");
+                doLogLine();
                 doLog(t);
                 doLog("<h2 style=\"color: red\">Program has been stopped! Please roll back manually.</h2><br>");
                 return;
@@ -153,7 +154,7 @@
 
         doLog("重构完成");
     } catch (Throwable t) {
-        doLog("<hr>");
+        doLogLine();
         doLog(t);
     } finally {
         clearLogStream();

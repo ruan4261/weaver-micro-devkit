@@ -33,21 +33,19 @@ public final class BeanUtils {
     public static Map<String, Object> object2Map(Object object, boolean parent, int filter) {
         Assert.notNull(object);
         Class<?> clazz = object.getClass();
-
         Field[] fields = ReflectUtils.queryFields(clazz, filter, parent);
-
-        Map<String, Object> map = new HashMap<String, Object>(fields.length + (fields.length >> 1));
+        Map<String, Object> ret = new HashMap<String, Object>(fields.length + (fields.length >> 1));
         for (int i = fields.length - 1; i >= 0; i--) {
             Field field = fields[i];
             try {
                 if (!field.isAccessible())
                     field.setAccessible(true);
 
-                map.put(field.getName(), field.get(object));
+                ret.put(field.getName(), field.get(object));
             } catch (IllegalAccessException ignore) {
             }
         }
-        return map;
+        return ret;
     }
 
     /**
@@ -86,22 +84,21 @@ public final class BeanUtils {
      * @since 1.1.9
      */
     public static Map<String, Object> object2MapCompletely(Object obj, boolean parent, int filter) {
-        Class<?> clazz = Assert.notNull(obj, "obj").getClass();
-
+        Assert.notNull(obj);
+        Class<?> clazz = obj.getClass();
         Field[] fields = ReflectUtils.queryFields(clazz, filter, parent);
-
-        Map<String, Object> map = new HashMap<String, Object>(fields.length + (fields.length >> 1));
+        Map<String, Object> ret = new HashMap<String, Object>(fields.length + (fields.length >> 1));
         for (int i = fields.length - 1; i >= 0; i--) {
             Field field = fields[i];
             try {
                 if (!field.isAccessible())
                     field.setAccessible(true);
 
-                map.put(field.toString(), field.get(obj));
+                ret.put(field.toString(), field.get(obj));
             } catch (IllegalAccessException ignore) {
             }
         }
-        return map;
+        return ret;
     }
 
     /**
