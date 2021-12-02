@@ -214,7 +214,6 @@ public class VisualPrintProcess {
                 this.printNULL();
                 break;
             case MinimumWithAnnotation:
-                // the annotation instance must be from class of the object
                 this.printMinimumWithAnnotation(o, field);
                 break;
             case MinimumWithModel:
