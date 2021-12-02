@@ -3,23 +3,12 @@ package weaver.micro.devkit.util;
 import weaver.micro.devkit.Assert;
 
 import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 
 @SuppressWarnings("all")
 public class StringUtils {
-
-    /**
-     * 用于{@link #fullRecursionPrint(Object)}方法内部去重
-     */
-    private final static ThreadLocal<Set<Object>> repeatObjects = new ThreadLocal<Set<Object>>() {
-
-        @Override
-        protected Set<Object> initialValue() {
-            return new HashSet<Object>();
-        }
-
-    };
 
     public static String toString(Throwable t) {
         if (t == null)
@@ -33,36 +22,8 @@ public class StringUtils {
         try {
             out.close();
         } catch (IOException ignored) {
-            // ByteArrayOutputStream不会出现此类异常
         }
         return res;
-    }
-
-    /**
-     * @see #toString(Throwable)
-     */
-    @Deprecated
-    public static String makeStackTraceInfo(Throwable t) {
-        return toString(t);
-    }
-
-    /**
-     * 自动跨行, 前缀加载每行行头
-     * 返回字符串的尾部有空行
-     */
-    public static String makeStackTraceInfo(StackTraceElement[] trace, String prefix) {
-        if (trace == null || trace.length == 0)
-            return "";
-
-        StringBuilder builder = new StringBuilder(trace.length << 6);
-        for (StackTraceElement traceElement : trace) {
-            if (prefix != null)
-                builder.append(prefix);
-
-            builder.append(traceElement)
-                    .append('\n');
-        }
-        return builder.toString();
     }
 
     /**
@@ -111,152 +72,13 @@ public class StringUtils {
     }
 
     /**
-     * 元类型, 数值类型及字符序列类型直接输出<br>
-     * 集合对象如array, collection, map会解析输出内部元素<br>
-     * 非以上情况下如有toString方法会优先调用toString方法<br>
-     * 否则递归输出对象内所有字段
-     * <br><br>
-     * 输出格式无特别规范
-     *
-     * @see #fullRecursionPrint0(Object)
-     * @since 1.1.4
-     * @deprecated new print function see {@link VisualPrintUtils}
-     */
-    @Deprecated
-    public static String fullRecursionPrint(Object obj) {
-        String str = fullRecursionPrint0(obj);
-        repeatObjects.remove();
-        return str;
-    }
-
-    /**
-     * internal method
-     *
-     * @see #fullRecursionPrint(Object)
-     */
-    static String fullRecursionPrint0(Object obj) {
-        Class<?> clazz;
-        if (obj == null || (clazz = obj.getClass()) == null) {
-            return "null";
-        }
-
-        // 该信息用于提示重复
-        String nativeInfo = '<' + toStringNative(obj) + '>';
-        Set<Object> repeated = repeatObjects.get();
-        if (repeated.contains(obj)) {
-            return "(repeat object: " + nativeInfo + ")";
-        }
-
-        String res;
-        if (BeanUtils.isPrimitive(clazz)
-                || obj instanceof Number
-                || obj instanceof CharSequence) {
-            return obj.toString();
-        } else if (clazz.isArray()) {
-            repeated.add(obj);
-            res = nativeInfo + fullRecursionPrintArray(obj);
-        } else if (obj instanceof Collection<?>) {
-            repeated.add(obj);
-            res = nativeInfo + fullRecursionPrintCollection(((Collection<?>) obj));
-        } else if (obj instanceof Map<?, ?>) {
-            repeated.add(obj);
-            res = nativeInfo + fullRecursionPrintMap(((Map<?, ?>) obj));
-        } else if (BeanUtils.hasOwnMethod(clazz, "toString")) {
-            // 非结构化对象, 并且有自定义toString
-            return obj.toString();
-        } else {
-            repeated.add(obj);
-            res = nativeInfo + fullRecursionPrintMap(BeanUtils.object2Map(obj, 0));
-        }
-
-        return res;
-    }
-
-    /**
-     * internal method
-     *
-     * @see #fullRecursionPrint(Object)
-     */
-    static String fullRecursionPrintMap(Map<?, ?> m) {
-        if (m == null)
-            return "null";
-
-        Iterator<? extends Map.Entry<?, ?>> i = m.entrySet().iterator();
-        if (!i.hasNext())
-            return "{}";
-
-        StringBuilder sb = new StringBuilder();
-        sb.append('{');
-        while (true) {
-            Map.Entry<?, ?> e = i.next();
-            Object key = e.getKey();
-            Object value = e.getValue();
-            sb.append(fullRecursionPrint0(key));
-            sb.append('=');
-            sb.append(fullRecursionPrint0(value));
-            if (!i.hasNext())// next or end
-                return sb.append('}').toString();
-            sb.append(',')
-                    .append(' ');
-        }
-    }
-
-    /**
-     * internal method
-     *
-     * @see #fullRecursionPrint(Object)
-     */
-    static String fullRecursionPrintCollection(Collection<?> collection) {
-        if (collection == null)
-            return "null";
-
-        Iterator<?> it = collection.iterator();
-        if (!it.hasNext())
-            return "[]";
-
-        StringBuilder sb = new StringBuilder();
-        sb.append('[');
-        while (true) {
-            Object e = it.next();
-            sb.append(fullRecursionPrint0(e));
-            if (!it.hasNext())// next or end
-                return sb.append(']').toString();
-            sb.append(',')
-                    .append(' ');
-        }
-    }
-
-    /**
-     * internal method
-     *
-     * @see #fullRecursionPrint(Object)
-     */
-    static String fullRecursionPrintArray(Object arr) {
-        if (arr == null)
-            return "null";
-
-        int len = Array.getLength(arr);
-        StringBuilder sb = new StringBuilder();
-        sb.append('[');
-        int i = 0;
-        while (true) {
-            Object e = Array.get(arr, i++);
-            sb.append(fullRecursionPrint0(e));
-            if (i == len)
-                return sb.append(']').toString();
-            sb.append(',')
-                    .append(' ');
-        }
-    }
-
-    /**
      * java原生toString方式
      */
     public static String toStringNative(Object o) {
         if (o == null)
             return "null";
 
-        return o.getClass().getName() + "@" + Integer.toHexString(o.hashCode());
+        return o.getClass().getName() + '@' + Integer.toHexString(o.hashCode());
     }
 
     /**
@@ -311,10 +133,9 @@ public class StringUtils {
         StringWriter writer = new StringWriter(str.length() << 1);
         try {
             escapeString(writer, str);
-            return writer.toString();
-        } catch (IOException e) {
-            throw new Error(e);
+        } catch (IOException ignored) {
         }
+        return writer.toString();
     }
 
     /**
