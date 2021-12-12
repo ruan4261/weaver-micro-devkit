@@ -5,6 +5,7 @@ import weaver.interfaces.workflow.action.Action;
 import weaver.micro.devkit.Assert;
 import weaver.micro.devkit.Cast;
 import weaver.micro.devkit.annotation.Autowired;
+import weaver.micro.devkit.annotation.NotNull;
 import weaver.micro.devkit.api.DocAPI;
 import weaver.micro.devkit.api.WorkflowAPI;
 import weaver.micro.devkit.util.ArrayUtils;
@@ -406,7 +407,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         this.logPrefix = "$request:" + this.getRequestId() + "$ -> ";
         this.log(" action start" +
                 ", bill main id is " + this.getMainId() +
-                ", bill table name is " + this.getTableNameLower() +
+                ", bill table name is " + this.getBillTableName() +
                 ", request name is " + this.getRequestName() +
                 ", creator is " + this.getCreatorId() +
                 ", current node is " + this.getCurrentNodeName() +
@@ -461,7 +462,8 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
 
     @Override
     public final String execute(RequestInfo requestInfo) {
-        // 并发问题解决(临时), 只有realExecutor为true时代表当前实例安全, 可用于实际action处理
+        // 流程流转集成中的接口为单例, 为解决并发问题, 设置 realExecutor 变量
+        // 只有 realExecutor 为 true 时代表当前实例安全, 可用于实际action处理
         if (!this.realExecutor) {
             log("ActionHandlerAgent#" + StringUtils.toStringNative(this)
                     + " :: " + StringUtils.toStringNative(requestInfo));
@@ -476,9 +478,10 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         this.request = requestInfo;
         try {
             this.actionStart();
-
-            // 正常流程
             this.init();
+            // 检查参数注入, 包含注解 @NotNull 的变量为空时会引发异常
+            this.checkRequiredArguments();
+
             return this.handle(requestInfo);
         } catch (Throwable t) {
             this.log("Auto catch exception by ActionHandler.", t);
@@ -640,7 +643,7 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
         log("Fill field quietly start >>");
         Class<? extends ActionHandler> clazz = this.getClass();
         Class<?>[] all = ReflectUtils.getAllSuper(clazz);
-        // 最后5个元素为Object, ActionHandler以及其3个接口
+        // 最后5个元素为Object, ActionHandler以及其3个接口, 不存在参数
         all = ArrayUtils.arrayExtend(all, all.length - 5);
 
         for (Class<?> c : all) {
@@ -666,6 +669,36 @@ public abstract class ActionHandler implements Handler, Action, Loggable {
             }
         }
         log("Fill field quietly end >>");
+    }
+
+    /**
+     * 校验当前实例中所有注解为 @NotNull 的参数, 如果有为 null 的则抛出异常
+     *
+     * @since 2.0.2
+     */
+    private void checkRequiredArguments() {
+        Class<? extends ActionHandler> clazz = this.getClass();
+        Class<?>[] all = ReflectUtils.getAllSuper(clazz);
+        // 最后5个元素为Object, ActionHandler以及其3个接口, 不存在参数
+        all = ArrayUtils.arrayExtend(all, all.length - 5);
+
+        try {
+            for (Class<?> c : all) {
+                // filter static and final
+                Field[] fields = ReflectUtils.queryFields(c, 8 + 16, false);
+                if (fields.length == 0) continue;
+
+                for (Field f : fields) {
+                    if (f.isAnnotationPresent(NotNull.class)) {
+                        f.setAccessible(true);
+                        if (f.get(this) == null)
+                            throw new IllegalArgumentException("The required argument is not set: " + f);
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
+            log("Cannot check params!", e);
+        }
     }
 
 }
